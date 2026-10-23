@@ -1,0 +1,78 @@
+# CLAUDE.md
+
+증강 칼바람 커뮤니티: 리그 오브 레전드 증강 칼바람 나락 모드의 증강 정보를 친구들(약 10명)과 공유하는 취미 커뮤니티 사이트.
+
+- 설계: `docs/superpowers/specs/2026-10-24-aram-community-v1-design.md` (기능·권한·데이터·API의 기준)
+- 구현 계획: `docs/superpowers/plans/2026-10-24-aram-community-v1.md` (v1 14개 작업, 모두 완료)
+- 사용자용 안내: `README.md` (디스코드 앱 등록, `.env`, 실행 방법)
+
+## 일하는 방식
+
+- 사용자는 **바이브코딩**으로 진행한다. 코드를 직접 읽거나 리뷰하지 않는다. 확인은 Claude가 직접 하고(테스트 실행, 브라우저로 동작 확인), 결과는 화면 기준의 쉬운 한국어로 보고한다.
+- 사용자에게는 기능·화면 관점의 질문만 한다. 코드 구조 같은 기술 결정은 Claude가 정하고 이유를 짧게 알린다.
+- 새 기능은 superpowers 흐름을 따른다: brainstorming → 설계 문서 → writing-plans → 실행. 테스트를 먼저 쓴다.
+- 화면 문구는 모두 한국어 해요체.
+- 기능 하나가 끝날 때마다 커밋한다. 원격(GitHub `yyy5044/aram`, **공개 저장소**)에 푸시는 사용자가 요청할 때만 한다.
+- 커밋 이메일은 저장소 로컬 설정의 GitHub noreply 주소(`48915312+yyy5044@users.noreply.github.com`)를 쓴다. 바꾸지 않는다. 실제 이메일이 공개 기록에 남지 않게 하기 위함.
+
+## 구조
+
+| 폴더 | 내용 |
+|---|---|
+| `backend/` | Spring Boot 4.1, Java 21, JPA(Hibernate 7), Flyway, PostgreSQL 18, Spring Security OAuth2(디스코드) |
+| `frontend/` | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Tiptap 3 |
+
+백엔드는 기능별 패키지(`auth`, `user`, `gamedata`, `post`, `image`, `comment`, `like`, `common`)로 나뉜다. 프론트엔드는 `api/`, `components/`, `pages/`, `editor/`, `lib/`, `test/`.
+
+## 실행과 테스트
+
+```bash
+cd backend && ./gradlew bootRun        # PostgreSQL은 compose.yaml로 자동으로 뜬다 (Docker 필요)
+cd frontend && npm run dev             # http://localhost:5173, /api·/oauth2·/login/oauth2는 8080으로 프록시
+cd backend && ./gradlew test           # Testcontainers로 실제 PostgreSQL 사용
+cd frontend && npm test && npm run build && npm run lint
+```
+
+- Node는 `C:\Program Files\nodejs`에 있다. Git Bash에서는 `export PATH="/c/Program Files/nodejs:$PATH"`가 필요할 수 있다.
+- 브라우저 확인은 `.claude/launch.json`의 `frontend` 설정으로 미리보기를 띄운다.
+- 디스코드 없이 확인할 때는 `backend/.env`에 `APP_DEV_LOGIN_ENABLED=true`를 두고 `POST /api/dev/login`(`{discordId, nickname}`, `X-XSRF-TOKEN` 헤더 필요)으로 로그인한다. 운영에서는 절대 켜지 않는다.
+
+## 규칙
+
+- DB 변경은 `backend/src/main/resources/db/migration`에 새 Flyway 파일(`V6__...`부터)로만 한다. Hibernate는 `ddl-auto: validate`.
+- 본문 허용 서식은 서버 `post/PostContentValidator.java`와 화면 `editor/extensions.ts`가 같은 목록을 지킨다. 하나를 바꾸면 다른 쪽과 `editor/extensions.test.ts`도 바꾼다.
+- 오류 응답은 `{ code, message, fieldErrors }`, 메시지는 화면에 그대로 보여줄 한국어 문장. 코드는 `common/ErrorCode.java`.
+- 모든 쓰기 API는 서버에서 권한을 검사한다(`auth/CurrentUser.requireWithNickname` + 글쓴이/관리자 확인).
+- 추천·댓글 수는 글 행을 `for update`로 잠근 뒤 실제 개수로 다시 센다. 동시 요청에서 숫자가 어긋나지 않게 하기 위함.
+- 비밀 값은 `backend/.env`(git 제외)에만 둔다. 디스코드 키를 빈 값으로 두면 서버가 시작되지 않으므로, 값이 없으면 줄을 `#`으로 막아둔다.
+
+## 기술 주의사항
+
+- Spring Boot 4: JSON은 **Jackson 3**(`tools.jackson.*`, `asString()`, `stringValue()`), 어노테이션은 그대로 `com.fasterxml.jackson.annotation`. `RestClient.Builder` 빈은 자동 등록되지 않는다(`RestClient.builder()` 사용). MockMvc 자동 설정은 `org.springframework.boot.webmvc.test.autoconfigure`.
+- 테스트 설정 `src/test/resources/application-test.yml`은 개발자의 `backend/.env` 값이 섞이지 않게 개발 로그인을 끈다.
+- 프론트엔드 테스트 렌더(`test/render.tsx`)는 실제 앱처럼 StrictMode로 감싼다. StrictMode에서만 드러나는 버그(효과 두 번 실행, 편집기 재생성)가 실제로 있었다.
+- 게임 데이터는 서버가 6시간마다 Data Dragon `versions.json`을 확인하고, 패치가 바뀌었을 때만 챔피언(`ko_KR/champion.json`)과 증강(CommunityDragon `kiwi.bin.json` + 한국어 문자열 표)을 다시 받는다. 패치 표기는 `16.21.1` → `26.21`.
+
+## 환경 주의사항 (이 컴퓨터)
+
+- **Docker Desktop을 에이전트 셸에서 실행하지 않는다.** Claude 데스크톱 앱 안에서 켜면 소켓 파일 문제로 계속 꺼진다. `docker info`가 실패하면 사용자에게 시작 메뉴에서 켜달라고 부탁한다. 이미 켜진 Docker를 CLI로 쓰는 것은 괜찮다.
+- 백엔드를 다시 띄우기 전에 8080 포트에 남은 이전 프로세스가 있으면 정리한다(명령줄에 `com.aram.community.BackendApplication`이 있는 것만).
+- Vite가 연달아 저장된 파일 변경을 놓쳐 예전 코드를 내보낼 때가 있다. 디스크 파일이 맞는데 화면이 이상하면 개발 서버를 재시작한다.
+- 셸 명령 하나에 heredoc 여러 개를 묶으면 따옴표 해석이 깨지는 일이 있었다. 파일은 하나씩 쓴다.
+
+## 남은 일
+
+**다음 단계**
+1. 사용자가 디스코드 앱을 등록하면 실제 디스코드 로그인을 처음으로 확인한다(아직 한 번도 검증되지 않음).
+2. 배포: AWS Lightsail(약 2GB, 월 2만원 이내) + Docker Compose, 이미지 저장소 S3 구현(`image/ImageStorage`), 세션을 DB에 저장(지금은 메모리라 서버 재시작 시 모두 로그아웃), HTTPS, DB 백업, AWS 예산 알림.
+3. 디자인 다듬기(지금은 틀만 잡은 상태).
+
+**v1 검토에서 미뤄둔 작은 문제**
+- `/posts/abc`, `/posts/abc/edit` 같은 잘못된 주소가 빈 화면으로 나온다("없는 글이에요"가 맞다).
+- 디스코드 로그인을 취소하면 `/login?error`로 가서 "페이지를 찾을 수 없어요"가 뜬다. `failureUrl` 지정과 안내 필요.
+- 제목 길이를 공백 제거 전에 검사해서, 끝에 공백이 붙은 100자 제목이 거절된다.
+- 다른 사람이 누른 추천 수가 글을 다시 불러와도 추천 버튼에 반영되지 않는다(`LikeButton`이 처음 값만 씀).
+- CSRF 실패가 "권한이 없어요"로만 보인다.
+- 이미지 업로드에서 파일 칸이 없거나 multipart가 아닌 요청이 400 대신 500으로 기록된다. 지원하지 않는 메서드는 405 대신 404.
+- `page=0` 요청이 빈 목록 대신 400을 돌려준다(설계 문서는 빈 목록).
+- 본문 검사가 서식 이름만 확인하고 ProseMirror 구조나 추가 속성은 확인하지 않는다. 본문 글자 수에 문단 줄바꿈이 포함된다.
