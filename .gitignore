@@ -1,0 +1,9 @@
+# 비밀 값과 개인 설정은 올리지 않아요.
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+*.log
+.DS_Store
+Thumbs.db

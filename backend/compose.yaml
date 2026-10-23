@@ -1,0 +1,15 @@
+# 로컬 개발용 PostgreSQL. ./gradlew bootRun 하면 Spring Boot가 자동으로 띄워요.
+services:
+  postgres:
+    image: 'postgres:18'
+    environment:
+      - 'POSTGRES_DB=aram'
+      - 'POSTGRES_USER=aram'
+      - 'POSTGRES_PASSWORD=aram-local'
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'aram-pgdata:/var/lib/postgresql'
+
+volumes:
+  aram-pgdata:
