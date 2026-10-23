@@ -1,7 +1,50 @@
 package com.aram.community.post;
 
+import com.aram.community.gamedata.Augment;
+import com.aram.community.gamedata.Champion;
+import java.util.Collection;
+import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
+
+	/** 태그 필터는 null이면 무시해요. 둘 다 있으면 둘 다 만족하는 글만. */
+	@EntityGraph(attributePaths = "author")
+	@Query(value = """
+			select p from Post p
+			where (:championId is null or exists (select 1 from p.champions c where c.id = :championId))
+			  and (:augmentId is null or exists (select 1 from p.augments a where a.id = :augmentId))
+			""", countQuery = """
+			select count(p) from Post p
+			where (:championId is null or exists (select 1 from p.champions c where c.id = :championId))
+			  and (:augmentId is null or exists (select 1 from p.augments a where a.id = :augmentId))
+			""")
+	Page<Post> search(String championId, String augmentId, Pageable pageable);
+
+	interface PostChampion {
+
+		Long getPostId();
+
+		Champion getChampion();
+
+	}
+
+	interface PostAugment {
+
+		Long getPostId();
+
+		Augment getAugment();
+
+	}
+
+	@Query("select p.id as postId, c as champion from Post p join p.champions c where p.id in :postIds")
+	List<PostChampion> findChampionTags(Collection<Long> postIds);
+
+	@Query("select p.id as postId, a as augment from Post p join p.augments a where p.id in :postIds")
+	List<PostAugment> findAugmentTags(Collection<Long> postIds);
 
 }

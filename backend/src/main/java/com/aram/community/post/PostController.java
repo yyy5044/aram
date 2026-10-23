@@ -2,6 +2,7 @@ package com.aram.community.post;
 
 import com.aram.community.auth.AppUserPrincipal;
 import com.aram.community.auth.CurrentUser;
+import com.aram.community.common.PageResponse;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,11 +24,21 @@ public class PostController {
 
 	private final PostService postService;
 
+	private final PostListService postListService;
+
 	private final CurrentUser currentUser;
 
-	public PostController(PostService postService, CurrentUser currentUser) {
+	public PostController(PostService postService, PostListService postListService, CurrentUser currentUser) {
+		this.postListService = postListService;
 		this.postService = postService;
 		this.currentUser = currentUser;
+	}
+
+	@GetMapping
+	public PageResponse<PostListItem> list(@RequestParam(defaultValue = "latest") String sort,
+			@RequestParam(defaultValue = "1") int page, @RequestParam(required = false) String champion,
+			@RequestParam(required = false) String augment) {
+		return postListService.list(sort, page, champion, augment);
 	}
 
 	@PostMapping
