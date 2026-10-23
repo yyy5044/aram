@@ -44,6 +44,16 @@ describe('TagPicker', () => {
     expect(screen.queryByRole('button', { name: '아무무 빼기' })).not.toBeInTheDocument()
   })
 
+  it('closes the list after picking so it does not cover the next field', async () => {
+    render(<Harness />)
+    await userEvent.click(screen.getByLabelText('챔피언 검색'))
+    await userEvent.click(screen.getByRole('option', { name: /아무무/ }))
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText('챔피언 검색'), '징')
+    expect(screen.getByRole('option', { name: /징크스/ })).toBeInTheDocument()
+  })
+
   it('blocks input at max', async () => {
     render(<Harness max={1} />)
     await userEvent.click(screen.getByLabelText('챔피언 검색'))

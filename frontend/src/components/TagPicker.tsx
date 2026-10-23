@@ -42,6 +42,7 @@ export default function TagPicker<T extends Item>({
   function add(id: string) {
     onChange([...selected, id])
     setQuery('')
+    setOpen(false)
   }
 
   const iconClass = round ? 'h-6 w-6 rounded-full' : 'h-6 w-6 rounded-md bg-slate-800'
@@ -82,6 +83,7 @@ export default function TagPicker<T extends Item>({
             setOpen(true)
           }}
           onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
           onBlur={() => setOpen(false)}
           className="min-w-32 flex-1 bg-transparent px-1 py-1 text-slate-100 outline-none disabled:cursor-not-allowed"
         />

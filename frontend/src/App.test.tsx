@@ -26,6 +26,21 @@ describe('App routing', () => {
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/write'))
   })
 
+  it('shows a friendly screen when a page crashes', async () => {
+    mockApi({ 'GET /api/me': () => json(null) })
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    function Boom(): never {
+      throw new Error('boom')
+    }
+    const routes = [
+      { element: appRoutes[0].element, errorElement: appRoutes[0].errorElement, children: [{ path: '/boom', element: <Boom /> }] },
+    ]
+    renderRoutes(routes, '/boom')
+    expect(await screen.findByText('문제가 생겼어요. 새로고침해 주세요.')).toBeInTheDocument()
+    expect(screen.queryByText(/Unexpected Application Error/)).not.toBeInTheDocument()
+    spy.mockRestore()
+  })
+
   it('shows not found for unknown pages', async () => {
     mockApi({ 'GET /api/me': () => json(null) })
     renderRoutes(appRoutes, '/nope')

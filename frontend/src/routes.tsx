@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router'
 import AppLayout from './components/AppLayout'
 import AuthDonePage from './pages/AuthDonePage'
+import ErrorPage from './pages/ErrorPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import PostDetailPage from './pages/PostDetailPage'
@@ -11,6 +12,7 @@ import WritePage from './pages/WritePage'
 export const appRoutes: RouteObject[] = [
   {
     element: <AppLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/posts/:postId', element: <PostDetailPage /> },

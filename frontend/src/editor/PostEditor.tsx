@@ -1,6 +1,6 @@
 import type { Editor, JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { ApiError } from '../api/client'
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_POST, uploadImage } from '../api/images'
 import { postExtensions } from './extensions'
@@ -75,11 +75,14 @@ export default function PostEditor({ initialContent, onChange, onError, labelled
         return true
       },
     },
-    onCreate: ({ editor }) => {
-      editorRef.current = editor
-    },
     onUpdate: ({ editor }) => onChange(editor.getJSON()),
   })
+
+  // 붙여넣기·끌어놓기 처리기는 편집기가 처음 만들어질 때 고정돼요. 개발 모드에서는 편집기가 다시 만들어지므로
+  // 항상 지금 살아 있는 편집기를 가리키도록 ref를 맞춰요.
+  useEffect(() => {
+    editorRef.current = editor
+  }, [editor])
 
   const active = useEditorState({
     editor,

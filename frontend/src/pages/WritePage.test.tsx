@@ -155,6 +155,19 @@ describe('WritePage', () => {
     expect(api.find('POST', '/api/images')).toHaveLength(0)
   })
 
+  it('uploads an image and inserts it into the body', async () => {
+    const { api } = setup(meYangho, '/write', {
+      'POST /api/images': () => json({ id: 'abc', url: '/api/images/0f8fad5b-d9cb-469f-a165-70867728950e' }, 201),
+    })
+    const png = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'shot.png', { type: 'image/png' })
+    await userEvent.upload(await screen.findByLabelText('이미지 넣기'), png)
+
+    await vi.waitFor(() =>
+      expect(document.querySelector('.tiptap img')?.getAttribute('src')).toBe('/api/images/0f8fad5b-d9cb-469f-a165-70867728950e'),
+    )
+    expect(api.find('POST', '/api/images')).toHaveLength(1)
+  })
+
   it('asks before leaving with unsaved changes', async () => {
     const confirm = vi.fn(() => false)
     vi.stubGlobal('confirm', confirm)

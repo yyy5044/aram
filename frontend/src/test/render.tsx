@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
-import type { ReactElement } from 'react'
+import { StrictMode, type ReactElement } from 'react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { ToastProvider } from '../components/Toast'
 import LocationProbe from './LocationProbe'
@@ -13,11 +13,13 @@ function renderRouter(routes: RouteObject[], initialEntry: string) {
   const queryClient = makeQueryClient()
   const router = createMemoryRouter(routes, { initialEntries: [initialEntry] })
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <RouterProvider router={router} />
-      </ToastProvider>
-    </QueryClientProvider>,
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </QueryClientProvider>
+    </StrictMode>,
   )
   return { ...utils, router, queryClient }
 }
