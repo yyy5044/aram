@@ -2,5 +2,8 @@ app:
   scheduling:
     enabled: false
   admin-discord-ids: "999"
+  # 개발자 컴퓨터의 backend/.env 값이 테스트에 섞이지 않게 고정해요.
+  dev-login:
+    enabled: false
   images:
     dir: build/test-images

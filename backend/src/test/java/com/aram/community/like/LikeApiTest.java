@@ -90,6 +90,43 @@ class LikeApiTest extends IntegrationTest {
 	}
 
 	@Test
+	void concurrentLikesFromDifferentUsersAreAllCounted() throws Exception {
+		int users = 6;
+		for (int round = 0; round < 5; round++) {
+			jdbc.update("delete from post_likes");
+			jdbc.update("update posts set like_count = 0");
+			List<User> fans = new ArrayList<>();
+			for (int i = 0; i < users; i++) {
+				fans.add(testUsers.create("팬" + round + "_" + i));
+			}
+			CountDownLatch start = new CountDownLatch(1);
+			ExecutorService pool = Executors.newFixedThreadPool(users);
+			try {
+				List<Future<Integer>> results = new ArrayList<>();
+				for (User u : fans) {
+					results.add(pool.submit(() -> {
+						start.await();
+						return mockMvc.perform(put("/api/posts/" + postId + "/like").with(testUsers.as(u)))
+							.andReturn()
+							.getResponse()
+							.getStatus();
+					}));
+				}
+				start.countDown();
+				for (Future<Integer> r : results) {
+					assertThat(r.get()).isEqualTo(200);
+				}
+			}
+			finally {
+				pool.shutdown();
+			}
+			assertThat(jdbc.queryForObject("select like_count from posts where id = ?", Integer.class, postId))
+				.as("round %d", round)
+				.isEqualTo(users);
+		}
+	}
+
+	@Test
 	void unlikeWithoutLikeIsFine() throws Exception {
 		mockMvc.perform(delete("/api/posts/" + postId + "/like").with(testUsers.as(fan)))
 			.andExpect(status().isOk())

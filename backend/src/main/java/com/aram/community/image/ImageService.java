@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -21,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImageService {
 
 	public static final long MAX_BYTES = 10L * 1024 * 1024;
+
+	private static final Logger log = LoggerFactory.getLogger(ImageService.class);
 
 	public record Uploaded(UUID id, String url) {
 	}
@@ -78,7 +82,17 @@ public class ImageService {
 		}
 		List<String> keys = targets.stream().map(Image::getStorageKey).toList();
 		images.deleteAllInBatch(targets);
-		afterCommit(() -> keys.forEach(storage::delete));
+		afterCommit(() -> keys.forEach(this::deleteFileQuietly));
+	}
+
+	/** 파일이 사용 중이라 못 지워도 이미 끝난 삭제를 실패로 만들지 않고, 나머지 파일은 계속 지워요. */
+	private void deleteFileQuietly(String key) {
+		try {
+			storage.delete(key);
+		}
+		catch (RuntimeException e) {
+			log.warn("Could not delete image file {}: {}", key, e.toString());
+		}
 	}
 
 	private static void afterCommit(Runnable action) {

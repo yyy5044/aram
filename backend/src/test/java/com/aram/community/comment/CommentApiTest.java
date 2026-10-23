@@ -128,6 +128,40 @@ class CommentApiTest extends IntegrationTest {
 	}
 
 	@Test
+	void concurrentCommentsAreAllCounted() throws Exception {
+		int writers = 6;
+		for (int round = 0; round < 5; round++) {
+			java.util.List<User> users = new java.util.ArrayList<>();
+			for (int i = 0; i < writers; i++) {
+				users.add(testUsers.create("작성" + round + "_" + i));
+			}
+			java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+			java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(writers);
+			try {
+				java.util.List<java.util.concurrent.Future<Integer>> results = new java.util.ArrayList<>();
+				for (User u : users) {
+					results.add(pool.submit(() -> {
+						start.await();
+						return add(u, "동시 댓글").andReturn().getResponse().getStatus();
+					}));
+				}
+				start.countDown();
+				for (java.util.concurrent.Future<Integer> r : results) {
+					org.assertj.core.api.Assertions.assertThat(r.get()).isEqualTo(201);
+				}
+			}
+			finally {
+				pool.shutdown();
+			}
+			Integer actual = jdbc.queryForObject("select count(*) from comments where post_id = ?", Integer.class, postId);
+			org.assertj.core.api.Assertions
+				.assertThat(jdbc.queryForObject("select comment_count from posts where id = ?", Integer.class, postId))
+				.as("round %d", round)
+				.isEqualTo(actual);
+		}
+	}
+
+	@Test
 	void missingCommentIs404() throws Exception {
 		mockMvc.perform(delete("/api/comments/9999").with(testUsers.as(author)))
 			.andExpect(status().isNotFound())

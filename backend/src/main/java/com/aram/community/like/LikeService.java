@@ -55,8 +55,11 @@ public class LikeService implements LikeLookup {
 				+ "where id = ? returning like_count", Integer.class, postId, postId);
 	}
 
+	/**
+	 * 글 행을 잠가요. 여러 사람이 동시에 추천해도 추천 수를 다시 셀 때 앞선 추천이 모두 보이게 하려는 거예요.
+	 */
 	private void requirePost(long postId) {
-		if (!posts.existsById(postId)) {
+		if (jdbc.queryForList("select id from posts where id = ? for update", Long.class, postId).isEmpty()) {
 			throw new ApiException(ErrorCode.POST_NOT_FOUND);
 		}
 	}

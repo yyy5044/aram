@@ -7,6 +7,7 @@ import com.aram.community.user.User;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +18,10 @@ public class CommentService {
 
 	private final PostRepository posts;
 
-	public CommentService(CommentRepository comments, PostRepository posts) {
+	private final JdbcTemplate jdbc;
+
+	public CommentService(CommentRepository comments, PostRepository posts, JdbcTemplate jdbc) {
+		this.jdbc = jdbc;
 		this.comments = comments;
 		this.posts = posts;
 	}
@@ -30,7 +34,7 @@ public class CommentService {
 
 	@Transactional
 	public CommentResponse create(User author, long postId, CommentRequest req) {
-		requirePost(postId);
+		lockPost(postId);
 		Comment comment = comments.save(new Comment(postId, author, clean(req.content()), Instant.now()));
 		comments.flush();
 		comments.recount(postId);
@@ -54,6 +58,7 @@ public class CommentService {
 			throw new ApiException(ErrorCode.FORBIDDEN);
 		}
 		long postId = comment.getPostId();
+		lockPost(postId);
 		comments.delete(comment);
 		comments.flush();
 		comments.recount(postId);
@@ -65,6 +70,15 @@ public class CommentService {
 			throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("content", "댓글을 입력해주세요"));
 		}
 		return content;
+	}
+
+	/**
+	 * 글 행을 잠가요. 동시에 댓글이 달려도 댓글 수를 다시 셀 때 앞선 댓글이 모두 보이게 하려는 거예요.
+	 */
+	private void lockPost(long postId) {
+		if (jdbc.queryForList("select id from posts where id = ? for update", Long.class, postId).isEmpty()) {
+			throw new ApiException(ErrorCode.POST_NOT_FOUND);
+		}
 	}
 
 	private void requirePost(long postId) {
