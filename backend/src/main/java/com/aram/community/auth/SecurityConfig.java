@@ -24,13 +24,16 @@ import tools.jackson.databind.json.JsonMapper;
 public class SecurityConfig {
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http, JsonMapper jsonMapper) throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http, JsonMapper jsonMapper,
+			DiscordOAuth2UserService discordUserService, LoginSuccessHandler loginSuccessHandler) throws Exception {
 		http.authorizeHttpRequests(auth -> auth
 			.requestMatchers(HttpMethod.GET, "/api/**").permitAll()
 			.requestMatchers(HttpMethod.POST, "/api/dev/login").permitAll()
 			.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 			.requestMatchers("/api/**").authenticated()
 			.anyRequest().permitAll());
+		http.oauth2Login(oauth -> oauth.userInfoEndpoint(info -> info.userService(discordUserService))
+			.successHandler(loginSuccessHandler));
 		http.csrf(csrf -> csrf.spa());
 		http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 		http.exceptionHandling(ex -> ex

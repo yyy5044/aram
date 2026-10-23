@@ -1,3 +1,4 @@
 app:
   scheduling:
     enabled: false
+  admin-discord-ids: "999"

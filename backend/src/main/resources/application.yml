@@ -18,6 +18,23 @@ spring:
   docker:
     compose:
       lifecycle-management: start-only
+  security:
+    oauth2:
+      client:
+        registration:
+          discord:
+            client-id: ${DISCORD_CLIENT_ID:local-placeholder}
+            client-secret: ${DISCORD_CLIENT_SECRET:local-placeholder}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: identify
+            client-name: Discord
+        provider:
+          discord:
+            authorization-uri: https://discord.com/oauth2/authorize
+            token-uri: https://discord.com/api/oauth2/token
+            user-info-uri: https://discord.com/api/users/@me
+            user-name-attribute: id
   servlet:
     multipart:
       max-file-size: 10MB
@@ -39,3 +56,8 @@ management:
 app:
   scheduling:
     enabled: true
+  # 쉼표로 구분한 관리자 디스코드 사용자 ID
+  admin-discord-ids: ${APP_ADMIN_DISCORD_IDS:}
+  dev-login:
+    # 로컬 확인용 로그인. 운영에서는 켜지 않아요.
+    enabled: ${APP_DEV_LOGIN_ENABLED:false}
