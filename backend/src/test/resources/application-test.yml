@@ -2,3 +2,5 @@ app:
   scheduling:
     enabled: false
   admin-discord-ids: "999"
+  images:
+    dir: build/test-images

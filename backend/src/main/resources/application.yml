@@ -65,3 +65,6 @@ app:
     ddragon-base-url: https://ddragon.leagueoflegends.com
     cdragon-base-url: https://raw.communitydragon.org
     timeout: 30s
+  images:
+    # 로컬 개발용 이미지 저장 폴더 (git 제외)
+    dir: data/images

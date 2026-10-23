@@ -10,23 +10,23 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
-class PostContentValidatorTest {
+public class PostContentValidatorTest {
 
 	private final PostContentValidator validator = new PostContentValidator(JsonMapper.builder().build());
 
-	static String paragraph(String innerJson) {
+	public static String paragraph(String innerJson) {
 		return "{\"type\":\"paragraph\",\"content\":[" + innerJson + "]}";
 	}
 
-	static String text(String t) {
+	public static String text(String t) {
 		return "{\"type\":\"text\",\"text\":\"" + t + "\"}";
 	}
 
-	static String doc(String... blocks) {
+	public static String doc(String... blocks) {
 		return "{\"type\":\"doc\",\"content\":[" + String.join(",", blocks) + "]}";
 	}
 
-	static String image(UUID id) {
+	public static String image(UUID id) {
 		return "{\"type\":\"image\",\"attrs\":{\"src\":\"/api/images/" + id + "\"}}";
 	}
 
