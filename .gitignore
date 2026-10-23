@@ -7,3 +7,6 @@
 *.log
 .DS_Store
 Thumbs.db
+
+# 브레인스토밍 목업 임시 파일
+.superpowers/
