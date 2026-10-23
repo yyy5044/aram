@@ -109,6 +109,40 @@ describe('WritePage', () => {
     expect(screen.getByRole('button', { name: '아무무 빼기' })).toBeInTheDocument()
   })
 
+  it('keeps the draft when the login check later says logged out', async () => {
+    let loggedIn = true
+    mockApi({
+      'GET /api/me': () => json(loggedIn ? meYangho : null),
+      'GET /api/champions': () => json([amumu, jinx]),
+      'GET /api/augments': () => json([legDay, oldAugment]),
+      'GET /api/patches': () => json({ current: '26.21', patches: ['26.21'] }),
+    })
+    const { queryClient } = renderRoutes(routesFor, '/write')
+    await userEvent.type(await screen.findByLabelText('제목'), '지켜야 할 초안')
+
+    loggedIn = false
+    await queryClient.invalidateQueries({ queryKey: ['me'] })
+    await vi.waitFor(() => expect(queryClient.getQueryData(['me'])).toBeNull())
+
+    await expect(
+      screen.findByRole('button', { name: '로그인하고 글쓰기' }, { timeout: 300 }),
+    ).rejects.toThrow()
+    expect(screen.getByLabelText('제목')).toHaveValue('지켜야 할 초안')
+  })
+
+  it('offers to log in again in a new tab after a 401', async () => {
+    const open = vi.fn()
+    vi.stubGlobal('open', open)
+    setup(meYangho, '/write', {
+      'POST /api/posts': () => json({ code: 'UNAUTHORIZED', message: '로그인이 필요해요' }, 401),
+    })
+    await userEvent.type(await screen.findByLabelText('제목'), '초안')
+    await userEvent.click(screen.getByRole('button', { name: '등록' }))
+    await userEvent.click(await screen.findByRole('button', { name: '새 탭에서 다시 로그인' }))
+    expect(open).toHaveBeenCalledWith('/oauth2/authorization/discord', '_blank')
+    expect(screen.getByLabelText('제목')).toHaveValue('초안')
+  })
+
   it('hides inactive augments except ones already attached', async () => {
     setup(meYangho, '/posts/5/edit', { 'GET /api/posts/5': () => json(existing()) })
     expect(await screen.findByRole('button', { name: '옛 증강 빼기' })).toBeInTheDocument()

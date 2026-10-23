@@ -24,9 +24,12 @@ export default function WritePage() {
   const champions = useChampions()
   const augments = useAugments()
   const patches = usePatches()
+  // 한 번 로그인 상태로 폼을 열었다면, 나중에 로그인이 풀려도 쓰던 내용을 지키려고 폼을 그대로 둬요.
+  const [hadSession, setHadSession] = useState(false)
+  if (me && !hadSession) setHadSession(true)
 
   if (meLoading) return null
-  if (!me) {
+  if (!me && !hadSession) {
     return (
       <section className="py-16 text-center">
         <p className="mb-4 text-slate-300">글을 쓰려면 로그인이 필요해요</p>
@@ -41,7 +44,7 @@ export default function WritePage() {
     )
   }
   if (editId !== null) {
-    if (post.error || (post.data && post.data.author.id !== me.id)) return <NotFoundPage message="없는 글이에요" />
+    if (post.error || (post.data && me && post.data.author.id !== me.id)) return <NotFoundPage message="없는 글이에요" />
     if (post.isPending) return null
   }
   if (patches.isPending) return null
@@ -80,6 +83,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [sessionExpired, setSessionExpired] = useState(false)
   const leaving = useRef(false)
 
   const augmentItems = [...augments, ...(initial?.augments.filter((a) => !augments.some((x) => x.id === a.id)) ?? [])]
@@ -131,6 +135,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
     } catch (e) {
       if (e instanceof ApiError) {
         if (e.fieldErrors) setErrors(e.fieldErrors)
+        if (e.status === 401) setSessionExpired(true)
         if (e.status === 401 || !e.fieldErrors) toast.show(e.message)
       } else {
         toast.show('잠시 후 다시 시도해주세요')
@@ -145,6 +150,21 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
   return (
     <form onSubmit={submit}>
       <h1 className="mb-2 text-xl font-bold">{editId !== null ? '글 수정' : '글쓰기'}</h1>
+      {sessionExpired && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-amber-700 bg-amber-950/60 px-3 py-2.5 text-sm text-amber-100">
+          <span>로그인이 풀렸어요. 쓰던 내용은 그대로 있으니, 새 탭에서 다시 로그인한 뒤 등록을 다시 눌러주세요.</span>
+          <button
+            type="button"
+            onClick={() => {
+              window.open('/oauth2/authorization/discord', '_blank')
+              setSessionExpired(false)
+            }}
+            className="rounded-md bg-indigo-500 px-3 py-1 font-bold text-white"
+          >
+            새 탭에서 다시 로그인
+          </button>
+        </div>
+      )}
 
       <label htmlFor="post-title" className={label}>
         제목
