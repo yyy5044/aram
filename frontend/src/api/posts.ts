@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { apiFetch } from './client'
-import type { Page, PostListItem } from './types'
+import type { Page, PostDetail, PostListItem } from './types'
 
 export type PostSort = 'latest' | 'likes'
 
@@ -20,4 +20,28 @@ export function usePostList(params: PostListParams) {
     queryFn: () => apiFetch<Page<PostListItem>>(`/api/posts?${query}`),
     placeholderData: keepPreviousData,
   })
+}
+
+export const postKey = (postId: number) => ['posts', 'detail', postId] as const
+
+export function usePost(postId: number) {
+  return useQuery({
+    queryKey: postKey(postId),
+    queryFn: () => apiFetch<PostDetail>(`/api/posts/${postId}`),
+    enabled: Number.isFinite(postId),
+  })
+}
+
+export function deletePost(postId: number) {
+  return apiFetch<void>(`/api/posts/${postId}`, { method: 'DELETE' })
+}
+
+export type LikeState = { likeCount: number; likedByMe: boolean }
+
+export function likePost(postId: number) {
+  return apiFetch<LikeState>(`/api/posts/${postId}/like`, { method: 'PUT' })
+}
+
+export function unlikePost(postId: number) {
+  return apiFetch<LikeState>(`/api/posts/${postId}/like`, { method: 'DELETE' })
 }

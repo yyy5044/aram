@@ -4,6 +4,7 @@ import AuthDonePage from './pages/AuthDonePage'
 import ComingSoon from './pages/ComingSoon'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
+import PostDetailPage from './pages/PostDetailPage'
 import TagPage from './pages/TagPage'
 import WelcomePage from './pages/WelcomePage'
 
@@ -12,7 +13,7 @@ export const appRoutes: RouteObject[] = [
     element: <AppLayout />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/posts/:postId', element: <ComingSoon /> },
+      { path: '/posts/:postId', element: <PostDetailPage /> },
       { path: '/posts/:postId/edit', element: <ComingSoon /> },
       { path: '/write', element: <ComingSoon /> },
       { path: '/champions/:championId', element: <TagPage kind="champion" /> },
