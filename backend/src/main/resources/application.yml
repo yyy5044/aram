@@ -1,6 +1,9 @@
 spring:
   application:
     name: aram-community
+  config:
+    # 비밀 값(디스코드 키 등)은 git에 올라가지 않는 backend/.env에서 읽어요.
+    import: optional:file:.env[.properties]
   jpa:
     open-in-view: false
     hibernate:
@@ -15,9 +18,24 @@ spring:
   docker:
     compose:
       lifecycle-management: start-only
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+server:
+  servlet:
+    session:
+      timeout: 30d
+      cookie:
+        max-age: 30d
 
 management:
   endpoints:
     web:
       exposure:
         include: health
+
+app:
+  scheduling:
+    enabled: true
