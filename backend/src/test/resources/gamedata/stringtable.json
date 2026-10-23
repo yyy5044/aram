@@ -1,0 +1,27 @@
+{
+ "entries": {
+  "kiwi_aram_legday_name": "하체 운동의 날",
+  "kiwi_sonata_name": "소나타",
+  "kiwi_surgefield_name": "방출 역장",
+  "kiwi_endlessdecimation_name": "끝없는 학살",
+  "kiwi_aram_firefox_name": "불여우",
+  "kiwi_aram_giantslayer_name": "거인 학살자",
+  "kiwi_aram_okboomerang_name": "부메랑 투척",
+  "kiwi_aram_itskillingtime_name": "처형 시간",
+  "kiwi_aram_infernotriggered_name": "지옥불 난사 발동",
+  "kiwi_aram_spintowin_name": "승리를 위한 회전",
+  "kiwi_veilofwarding_name": "감시의 장막",
+  "kiwi_missile_split_name": "주문 분산",
+  "kiwi_ability_selfaoe_doublecast_name": "메아리 시전",
+  "kiwi_aram_overextender_name": "무리한 진입",
+  "kiwi_aram_searingdawn_name": "타오르는 새벽",
+  "upgradedeathdance_name": "죽음의 무도 업그레이드",
+  "kiwi_snapback_name": "원상복구",
+  "kiwi_bonk_name": "꽁!",
+  "kiwi_augment_divinedomain_name": "초월 의식",
+  "kiwi_quest_sneakerhead_name": "신발 수집가",
+  "augment_pincushion_name": "고슴도치",
+  "kiwi_aram_shadowrunner_name": "그림자 질주",
+  "unrelated_key": "관계없는 문자열"
+ }
+}

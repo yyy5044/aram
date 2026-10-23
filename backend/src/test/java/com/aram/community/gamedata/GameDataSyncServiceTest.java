@@ -1,0 +1,157 @@
+package com.aram.community.gamedata;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+import com.aram.community.support.IntegrationTest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+
+class GameDataSyncServiceTest extends IntegrationTest {
+
+	private static final String VERSIONS = "https://ddragon.leagueoflegends.com/api/versions.json";
+
+	private static final String CHAMPIONS = "https://ddragon.leagueoflegends.com/cdn/16.21.1/data/ko_KR/champion.json";
+
+	private static final String KIWI = "https://raw.communitydragon.org/latest/game/maps/modespecificdata/kiwi.bin.json";
+
+	private static final String STRINGS = "https://raw.communitydragon.org/latest/game/ko_kr/data/menu/en_us/lol.stringtable.json";
+
+	@Autowired
+	GameDataSyncService sync;
+
+	@Autowired
+	GameDataClient client;
+
+	@Autowired
+	ChampionRepository champions;
+
+	@Autowired
+	AugmentRepository augments;
+
+	@Autowired
+	PatchRepository patchRepo;
+
+	@Autowired
+	GameDataStateRepository states;
+
+	MockRestServiceServer server;
+
+	@BeforeEach
+	void bindServer() {
+		RestClient.Builder builder = (RestClient.Builder) ReflectionTestUtils.getField(client, "builder");
+		server = MockRestServiceServer.bindTo(builder).build();
+		jdbc.update("insert into game_data_state (id) values (1)");
+	}
+
+	private static String fixture(String name) throws IOException {
+		return new ClassPathResource("gamedata/" + name).getContentAsString(StandardCharsets.UTF_8);
+	}
+
+	private void expectFullSync(String kiwiFixture) throws IOException {
+		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CHAMPIONS))
+			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture(kiwiFixture), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS))
+			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+	}
+
+	private GameDataState state() {
+		return states.findById(1).orElseThrow();
+	}
+
+	@Test
+	void firstSyncFillsEverything() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
+
+		server.verify();
+		assertThat(champions.count()).isEqualTo(3);
+		assertThat(champions.findById("Amumu").orElseThrow().getNameKo()).isEqualTo("아무무");
+		assertThat(augments.count()).isEqualTo(22);
+		Augment legDay = augments.findById("ARAM_LegDay").orElseThrow();
+		assertThat(legDay.getNameKo()).isEqualTo("하체 운동의 날");
+		assertThat(legDay.getIconPath()).isEqualTo("assets/ux/cherry/augments/icons/legday_small.png");
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.21.1");
+		assertThat(state().getCurrentGamePatch()).isEqualTo("26.21");
+		assertThat(state().getLastSyncedAt()).isNotNull();
+		assertThat(patchRepo.count()).isEqualTo(8);
+	}
+
+	@Test
+	void sameVersionSkipsHeavyDownloads() throws IOException {
+		expectFullSync("kiwi.bin.json");
+		sync.sync();
+		server.verify();
+		server.reset();
+		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UNCHANGED);
+
+		server.verify();
+		assertThat(state().getLastCheckedAt()).isNotNull();
+	}
+
+	@Test
+	void missingAugmentBecomesInactiveNotDeleted() throws IOException {
+		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at) values ('Gone', '사라진 증강', 'x.png', true, now())");
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		Augment gone = augments.findById("Gone").orElseThrow();
+		assertThat(gone.isActive()).isFalse();
+	}
+
+	@Test
+	void tooFewAugmentsFailsAndKeepsOldData() throws IOException {
+		jdbc.update("update game_data_state set current_ddragon_version = '16.20.1', current_game_patch = '26.20' where id = 1");
+		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at) values ('Keep', '남을 증강', 'x.png', true, now())");
+		jdbc.update("insert into champions (id, name_ko, image_file) values ('Ahri', '아리', 'Ahri.png')");
+		expectFullSync("kiwi-small.bin.json");
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.FAILED);
+
+		assertThat(augments.count()).isEqualTo(1);
+		assertThat(augments.findById("Keep").orElseThrow().isActive()).isTrue();
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.20.1");
+		assertThat(state().getLastError()).isNotBlank();
+	}
+
+	@Test
+	void championFailureDoesNotAdvanceVersion() throws IOException {
+		jdbc.update("update game_data_state set current_ddragon_version = '16.20.1', current_game_patch = '26.20' where id = 1");
+		jdbc.update("insert into champions (id, name_ko, image_file) values ('Ahri', '아리', 'Ahri.png')");
+		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CHAMPIONS)).andRespond(withServerError());
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.FAILED);
+
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.20.1");
+		assertThat(champions.count()).isEqualTo(1);
+		assertThat(state().getLastError()).isNotBlank();
+	}
+
+	@Test
+	void successClearsPreviousError() throws IOException {
+		jdbc.update("update game_data_state set last_error = 'x' where id = 1");
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		assertThat(state().getLastError()).isNull();
+	}
+
+}

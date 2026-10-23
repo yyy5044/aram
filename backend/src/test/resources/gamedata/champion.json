@@ -1,0 +1,31 @@
+{
+ "type": "champion",
+ "format": "standAloneComplex",
+ "version": "16.21.1",
+ "data": {
+  "Amumu": {
+   "id": "Amumu",
+   "key": "32",
+   "name": "아무무",
+   "image": {
+    "full": "Amumu.png"
+   }
+  },
+  "Jinx": {
+   "id": "Jinx",
+   "key": "222",
+   "name": "징크스",
+   "image": {
+    "full": "Jinx.png"
+   }
+  },
+  "Lux": {
+   "id": "Lux",
+   "key": "99",
+   "name": "럭스",
+   "image": {
+    "full": "Lux.png"
+   }
+  }
+ }
+}

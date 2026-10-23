@@ -61,3 +61,7 @@ app:
   dev-login:
     # 로컬 확인용 로그인. 운영에서는 켜지 않아요.
     enabled: ${APP_DEV_LOGIN_ENABLED:false}
+  gamedata:
+    ddragon-base-url: https://ddragon.leagueoflegends.com
+    cdragon-base-url: https://raw.communitydragon.org
+    timeout: 30s
