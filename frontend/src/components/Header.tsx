@@ -1,10 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, NavLink, useLocation } from 'react-router'
 import { ApiError } from '../api/client'
 import { logout, meKey, startDiscordLogin, useMe } from '../api/me'
 import Avatar from './Avatar'
 import { useToast } from './toastContext'
+
+const TABS = [
+  { to: '/', label: '전체 글', end: true },
+  { to: '/augments', label: '증강', end: false },
+  { to: '/champions', label: '챔피언', end: false },
+]
 
 export default function Header() {
   const { data: me, isPending } = useMe()
@@ -27,10 +33,25 @@ export default function Header() {
 
   return (
     <header className="border-b border-slate-800 bg-slate-950/80">
-      <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         <Link to="/" className="font-extrabold tracking-wide text-amber-300">
           증강 칼바람
         </Link>
+        {/* 좁은 화면에서는 탭 줄이 로고·글쓰기 줄 아래로 내려가요. */}
+        <nav aria-label="주요 메뉴" className="order-last flex w-full gap-1 min-[480px]:order-none min-[480px]:w-auto">
+          {TABS.map(({ to, label, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `rounded-lg px-2.5 py-1 text-sm ${isActive ? 'bg-slate-800 font-bold text-slate-100' : 'text-slate-400 hover:text-slate-200'}`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </nav>
         <span className="flex-1" />
         {!isPending && !me && (
           <button

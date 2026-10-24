@@ -1,8 +1,8 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { json, mockApi, noContent } from '../test/mockApi'
-import { renderWithProviders } from '../test/render'
+import { renderRoutes, renderWithProviders } from '../test/render'
 import Header from './Header'
 
 afterEach(() => {
@@ -45,6 +45,31 @@ describe('Header', () => {
     const items = screen.getAllByRole('menuitem')
     expect(items.map((i) => i.textContent)).toEqual(['내 프로필', '로그아웃'])
     expect(items[0]).toHaveAttribute('href', '/users/1')
+  })
+
+  it.each([
+    ['/', '전체 글'],
+    ['/augments', '증강'],
+    ['/augments/ARAM_LegDay', '증강'],
+    ['/champions', '챔피언'],
+    ['/champions/Amumu', '챔피언'],
+  ])('marks the tab for %s', async (path, tab) => {
+    mockApi({ 'GET /api/me': () => json(null) })
+    renderRoutes([{ path: '*', element: <Header /> }], path)
+    const nav = await screen.findByRole('navigation', { name: '주요 메뉴' })
+    expect(within(nav).getByRole('link', { name: tab })).toHaveAttribute('aria-current', 'page')
+    const others = within(nav)
+      .getAllByRole('link')
+      .filter((l) => l.textContent !== tab)
+    expect(others).toHaveLength(2)
+    for (const other of others) expect(other).not.toHaveAttribute('aria-current')
+  })
+
+  it('posts page marks no tab', async () => {
+    mockApi({ 'GET /api/me': () => json(null) })
+    renderRoutes([{ path: '*', element: <Header /> }], '/posts/1')
+    const nav = await screen.findByRole('navigation', { name: '주요 메뉴' })
+    for (const link of within(nav).getAllByRole('link')) expect(link).not.toHaveAttribute('aria-current')
   })
 
   it('logs out from the profile menu', async () => {
