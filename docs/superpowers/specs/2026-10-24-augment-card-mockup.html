@@ -1,0 +1,68 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>증강 카드 목업 3</title>
+<style>
+body{margin:0;background:#0b1120;color:#e2e8f0;font-family:Pretendard,system-ui,'Malgun Gothic',sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:24px 20px}
+.panel{border:1px solid #eab308;border-radius:16px;background:#0f172a;padding:24px}
+.cards{display:flex;gap:36px;justify-content:center;align-items:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.label{height:30px;display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8}
+.label .tag{background:#1e293b;border-radius:6px;padding:3px 9px;color:#cbd5e1;font-weight:600}
+.sel{display:inline-flex;align-items:center;gap:6px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:4px 10px;color:#e2e8f0;font-size:13px;font-weight:600;cursor:pointer}
+.sel svg{opacity:.7}
+.card{position:relative;width:300px;height:492px;overflow:hidden;border-radius:14px}
+.card .bg,.card .frame{position:absolute;left:-96px;top:0;width:492px;height:492px}
+.card .body{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;padding:52px 32px 28px;box-sizing:border-box;text-align:center;user-select:text}
+.oct{position:relative;width:120px;height:120px;background:linear-gradient(#5b6470,#2f353e);clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);display:grid;place-items:center;flex:none}
+.oct-in{width:106px;height:106px;background:#141922;clip-path:polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%);display:grid;place-items:center}
+.oct-in img{width:84px;height:84px;object-fit:contain}
+.oct i{position:absolute;width:6px;height:6px;border-radius:50%;background:#9aa3ad;transform:translateX(-50%);box-shadow:inset 0 0 0 1px #3a414b}
+.card h2{margin:26px 0 8px;font-size:24px;color:#f8fafc;letter-spacing:-.01em;font-weight:700}
+.pill{font-size:12px;font-weight:700;border-radius:4px;padding:2px 10px;letter-spacing:.04em}
+.card p{margin:16px 0 0;font-size:14px;line-height:1.7;color:#d7dee9;word-break:keep-all}
+.card.en p{font-family:'Segoe UI',system-ui,sans-serif;word-break:normal}
+.copy{position:absolute;z-index:3;top:16px;right:22px;display:inline-flex;align-items:center;gap:5px;background:rgba(30,41,59,.92);border:1px solid #475569;color:#e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;
+  opacity:0;transform:translateY(-6px);transition:opacity .25s ease,transform .25s ease}
+.card:hover .copy,.card.demo-hover .copy{opacity:1;transform:translateY(0)}
+.copy:hover{background:#334155}
+.posts{margin-top:26px;border-top:1px solid #243052;padding-top:16px}
+.posts h3{margin:0 0 10px;font-size:15px;display:flex;justify-content:space-between} .posts h3 .s{font-size:12px;color:#94a3b8}
+.posts ul{list-style:none;margin:0;padding:0;border:1px solid #1e2a44;border-radius:12px;overflow:hidden}
+.posts li{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #1e2a44}
+.posts li:last-child{border-bottom:0}
+.up{color:#facc15;font-weight:700;width:34px;text-align:center} .t{flex:1;font-weight:600}
+.patch{background:#052e16;color:#4ade80;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700} .meta{color:#94a3b8;font-size:13px}
+</style></head><body><div class="wrap">
+<div class="panel">
+  <div class="cards">
+    <div class="col">
+      <div class="label"><span class="tag">원문</span>English</div>
+      <div class="card en">
+  <img class="bg" src="https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/augmentselection/augmentcard_bg.png" alt="">
+  <img class="frame" src="https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/augmentselection/augmentcard_frame_silver.png" alt="">
+  <button class="copy" title="글 복사"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 복사</button>
+  <div class="body">
+    <div class="oct"><div class="oct-in"><img src="https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/wisdomofages_large.png" alt=""></div>
+      <i style="left:50%;top:6px"></i><i style="left:50%;bottom:6px"></i><i style="left:14px;top:30%"></i><i style="left:14px;bottom:30%"></i><i style="right:14px;top:30%"></i><i style="right:14px;bottom:30%"></i></div>
+    <h2>Ominous Pact</h2>
+    <span class="pill" style="background:#8d99ae;color:#111827">Silver</span>
+    <p>Gain <span style="color:#49b6ff;font-weight:600">75~150 Ability Power</span>, <span style="color:#e8d58a;font-weight:600">50% Movement Speed</span>, and <span style="color:#ff5c5c;font-weight:600">20% Omnivamp</span> based on <span style="color:#2ecc71;font-weight:600">missing Health</span>. Spell casts cost 5% of your current Health.<br><br><span style="color:#8d99ae;font-weight:600;font-style:italic;font-weight:400">Max benefit at 30% Health.</span></p>
+  </div></div>
+    </div>
+    <div class="col">
+      <div class="label"><span class="tag">번역</span><span class="sel">한국어 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></span></div>
+      <div class="card ko demo-hover">
+  <img class="bg" src="https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/augmentselection/augmentcard_bg.png" alt="">
+  <img class="frame" src="https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/augmentselection/augmentcard_frame_silver.png" alt="">
+  <button class="copy" title="글 복사"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 복사</button>
+  <div class="body">
+    <div class="oct"><div class="oct-in"><img src="https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/wisdomofages_large.png" alt=""></div>
+      <i style="left:50%;top:6px"></i><i style="left:50%;bottom:6px"></i><i style="left:14px;top:30%"></i><i style="left:14px;bottom:30%"></i><i style="right:14px;top:30%"></i><i style="right:14px;bottom:30%"></i></div>
+    <h2>불길한 서약</h2>
+    <span class="pill" style="background:#8d99ae;color:#111827">일반</span>
+    <p><span style="color:#2ecc71;font-weight:600">잃은 체력</span>에 비례하여 <span style="color:#49b6ff;font-weight:600">주문력을 75~150</span>, <span style="color:#e8d58a;font-weight:600">이동 속도를 50%</span>, <span style="color:#ff5c5c;font-weight:600">모든 피해 흡혈을 20%</span>을 얻습니다. 스킬 사용 시 현재 체력의 5%를 소모합니다.<br><br><span style="color:#8d99ae;font-weight:600;font-style:italic;font-weight:400">체력이 30%일 때 최대 효과를 얻습니다.</span></p>
+  </div></div>
+    </div>
+  </div>
+  <div class="posts"><h3>이 증강 글 3개 <span class="s">최신순 · 추천순</span></h3><ul><li><span class="up">▲ 0</span><span class="t">아무무 불길한 서약 글 3</span><span class="patch">26.21</span><span class="meta">테스터 · 36분 전</span><span class="meta">💬 0</span></li><li><span class="up">▲ 0</span><span class="t">아무무 불길한 서약 글 2</span><span class="patch">26.21</span><span class="meta">테스터 · 36분 전</span><span class="meta">💬 0</span></li><li><span class="up">▲ 0</span><span class="t">아무무 불길한 서약 글 1</span><span class="patch">26.21</span><span class="meta">테스터 · 36분 전</span><span class="meta">💬 0</span></li></ul></div>
+</div>
+</div></body></html>
