@@ -30,8 +30,16 @@ export type Segment = { kind: 'text'; text: string; color: string | null; italic
 
 const TAG = /<(\/?)([A-Za-z]+)[^>]*>/g
 
+/** 서버가 못 채운 자리표시자(@Calc_Cooldown@, {{참조}}). 서버에는 이름을 남겨 두고 화면에서만 ?로 보여요. */
+const UNFILLED = /@[^@\s<>]+@|\{\{[^}]*\}\}/g
+
+function hideUnfilled(description: string): string {
+  return description.replace(UNFILLED, '?')
+}
+
 /** 설명을 글 조각과 줄바꿈으로 나눠요. 아는 표식은 색을 입히고, 모르는 표식은 글만 남겨요. 중첩은 안쪽이 이겨요. */
-export function parseDescription(description: string): Segment[] {
+export function parseDescription(raw: string): Segment[] {
+  const description = hideUnfilled(raw)
   const segments: Segment[] = []
   const stack: string[] = []
   let last = 0
@@ -67,7 +75,7 @@ export function parseDescription(description: string): Segment[] {
 
 /** 복사용 글: 표식을 빼고 <br>을 줄바꿈으로. */
 export function toPlainText(description: string): string {
-  return description
+  return hideUnfilled(description)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .trim()

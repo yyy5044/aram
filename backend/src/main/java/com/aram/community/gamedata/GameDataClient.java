@@ -3,6 +3,7 @@ package com.aram.community.gamedata;
 import com.aram.community.gamedata.text.AugmentDescriptionBuilder;
 import com.aram.community.gamedata.text.AugmentLocale;
 import com.aram.community.gamedata.text.SpellValues;
+import com.aram.community.gamedata.text.StringTableKeys;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;
@@ -140,7 +141,8 @@ public class GameDataClient {
 			}
 			String iconPath = toPng(icon);
 			String largeIcon = v.path("AugmentLargeIconPath").asString("");
-			String largeIconPath = largeIcon.isBlank() ? iconPath : toPng(largeIcon);
+			// 새 증강은 큰 아이콘 경로가 파일 이름 대신 {해시}로만 있어요. 그 주소는 열리지 않으니 작은 아이콘을 써요.
+			String largeIconPath = largeIcon.isBlank() || largeIcon.startsWith("{") ? iconPath : toPng(largeIcon);
 
 			SpellValues values = SpellValues.from(spellObjects(kiwi, v));
 			Map<AugmentLocale, LocalizedText> texts = new EnumMap<>(AugmentLocale.class);
@@ -220,21 +222,29 @@ public class GameDataClient {
 		return spells;
 	}
 
-	/** 3천만 바이트가 넘는 문자열 표에서 필요한 키만 스트리밍으로 골라내요. */
+	/**
+	 * 3천만 바이트가 넘는 문자열 표에서 필요한 키만 스트리밍으로 골라내요. 표가 이름을 모르는 키는 `{해시}`로 두니까,
+	 * 같은 해시도 함께 찾아 원래 키 이름으로 돌려줘요.
+	 */
 	Map<String, String> fetchStrings(AugmentLocale locale, Set<String> wantedLowerKeys) {
 		String url = props.cdragonBaseUrl() + "/latest/game/" + locale.folder()
 				+ "/data/menu/en_us/lol.stringtable.json";
+		Map<String, String> aliases = new HashMap<>();
+		for (String key : wantedLowerKeys) {
+			aliases.put(StringTableKeys.hashedKey(key), key);
+		}
 		return builder.build().get().uri(url).exchange((request, response) -> {
 			if (!response.getStatusCode().is2xxSuccessful()) {
 				throw new IllegalStateException("GET " + url + " -> " + response.getStatusCode());
 			}
 			try (InputStream body = response.getBody()) {
-				return readEntries(body, wantedLowerKeys);
+				return readEntries(body, wantedLowerKeys, aliases);
 			}
 		});
 	}
 
-	private Map<String, String> readEntries(InputStream body, Set<String> wantedLowerKeys) throws IOException {
+	private Map<String, String> readEntries(InputStream body, Set<String> wantedLowerKeys,
+			Map<String, String> aliases) throws IOException {
 		Map<String, String> found = new HashMap<>();
 		try (JsonParser p = jsonMapper.createParser(body)) {
 			if (p.nextToken() != JsonToken.START_OBJECT) {
@@ -252,6 +262,9 @@ public class GameDataClient {
 					JsonToken value = p.nextToken();
 					if (value == JsonToken.VALUE_STRING && wantedLowerKeys.contains(key)) {
 						found.put(key, p.getString());
+					}
+					else if (value == JsonToken.VALUE_STRING && aliases.containsKey(key)) {
+						found.putIfAbsent(aliases.get(key), p.getString());
 					}
 					else {
 						p.skipChildren();

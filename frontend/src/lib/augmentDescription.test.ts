@@ -29,6 +29,24 @@ describe('parseDescription', () => {
   })
 })
 
+describe('unfilled placeholders', () => {
+  it('shows unfilled numbers and references as ?', () => {
+    expect(parseDescription('Every @Calc_Cooldown@ seconds, <shield>@X*100@% Shield</shield> {{Kiwi_Spell_Tooltip}}')).toEqual([
+      { kind: 'text', text: 'Every ? seconds, ', color: null, italic: false },
+      { kind: 'text', text: '?% Shield', color: '#9ad8ff', italic: false },
+      { kind: 'text', text: ' ?', color: null, italic: false },
+    ])
+  })
+
+  it('copies ? too', () => {
+    expect(toPlainText('@Calc_Cooldown@초마다')).toBe('?초마다')
+  })
+
+  it('leaves a lone @ alone', () => {
+    expect(toPlainText('email@example and 50%')).toBe('email@example and 50%')
+  })
+})
+
 describe('toPlainText', () => {
   it('makes plain text for copying', () => {
     expect(toPlainText('Gain <shield>150 Shield</shield>.<br><br><rules>Max.</rules>')).toBe('Gain 150 Shield.\n\nMax.')

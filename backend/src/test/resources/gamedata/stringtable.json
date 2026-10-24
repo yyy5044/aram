@@ -26,6 +26,8 @@
   "kiwi_aram_legday_tooltip": "{{Kiwi_ARAM_LegDay_Summary}}<br><br>달린 거리: @f1@",
   "kiwi_aram_legday_summary": "<speed>이동 속도가 @MSBonus*100@%</speed> 오릅니다.",
   "kiwi_surgefield_tooltip": "@Damage@의 피해",
-  "kiwi_sonata_tooltip": "연주한 횟수: @f1@"
+  "kiwi_sonata_tooltip": "연주한 횟수: @f1@",
+  "{045c3c0e79}": "장갑 충격",
+  "{166854c780}": "스킬 사용 후 다음 기본 공격 시 주변 적에게 <physicalDamage>@ArmorDamage@의 추가 물리 피해</physicalDamage>를 입힙니다."
  }
 }

@@ -1,6 +1,7 @@
 package com.aram.community.gamedata.text;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -73,9 +74,11 @@ public final class SpellValueResolver {
 		if (factor != 1 && parts.get().stream().anyMatch(p -> !p.numeric() || p.percent())) {
 			return Optional.empty();
 		}
+		// 게임 툴팁처럼 숫자가 먼저, 스탯 계수 "(+…)"가 뒤에 오게 해요. 자료의 순서는 증강마다 달라요.
+		List<Part> ordered = parts.get().stream().sorted(Comparator.comparing(Part::stat)).toList();
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Part part : parts.get()) {
+		for (Part part : ordered) {
 			Part scaled = part.times(factor);
 			if (!first) {
 				sb.append(' ');

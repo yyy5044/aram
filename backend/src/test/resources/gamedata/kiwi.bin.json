@@ -147,7 +147,9 @@
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/armoredimpact_small.tex",
   "__type": "AugmentData",
   "rarity": 1,
-  "AugmentTooltipTra": "Kiwi_Augment_ArmoredImpact_Tooltip"
+  "AugmentTooltipTra": "Kiwi_Augment_ArmoredImpact_Tooltip",
+  "RootSpell": "Maps/ModeSpecificData/Augments/ArmoredImpact/Augment_ArmoredImpact",
+  "AugmentLargeIconPath": "{a5f7fc50c1b61b38}"
  },
  "Maps/ModeSpecificData/Augments/Sonata/Resources": {
   "__type": "ResourceResolver"
@@ -183,6 +185,32 @@
      "__type": "SpellDataValue"
     }
    ],
+   "__type": "SpellDataResource"
+  },
+  "__type": "SpellObject"
+ },
+ "Maps/ModeSpecificData/Augments/StillHere": {
+  "AugmentNameId": "StillHere",
+  "NameTra": "Kiwi_Augment_StillHere_Name",
+  "AugmentTooltipTra": "Kiwi_Augment_StillHere_Tooltip",
+  "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/stillhere_small.tex",
+  "rarity": 1,
+  "__type": "AugmentData"
+ },
+ "Maps/ModeSpecificData/Augments/ArmoredImpact/Augment_ArmoredImpact": {
+  "mSpell": {
+   "mSpellCalculations": {
+    "ArmorDamage": {
+     "mFormulaParts": [
+      {
+       "mStartValue": 40.0,
+       "mEndValue": 120.0,
+       "__type": "ByCharLevelInterpolationCalculationPart"
+      }
+     ],
+     "__type": "GameCalculation"
+    }
+   },
    "__type": "SpellDataResource"
   },
   "__type": "SpellObject"

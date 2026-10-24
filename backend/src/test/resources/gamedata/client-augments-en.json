@@ -6,5 +6,13 @@
   "simpleNameTRA": "",
   "augmentSmallIconPath": "",
   "rarity": "kGold"
+ },
+ {
+  "id": 3050,
+  "augmentNameId": "StillHere",
+  "nameTRA": "Still Here",
+  "simpleNameTRA": "",
+  "augmentSmallIconPath": "",
+  "rarity": "kGold"
  }
 ]

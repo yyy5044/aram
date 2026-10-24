@@ -108,7 +108,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		server.verify();
 		assertThat(champions.count()).isEqualTo(3);
 		assertThat(champions.findById("Amumu").orElseThrow().getNameKo()).isEqualTo("아무무");
-		assertThat(augments.count()).isEqualTo(23);
+		assertThat(augments.count()).isEqualTo(24);
 		Augment legDay = augments.findById("ARAM_LegDay").orElseThrow();
 		assertThat(legDay.getNameKo()).isEqualTo("하체 운동의 날");
 		assertThat(legDay.getIconPath()).isEqualTo("assets/ux/cherry/augments/icons/legday_small.png");
@@ -204,7 +204,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		sync.sync();
 
 		assertThat(augments.findById("Disabled_Test")).isEmpty();
-		assertThat(augments.count()).isEqualTo(23);
+		assertThat(augments.count()).isEqualTo(24);
 	}
 
 	@Test
@@ -296,16 +296,33 @@ class GameDataSyncServiceTest extends IntegrationTest {
 	}
 
 	@Test
+	void readsStringsStoredUnderHashedKeys() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		// 새 증강의 글은 표에 {해시} 키로만 있어요. 키를 같은 방식으로 해시해 찾아요.
+		Augment armored = augments.findById("ArmoredImpact").orElseThrow();
+		assertThat(armored.getNameKo()).isEqualTo("장갑 충격");
+		assertThat(armored.getRarity()).isEqualTo(AugmentRarity.GOLD);
+		AugmentText ko = texts.findById(new AugmentTextId("ArmoredImpact", "ko")).orElseThrow();
+		assertThat(ko.getDescription())
+			.isEqualTo("스킬 사용 후 다음 기본 공격 시 주변 적에게 <physicalDamage>40~120의 추가 물리 피해</physicalDamage>를 입힙니다.");
+		assertThat(texts.findById(new AugmentTextId("ArmoredImpact", "en")).orElseThrow().getName()).isEqualTo("Armored Impact");
+		// 큰 아이콘 경로가 파일 이름 대신 {해시}로만 있으면 작은 아이콘을 써요(그 주소는 열리지 않아요).
+		assertThat(armored.getLargeIconPath()).isEqualTo("assets/ux/kiwi/augments/icons/armoredimpact_small.png");
+	}
+
+	@Test
 	void namesNewAugmentsFromClientList() throws IOException {
 		expectFullSync("kiwi.bin.json");
 
 		sync.sync();
 
-		// 문자열 표에 없는 새 증강은 클라이언트 목록의 이름으로 들어가고, 설명은 없어서 글 행이 없어요.
-		Augment armored = augments.findById("ArmoredImpact").orElseThrow();
-		assertThat(armored.getNameKo()).isEqualTo("장갑 충격");
-		assertThat(armored.getRarity()).isEqualTo(AugmentRarity.GOLD);
-		assertThat(texts.findByIdAugmentId("ArmoredImpact")).isEmpty();
+		// 표에 글이 전혀 없는 증강은 클라이언트 목록의 이름으로 들어가고, 설명은 없어서 글 행이 없어요.
+		Augment still = augments.findById("StillHere").orElseThrow();
+		assertThat(still.getNameKo()).isEqualTo("아직 여기 있어");
+		assertThat(texts.findByIdAugmentId("StillHere")).isEmpty();
 		// 문자열 표에 있는 이름이 우선이에요.
 		assertThat(augments.findById("ARAM_LegDay").orElseThrow().getNameKo()).isEqualTo("하체 운동의 날");
 	}
@@ -330,7 +347,8 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		// 클라이언트 목록은 보조 자료라 실패해도 동기화는 성공하고, 그 이름만 있는 증강은 빠져요.
 		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
 
-		assertThat(augments.findById("ArmoredImpact")).isEmpty();
+		assertThat(augments.findById("StillHere")).isEmpty();
+		assertThat(augments.findById("ArmoredImpact")).isPresent();
 		assertThat(augments.findById("ARAM_LegDay")).isPresent();
 	}
 

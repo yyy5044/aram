@@ -25,6 +25,8 @@
   "kiwi_aram_legday_tooltip": "{{Kiwi_ARAM_LegDay_Summary}}<br><br>Distance Run: @f1@",
   "kiwi_aram_legday_summary": "Gain <speed>@MSBonus*100@% Move Speed</speed>.",
   "kiwi_surgefield_tooltip": "@Damage@ damage",
-  "kiwi_sonata_tooltip": "Plays a song."
+  "kiwi_sonata_tooltip": "Plays a song.",
+  "{045c3c0e79}": "Armored Impact",
+  "{166854c780}": "After casting an Ability, your next Attack deals <physicalDamage>@ArmorDamage@ bonus physical damage</physicalDamage> to nearby enemies."
  }
 }

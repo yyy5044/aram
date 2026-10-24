@@ -82,7 +82,7 @@ export default function AugmentCard({ text, rarity, iconUrl }: Props) {
         </div>
         <h2 className="mt-6 mb-2 text-2xl font-bold tracking-tight text-slate-50">{text.name}</h2>
         <span className={`rounded px-2.5 py-0.5 text-xs font-bold tracking-wide ${RARITY_PILL[rarity]}`}>{label}</span>
-        <p className="mt-4 text-sm leading-relaxed break-keep text-slate-200">
+        <p className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1 text-sm leading-relaxed break-keep text-slate-200 [scrollbar-width:thin]">
           {parseDescription(text.description).map((seg, i) =>
             seg.kind === 'break' ? (
               <br key={i} />

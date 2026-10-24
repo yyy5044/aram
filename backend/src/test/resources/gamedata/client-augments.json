@@ -14,5 +14,13 @@
   "simpleNameTRA": "",
   "augmentSmallIconPath": "",
   "rarity": "kSilver"
+ },
+ {
+  "id": 3050,
+  "augmentNameId": "StillHere",
+  "nameTRA": "아직 여기 있어",
+  "simpleNameTRA": "",
+  "augmentSmallIconPath": "",
+  "rarity": "kGold"
  }
 ]

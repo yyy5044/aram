@@ -181,6 +181,15 @@ class SpellValueResolverTest {
 	}
 
 	@Test
+	void numbersComeBeforeStatScalingWhateverTheDataOrder() {
+		SpellValues v = spell("{\"mSpellCalculations\":{\"Dmg\":{\"mFormulaParts\":["
+				+ "{\"mStat\":1,\"mStatFormula\":2,\"mCoefficient\":2.5,\"__type\":\"StatByCoefficientCalculationPart\"},"
+				+ "{\"mStartValue\":50.0,\"mEndValue\":125.0,\"__type\":\"ByCharLevelInterpolationCalculationPart\"}],"
+				+ "\"__type\":\"GameCalculation\"}}}");
+		assertThat(ko.resolve("Dmg", v)).contains("50~125 (+전체 방어력의 250%)");
+	}
+
+	@Test
 	void formatsNumbers() {
 		assertThat(SpellValueResolver.formatNumber(150)).isEqualTo("150");
 		assertThat(SpellValueResolver.formatNumber(4.5)).isEqualTo("4.5");
