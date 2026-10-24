@@ -24,6 +24,7 @@
   "kiwi_aram_shadowrunner_name": "Shadow Runner",
   "kiwi_aram_legday_tooltip": "{{Kiwi_ARAM_LegDay_Summary}}<br><br>Distance Run: @f1@",
   "kiwi_aram_legday_summary": "Gain <speed>@MSBonus*100@% Move Speed</speed>.",
-  "kiwi_surgefield_tooltip": "@Damage@ damage"
+  "kiwi_surgefield_tooltip": "@Damage@ damage",
+  "kiwi_sonata_tooltip": "Plays a song."
  }
 }

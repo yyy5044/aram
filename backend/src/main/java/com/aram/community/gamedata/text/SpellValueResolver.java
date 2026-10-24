@@ -69,6 +69,10 @@ public final class SpellValueResolver {
 		if (parts.isEmpty()) {
 			return Optional.empty();
 		}
+		// 글로 만들어진 부분(합·곱·스탯)이나 이미 백분율인 값에는 꼬리를 곱할 수 없어요. 틀린 숫자 대신 자리표시자를 남겨요.
+		if (factor != 1 && parts.get().stream().anyMatch(p -> !p.numeric() || p.percent())) {
+			return Optional.empty();
+		}
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		for (Part part : parts.get()) {
@@ -151,7 +155,7 @@ public final class SpellValueResolver {
 			case "ByCharLevelInterpolationCalculationPart":
 				return Optional.of(Part.number(fp.path("mStartValue").asDouble(0), fp.path("mEndValue").asDouble(0)));
 			case "ByCharLevelBreakpointsCalculationPart":
-				return Optional.of(Part.number(fp.path("mLevel1Value").asDouble(0), breakpointsAtMaxLevel(fp)));
+				return breakpointsAtMaxLevel(fp).map(max -> Part.number(fp.path("mLevel1Value").asDouble(0), max));
 			case "StatByCoefficientCalculationPart":
 				return statPart(fp, fp.path("mCoefficient").asDouble(0));
 			case "StatByNamedDataValueCalculationPart": {
@@ -201,8 +205,14 @@ public final class SpellValueResolver {
 	/**
 	 * 1레벨 값에서 시작해 2~18레벨마다 "레벨당 증가분"을 더해요. 증가분은 처음에 mInitialBonusPerLevel이고,
 	 * 각 mBreakpoints의 mLevel 이후부터 mAdditionalBonusAtThisLevel만큼 누적해서 커져요.
+	 * 모르는 모양의 구간(이 필드가 없는 것)은 값을 지어내지 않고 비워요.
 	 */
-	private static double breakpointsAtMaxLevel(JsonNode fp) {
+	private static Optional<Double> breakpointsAtMaxLevel(JsonNode fp) {
+		for (JsonNode bp : fp.path("mBreakpoints")) {
+			if (!bp.has("mAdditionalBonusAtThisLevel")) {
+				return Optional.empty();
+			}
+		}
 		double value = fp.path("mLevel1Value").asDouble(0);
 		double perLevel = fp.path("mInitialBonusPerLevel").asDouble(0);
 		for (int level = 2; level <= MAX_LEVEL; level++) {
@@ -213,7 +223,7 @@ public final class SpellValueResolver {
 			}
 			value += perLevel;
 		}
-		return value;
+		return Optional.of(value);
 	}
 
 	private static Part range(List<Double> values) {

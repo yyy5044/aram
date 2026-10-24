@@ -270,6 +270,17 @@ class GameDataSyncServiceTest extends IntegrationTest {
 	}
 
 	@Test
+	void skipsLocaleWhoseDescriptionIsBlank() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		// 소나타의 한국어 툴팁은 집계 줄뿐이라 빈 설명이 되고, 그 언어 행은 저장하지 않아요.
+		assertThat(texts.findById(new AugmentTextId("Sonata", "ko"))).isEmpty();
+		assertThat(texts.findById(new AugmentTextId("Sonata", "en")).orElseThrow().getDescription()).isEqualTo("Plays a song.");
+	}
+
+	@Test
 	void successClearsPreviousError() throws IOException {
 		jdbc.update("update game_data_state set last_error = 'x' where id = 1");
 		expectFullSync("kiwi.bin.json");

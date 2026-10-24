@@ -148,8 +148,12 @@ public class GameDataClient {
 				AugmentDescriptionBuilder.Result result = new AugmentDescriptionBuilder(locale,
 						key -> Optional.ofNullable(table.get(key.toLowerCase(Locale.ROOT))))
 					.build(tooltip, values);
-				texts.put(locale, new LocalizedText(name, result.description()));
 				unresolved += result.unresolved().size();
+				// 집계 줄뿐이거나 참조를 못 찾아 빈 설명이 되면 그 언어 행을 두지 않아요(화면은 "아직 설명이 없어요").
+				if (result.description().isBlank()) {
+					continue;
+				}
+				texts.put(locale, new LocalizedText(name, result.description()));
 			}
 			augments.add(new AugmentData(v.path("AugmentNameId").asString(), nameKo, iconPath, largeIconPath,
 					AugmentRarity.fromKiwi(v), texts, unresolved));

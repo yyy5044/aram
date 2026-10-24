@@ -13,7 +13,8 @@
   "NameTra": "Kiwi_Sonata_Name",
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/sonata_small.tex",
   "__type": "AugmentData",
-  "rarity": 1
+  "rarity": 1,
+  "AugmentTooltipTra": "Kiwi_Sonata_Tooltip"
  },
  "Maps/ModeSpecificData/Augments/SurgeField": {
   "AugmentNameId": "SurgeField",

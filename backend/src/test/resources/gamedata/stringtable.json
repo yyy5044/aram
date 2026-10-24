@@ -25,6 +25,7 @@
   "unrelated_key": "관계없는 문자열",
   "kiwi_aram_legday_tooltip": "{{Kiwi_ARAM_LegDay_Summary}}<br><br>달린 거리: @f1@",
   "kiwi_aram_legday_summary": "<speed>이동 속도가 @MSBonus*100@%</speed> 오릅니다.",
-  "kiwi_surgefield_tooltip": "@Damage@의 피해"
+  "kiwi_surgefield_tooltip": "@Damage@의 피해",
+  "kiwi_sonata_tooltip": "연주한 횟수: @f1@"
  }
 }

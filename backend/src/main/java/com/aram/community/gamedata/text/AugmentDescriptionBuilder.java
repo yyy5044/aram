@@ -56,7 +56,13 @@ public final class AugmentDescriptionBuilder {
 		List<String> unresolved = new ArrayList<>();
 		text = fillVariables(text, values, unresolved);
 		text = cleanTags(text);
-		return new Result(tidyLines(text), unresolved);
+		String description = tidyLines(text);
+		// 끝까지 남은 {{참조}}도 못 채운 것으로 기록해요(동기화 로그에 수가 찍혀요).
+		Matcher leftover = REFERENCE.matcher(description);
+		while (leftover.find()) {
+			unresolved.add(leftover.group(1));
+		}
+		return new Result(description, unresolved);
 	}
 
 	private String inlineReferences(String text) {

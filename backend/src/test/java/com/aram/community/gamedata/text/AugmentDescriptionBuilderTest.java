@@ -89,7 +89,16 @@ class AugmentDescriptionBuilderTest {
 		AugmentDescriptionBuilder.Result r = b.build("{{Kiwi_Nope}} deals @Ult_DamageAmp@", SpellValues.from(List.of()));
 
 		assertThat(r.description()).isEqualTo("{{Kiwi_Nope}} deals @Ult_DamageAmp@");
-		assertThat(r.unresolved()).containsExactly("Ult_DamageAmp");
+		assertThat(r.unresolved()).containsExactlyInAnyOrder("Kiwi_Nope", "Ult_DamageAmp");
+	}
+
+	@Test
+	void unknownReferenceOnTrackingLineLeavesNothing() {
+		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
+		AugmentDescriptionBuilder.Result r = b.build("{{Kiwi_PressureCooker_Tooltip@f4@}}", SpellValues.from(List.of()));
+
+		// 참조를 못 찾았고 그 줄은 집계 줄이라 지워져요. 빈 설명은 부르는 쪽(동기화)이 저장하지 않아요.
+		assertThat(r.description()).isEmpty();
 	}
 
 	@Test

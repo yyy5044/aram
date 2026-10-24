@@ -161,6 +161,26 @@ class SpellValueResolverTest {
 	}
 
 	@Test
+	void tailOnTextOrPercentPartIsEmpty() {
+		SpellValues v = spell("{\"DataValues\":[" + same("A", 3) + "," + same("X", 0.1) + "],\"mSpellCalculations\":{"
+				+ "\"S\":{\"mFormulaParts\":[{\"mSubparts\":[{\"mNumber\":1.0,\"__type\":\"NumberCalculationPart\"},{\"mDataValue\":\"A\",\"__type\":\"NamedDataValueCalculationPart\"}],"
+				+ "\"__type\":\"SumOfSubPartsCalculationPart\"}],\"__type\":\"GameCalculation\"},"
+				+ "\"Pct\":{\"mFormulaParts\":[{\"mDataValue\":\"X\",\"__type\":\"NamedDataValueCalculationPart\"}],\"mDisplayAsPercent\":true,\"__type\":\"GameCalculation\"}}}");
+		// 합·곱은 글로 만들어져 곱할 수 없고, 백분율은 이미 100을 곱했어요. 틀린 숫자 대신 자리표시자를 남겨요.
+		assertThat(ko.resolve("S*100", v)).isEmpty();
+		assertThat(ko.resolve("Pct*100", v)).isEmpty();
+		assertThat(ko.resolve("S", v)).contains("1 + 3");
+	}
+
+	@Test
+	void breakpointWithUnknownFieldIsEmpty() {
+		SpellValues v = spell("{\"mSpellCalculations\":{\"Inc\":{\"mFormulaParts\":["
+				+ "{\"mLevel1Value\":1.0,\"mBreakpoints\":[{\"mLevel\":7,\"mBonusPerLevelAtAndAfter\":1.0,\"__type\":\"Breakpoint\"}],"
+				+ "\"__type\":\"ByCharLevelBreakpointsCalculationPart\"}],\"__type\":\"GameCalculation\"}}}");
+		assertThat(ko.resolve("Inc", v)).isEmpty();
+	}
+
+	@Test
 	void formatsNumbers() {
 		assertThat(SpellValueResolver.formatNumber(150)).isEqualTo("150");
 		assertThat(SpellValueResolver.formatNumber(4.5)).isEqualTo("4.5");
