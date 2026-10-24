@@ -32,3 +32,33 @@ body {
   border-radius: 0.6rem;
   margin: 0.5em 0;
 }
+
+/* 긴 설명이 카드 아래에서 뚝 잘리지 않게 끝을 살짝 흐려요(아래 여백이 있어 끝까지 내리면 마지막 줄은 또렷해요). */
+.card-scroll {
+  mask-image: linear-gradient(to bottom, black calc(100% - 1.5rem), transparent);
+}
+
+/* 증강 카드 설명 스크롤: 얇고 둥근 막대, 화살표 없음. 크롬·엣지·사파리는 ::-webkit-scrollbar로 꾸미고,
+   표준 속성(scrollbar-width)은 그걸 덮어써서 윈도우 화살표가 생기니 파이어폭스에만 써요. */
+.card-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.card-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.card-scroll::-webkit-scrollbar-thumb {
+  background: rgb(203 213 225 / 0.22);
+  border-radius: 9999px;
+}
+.card-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgb(203 213 225 / 0.45);
+}
+.card-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .card-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225 / 0.3) transparent;
+  }
+}
