@@ -66,6 +66,7 @@ cd frontend && npm test && npm run build && npm run lint
 
 **완료**
 - 2026-10-24: 디스코드 앱 등록(앱 이름 `aram`, Client ID `1563452857179578451`), 로컬에서 실제 디스코드 로그인 성공. 관리자는 사용자 "하포"(디스코드 ID `472407196144107529`). 디스코드 개발자 포털 Redirects에는 `http://localhost:5173/login/oauth2/code/discord`만 등록돼 있다.
+- 2026-10-24: 프로필 페이지(`/users/:userId`, `/settings/profile`) — 활동 잔디(한국 시간, 53주/좁은 화면 26주), 통계, 쓴 글·쓴 댓글·스크랩 탭, 공개/비공개, 직접 올린 프로필 사진, 글 스크랩. 설계 `docs/superpowers/specs/2026-10-24-profile-design.md`, 계획 `docs/superpowers/plans/2026-10-24-profile.md`.
 
 **다음 단계**
 1. 배포: AWS Lightsail(약 2GB, 월 2만원 이내) + Docker Compose, 이미지 저장소 S3 구현(`image/ImageStorage`), 세션을 DB에 저장(지금은 메모리라 서버 재시작 시 모두 로그아웃), HTTPS, DB 백업, AWS 예산 알림. 배포 주소가 정해지면 디스코드 Redirects에 운영 주소를 추가하고, Vite 프록시 대신 리버스 프록시가 원래 Host를 넘기도록 한다(돌아올 주소가 Host로 만들어진다).
