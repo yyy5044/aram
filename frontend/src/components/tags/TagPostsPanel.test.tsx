@@ -66,6 +66,17 @@ describe('TagPostsPanel', () => {
     expect(screen.queryByText('latest 글 7')).not.toBeInTheDocument()
   })
 
+  it('keeps sort pills and posts while the new sort loads', async () => {
+    setup(7, 'augment', {
+      'GET /api/posts': (req) => (req.query.get('sort') === 'likes' ? new Promise<Response>(() => {}) : postsOf(7)(req)),
+    })
+    await screen.findByText('latest 글 1')
+    await userEvent.click(screen.getByRole('button', { name: '추천순' }))
+    expect(screen.getByRole('button', { name: '추천순' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByRole('listitem')).toHaveLength(5)
+    expect(screen.queryByText('불러오는 중이에요')).not.toBeInTheDocument()
+  })
+
   it('shows empty text without sort pills', async () => {
     setup(0)
     expect(await screen.findByText('아직 이 태그가 붙은 글이 없어요')).toBeInTheDocument()
@@ -92,6 +103,15 @@ describe('TagPostsPanel', () => {
     })
     expect(await screen.findByText('자주 함께 쓰는 증강')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '하체 운동의 날 3' })).toHaveAttribute('href', '/augments?open=ARAM_LegDay')
+  })
+
+  it('champion panel shows top augments error inside the region', async () => {
+    setup(1, 'champion', {
+      'GET /api/champions/Amumu/top-augments': () => json({ code: 'INTERNAL_ERROR', message: '잠시 후 다시 시도해주세요' }, 500),
+    })
+    const region = await screen.findByRole('region', { name: '아무무 게시글' })
+    expect(await within(region).findByText('잠시 후 다시 시도해주세요')).toBeInTheDocument()
+    expect(await within(region).findByText('latest 글 1')).toBeInTheDocument()
   })
 
   it('champion panel hides top augments when empty', async () => {

@@ -38,6 +38,8 @@ export function useTagPosts(params: TagPostsParams) {
     },
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+    // 정렬을 바꿔도 새 목록이 올 때까지 예전 목록을 그대로 보여줘요(버튼이 사라지지 않게).
+    placeholderData: keepPreviousData,
   })
 }
 

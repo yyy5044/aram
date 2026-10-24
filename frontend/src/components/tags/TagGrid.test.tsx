@@ -41,6 +41,40 @@ describe('TagGrid', () => {
     expect(screen.queryByText('패널')).not.toBeInTheDocument()
   })
 
+  it('keeps the panel on the open item row after items reorder', () => {
+    // 실제 격자처럼 흉내 내요: 3칸이 한 줄이고, 펼침 영역은 줄 전체를 차지해요.
+    const COLS = 3
+    vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {
+      const li = this.closest('li')!
+      let row = 0
+      let col = 0
+      for (const child of li.parentElement!.children) {
+        const isItem = child.classList.contains('contents')
+        if (isItem && col === COLS) {
+          row++
+          col = 0
+        }
+        if (!isItem && col > 0) {
+          row++
+          col = 0
+        }
+        if (child === li) return row * 100
+        if (isItem) col++
+        else row++
+      }
+      return 0
+    })
+    const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, name: id, image: null, count: 0 }))
+    const { rerender } = render(<TagGrid items={six} openId="e" onToggle={() => {}} renderPanel={() => <p>패널</p>} />)
+    const order = () => [...screen.getByRole('list').children].map((el) => el.textContent?.replace(/글 0개/, ''))
+    expect(order()).toEqual(['a', 'b', 'c', 'd', 'e', 'f', '패널'])
+
+    const reordered = ['f', 'e', 'a', 'b', 'c', 'd'].map((id) => six.find((it) => it.id === id)!)
+    rerender(<TagGrid items={reordered} openId="e" onToggle={() => {}} renderPanel={() => <p>패널</p>} />)
+    // e가 첫 줄(f e a)에 있으니 펼침 영역은 a 바로 뒤에 와야 해요.
+    expect(order()).toEqual(['f', 'e', 'a', '패널', 'b', 'c', 'd'])
+  })
+
   it('places the panel after the last item on the same row', () => {
     // a, b는 첫 줄(0), c는 둘째 줄(100)이라고 가정해요.
     vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: HTMLElement) {

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
 export type GridItem = {
   id: string
@@ -16,34 +16,44 @@ type Props = {
   renderPanel: (id: string) => ReactNode
 }
 
+/** 어떤 칸 배치(key)에서 잰 결과인지 같이 기억해요. after가 null이면 아직 재기 전이에요. */
+type Measured = { key: string; after: string | null }
+
 /**
  * 칸 격자. 펼친 칸이 있으면 그 칸이 놓인 줄의 마지막 칸 뒤에 펼침 영역을 끼워 넣어요.
- * 줄은 칸의 offsetTop이 같은지로 판단해요. 위치 정보가 없는 환경(jsdom)에서는 모두 한 줄로 봐요.
+ * 줄은 칸의 offsetTop이 같은지로 판단해요. 펼침 영역이 줄을 밀어내면 잘못 재니까, 재는 동안은
+ * 펼침 영역을 맨 뒤에 두고 잰 뒤에 옮겨요(useLayoutEffect라 화면에 그려지기 전에 끝나요).
+ * 위치 정보가 없는 환경(jsdom)에서는 모두 한 줄로 봐요.
  */
 export default function TagGrid({ items, openId, onToggle, renderPanel }: Props) {
   const listRef = useRef<HTMLUListElement>(null)
-  const [panelAfter, setPanelAfter] = useState<string | null>(null)
+  const [measured, setMeasured] = useState<Measured | null>(null)
   const openIndex = openId === null ? -1 : items.findIndex((it) => it.id === openId)
+  const key = items.map((it) => it.id).join('|') + '#' + openIndex
+  const current = measured?.key === key ? measured : null
 
   useLayoutEffect(() => {
-    if (openIndex < 0) return
-    function measure() {
-      const buttons = listRef.current?.querySelectorAll<HTMLElement>('[data-id]') ?? []
-      const open = buttons[openIndex]
-      if (!open) return
-      let last = items[openIndex].id
-      for (let i = openIndex + 1; i < buttons.length; i++) {
-        if (buttons[i].offsetTop !== open.offsetTop) break
-        last = items[i].id
-      }
-      setPanelAfter(last)
+    if (openIndex < 0 || current?.after != null) return
+    const buttons = listRef.current?.querySelectorAll<HTMLElement>('[data-id]') ?? []
+    const open = buttons[openIndex]
+    if (!open) return
+    let last = items[openIndex].id
+    for (let i = openIndex + 1; i < buttons.length; i++) {
+      if (buttons[i].offsetTop !== open.offsetTop) break
+      last = items[i].id
     }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [items, openIndex])
+    setMeasured({ key, after: last })
+  }, [items, openIndex, key, current])
 
-  const anchor = openIndex < 0 ? null : panelAfter && items.some((it) => it.id === panelAfter) ? panelAfter : items[items.length - 1].id
+  useEffect(() => {
+    if (openIndex < 0) return
+    // 창 크기가 바뀌면 펼침 영역을 맨 뒤로 보낸 채 다시 재요.
+    const remeasure = () => setMeasured({ key, after: null })
+    window.addEventListener('resize', remeasure)
+    return () => window.removeEventListener('resize', remeasure)
+  }, [openIndex, key])
+
+  const anchor = openIndex < 0 ? null : (current?.after ?? items[items.length - 1].id)
 
   return (
     <ul ref={listRef} className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">

@@ -48,13 +48,31 @@ export default function AugmentsPage() {
     }
   }).filter((g) => !searching || g.matches.length > 0)
 
-  function toggleGroup(rarity: AugmentRarity) {
+  function setGroupOpen(rarity: AugmentRarity, open: boolean) {
     setOpenGroups((prev) => {
       const next = new Set(prev)
-      if (next.has(rarity)) next.delete(rarity)
-      else next.add(rarity)
+      if (open) next.add(rarity)
+      else next.delete(rarity)
       return next
     })
+  }
+
+  /** 펼침 영역을 품은 묶음의 제목을 누르면 펼침 영역도 닫고 묶음을 접어요. */
+  function toggleGroup(g: (typeof groups)[number]) {
+    const containsOpen = openId !== null && g.all.some((a) => a.id === openId)
+    if (containsOpen) close()
+    setGroupOpen(g.rarity, !(g.open || containsOpen))
+  }
+
+  /** 묶음 안의 칸이나 펼침 영역을 건드리면 그 묶음은 계속 펼쳐 둬요(?open=으로만 열렸던 경우). */
+  function toggleItem(rarity: AugmentRarity, id: string) {
+    setGroupOpen(rarity, true)
+    toggle(id)
+  }
+
+  function closePanel(rarity: AugmentRarity) {
+    setGroupOpen(rarity, true)
+    close()
   }
 
   return (
@@ -66,7 +84,7 @@ export default function AugmentsPage() {
           <button
             type="button"
             aria-expanded={g.open}
-            onClick={() => toggleGroup(g.rarity)}
+            onClick={() => toggleGroup(g)}
             className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-3 text-left hover:bg-slate-800"
           >
             <span aria-hidden="true" className={`h-3.5 w-3.5 rounded ${g.dot}`} />
@@ -84,7 +102,7 @@ export default function AugmentsPage() {
               <TagGrid
                 items={g.matches.map((a) => ({ id: a.id, name: a.nameKo, image: a.iconUrl, count: countOf(a) }))}
                 openId={openId}
-                onToggle={toggle}
+                onToggle={(id) => toggleItem(g.rarity, id)}
                 renderPanel={(id) => {
                   const a = g.all.find((x) => x.id === id)!
                   return (
@@ -93,7 +111,7 @@ export default function AugmentsPage() {
                       id={id}
                       title={a.nameKo}
                       subtitle={`${g.label} 증강 · 게시글 ${countOf(a)}개`}
-                      onClose={close}
+                      onClose={() => closePanel(g.rarity)}
                     />
                   )
                 }}

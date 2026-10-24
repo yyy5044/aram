@@ -91,6 +91,24 @@ describe('AugmentsPage', () => {
     expect(group('프리즘')).toHaveAttribute('aria-expanded', 'false')
   })
 
+  it('closing the panel keeps the group that ?open= expanded', async () => {
+    setup('/augments?open=ARAM_LegDay')
+    await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
+    await userEvent.click(screen.getByRole('button', { name: '닫기' }))
+    expect(screen.queryByRole('region')).not.toBeInTheDocument()
+    expect(group('실버')).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: '하체 운동의 날' })).toBeInTheDocument()
+  })
+
+  it('group header with the open panel closes it and collapses', async () => {
+    const { router } = setup('/augments?open=ARAM_LegDay')
+    await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
+    await userEvent.click(group('실버'))
+    expect(screen.queryByRole('region')).not.toBeInTheDocument()
+    expect(group('실버')).toHaveAttribute('aria-expanded', 'false')
+    expect(router.state.location.search).toBe('')
+  })
+
   it('ignores unknown or inactive ?open= ids', async () => {
     for (const route of ['/augments?open=OLD', '/augments?open=nope']) {
       const { unmount } = setup(route)
