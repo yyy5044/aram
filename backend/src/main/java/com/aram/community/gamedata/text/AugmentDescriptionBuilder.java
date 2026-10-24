@@ -96,15 +96,26 @@ public final class AugmentDescriptionBuilder {
 		return text;
 	}
 
+	/**
+	 * 게임 중 누적치 줄("입힌 피해량: @f3@")을 지워요. 누적치를 빼고 나면 이름표(끝이 ':')만 남거나 아무것도 안 남는 줄만
+	 * 지우고, 문장 안에 섞인 누적치는 그대로 둬요(화면에서는 ?로 보여요). 그래야 본문 문장이 통째로 사라지지 않아요.
+	 */
 	private static String removeTrackingLines(String text) {
 		text = STAT_TRACKING.matcher(text).replaceAll("");
 		List<String> kept = new ArrayList<>();
 		for (String line : BR.split(text, -1)) {
-			if (!TRACKING.matcher(line).find()) {
+			if (!TRACKING.matcher(line).find() || !isLabelOnly(line)) {
 				kept.add(line);
 			}
 		}
 		return String.join("<br>", kept);
+	}
+
+	private static boolean isLabelOnly(String line) {
+		String rest = TAG.matcher(line).replaceAll("");
+		rest = REFERENCE.matcher(rest).replaceAll("");
+		rest = TRACKING.matcher(rest).replaceAll("").strip();
+		return rest.isEmpty() || rest.endsWith(":");
 	}
 
 	private String fillVariables(String text, SpellValues values, List<String> unresolved) {

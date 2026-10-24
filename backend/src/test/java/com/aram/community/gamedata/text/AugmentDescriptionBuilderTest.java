@@ -93,6 +93,26 @@ class AugmentDescriptionBuilderTest {
 	}
 
 	@Test
+	void keepsSentencesWithInlineTrackingValues() {
+		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
+		AugmentDescriptionBuilder.Result r = b.build(
+				"Deal <trueDamage>5% max Health + @f2@ true damage</trueDamage>.<br><br><rules>Stacks: @f1.0@<br>Damage Dealt: @f3@</rules>",
+				SpellValues.from(List.of()));
+
+		// 문장 안의 누적치는 지우지 않고 남겨요(화면에서는 ?로 보여요). "이름표: 값" 줄만 지워요.
+		assertThat(r.description()).isEqualTo("Deal <trueDamage>5% max Health + @f2@ true damage</trueDamage>.");
+		assertThat(r.unresolved()).containsExactly("f2");
+	}
+
+	@Test
+	void dropsKoreanLabelTrackingLines() {
+		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.KO, NO_STRINGS);
+		AugmentDescriptionBuilder.Result r = b.build("보호막을 얻습니다.<br><br>생성한 보호막: @f2@", SpellValues.from(List.of()));
+
+		assertThat(r.description()).isEqualTo("보호막을 얻습니다.");
+	}
+
+	@Test
 	void unknownReferenceOnTrackingLineLeavesNothing() {
 		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
 		AugmentDescriptionBuilder.Result r = b.build("{{Kiwi_PressureCooker_Tooltip@f4@}}", SpellValues.from(List.of()));
