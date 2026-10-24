@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -34,6 +35,12 @@ public class User {
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
+	@Column(name = "profile_image_id")
+	private UUID profileImageId;
+
+	@Column(name = "profile_public", nullable = false)
+	private boolean profilePublic = true;
+
 	protected User() {
 	}
 
@@ -53,6 +60,25 @@ public class User {
 
 	public void changeNickname(String nickname) {
 		this.nickname = nickname;
+	}
+
+	public void updateProfile(String nickname, UUID profileImageId, boolean profilePublic) {
+		this.nickname = nickname;
+		this.profileImageId = profileImageId;
+		this.profilePublic = profilePublic;
+	}
+
+	/** 보여줄 프로필 사진: 직접 올린 사진 → 디스코드 사진 → 없음(null). */
+	public String effectiveAvatarUrl() {
+		return profileImageId != null ? "/api/images/" + profileImageId : avatarUrl;
+	}
+
+	public UUID getProfileImageId() {
+		return profileImageId;
+	}
+
+	public boolean isProfilePublic() {
+		return profilePublic;
 	}
 
 	public Long getId() {
