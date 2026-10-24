@@ -1,5 +1,6 @@
 package com.aram.community.gamedata;
 
+import com.aram.community.gamedata.text.AbilitySlot;
 import com.aram.community.gamedata.text.AugmentDescriptionBuilder;
 import com.aram.community.gamedata.text.AugmentLocale;
 import com.aram.community.gamedata.text.SpellValues;
@@ -144,7 +145,9 @@ public class GameDataClient {
 			// 새 증강은 큰 아이콘 경로가 파일 이름 대신 {해시}로만 있어요. 그 주소는 열리지 않으니 작은 아이콘을 써요.
 			String largeIconPath = largeIcon.isBlank() || largeIcon.startsWith("{") ? iconPath : toPng(largeIcon);
 
-			SpellValues values = SpellValues.from(spellObjects(kiwi, v));
+			List<JsonNode> spells = spellObjects(kiwi, v);
+			SpellValues values = SpellValues.from(spells);
+			Optional<String> abilitySlot = AbilitySlot.of(augmentId, spells);
 			Map<AugmentLocale, LocalizedText> texts = new EnumMap<>(AugmentLocale.class);
 			int unresolved = 0;
 			for (AugmentLocale locale : AugmentLocale.values()) {
@@ -155,7 +158,7 @@ public class GameDataClient {
 					continue;
 				}
 				AugmentDescriptionBuilder.Result result = new AugmentDescriptionBuilder(locale,
-						key -> Optional.ofNullable(table.get(key.toLowerCase(Locale.ROOT))))
+						key -> Optional.ofNullable(table.get(key.toLowerCase(Locale.ROOT))), abilitySlot)
 					.build(tooltip, values);
 				unresolved += result.unresolved().size();
 				// 집계 줄뿐이거나 참조를 못 찾아 빈 설명이 되면 그 언어 행을 두지 않아요(화면은 "아직 설명이 없어요").

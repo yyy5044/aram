@@ -44,10 +44,19 @@ public final class AugmentDescriptionBuilder {
 
 	private final SpellValueResolver resolver;
 
+	/** 챔피언 스킬 자리에 넣을 글: 칸이 고정이면 "[W]", 아니면 "[스킬]"/"[Ability]". */
+	private final String spellPlaceholder;
+
 	public AugmentDescriptionBuilder(AugmentLocale locale, Function<String, Optional<String>> strings) {
+		this(locale, strings, Optional.empty());
+	}
+
+	public AugmentDescriptionBuilder(AugmentLocale locale, Function<String, Optional<String>> strings,
+			Optional<String> abilitySlot) {
 		this.locale = locale;
 		this.strings = strings;
 		this.resolver = new SpellValueResolver(locale);
+		this.spellPlaceholder = abilitySlot.map(slot -> "[" + slot + "]").orElse(locale.spellPlaceholder());
 	}
 
 	public Result build(String tooltip, SpellValues values) {
@@ -74,7 +83,7 @@ public final class AugmentDescriptionBuilder {
 				String key = m.group(1);
 				String replacement;
 				if (key.equalsIgnoreCase("SpellName") || key.equalsIgnoreCase("SpellNameOnly")) {
-					replacement = locale.spellPlaceholder();
+					replacement = spellPlaceholder;
 				}
 				else {
 					replacement = strings.apply(key).orElse(null);

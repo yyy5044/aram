@@ -84,6 +84,16 @@ class AugmentDescriptionBuilderTest {
 	}
 
 	@Test
+	void namesFixedAbilitySlot() {
+		AugmentDescriptionBuilder en = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS, java.util.Optional.of("W"));
+		assertThat(en.build("Your {{SpellName}} gains 100 Ability Haste.", SpellValues.from(List.of())).description())
+			.isEqualTo("Your [W] gains 100 Ability Haste.");
+		AugmentDescriptionBuilder ko = new AugmentDescriptionBuilder(AugmentLocale.KO, NO_STRINGS, java.util.Optional.of("W"));
+		assertThat(ko.build("{{SpellName}} 스킬 가속을 100 얻습니다.", SpellValues.from(List.of())).description())
+			.isEqualTo("[W] 스킬 가속을 100 얻습니다.");
+	}
+
+	@Test
 	void keepsUnknownReferenceAndPlaceholder() {
 		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
 		AugmentDescriptionBuilder.Result r = b.build("{{Kiwi_Nope}} deals @Ult_DamageAmp@", SpellValues.from(List.of()));
