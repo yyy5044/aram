@@ -26,7 +26,7 @@ describe('TagGrid', () => {
     render(
       <TagGrid
         items={[
-          { id: 'x', name: '색칠', image: 'small.png', count: 0, tint: 'GOLD' },
+          { id: 'x', name: '색칠', image: 'small.png', count: 0, rarity: 'GOLD', tinted: true },
           { id: 'y', name: '그대로', image: 'large.png', count: 0 },
         ]}
         openId={null}
@@ -34,8 +34,21 @@ describe('TagGrid', () => {
         renderPanel={() => null}
       />,
     )
-    expect(screen.getByRole('button', { name: '색칠' }).querySelector('img')).toBeNull()
+    // 흰 아이콘 그림 대신 색을 칠한 칸이 보여요(테두리 그림은 따로 있어요).
+    expect(screen.getByRole('button', { name: '색칠' }).querySelector('img[src="small.png"]')).toBeNull()
     expect(screen.getByRole('button', { name: '그대로' }).querySelector('img')).toHaveAttribute('src', 'large.png')
+  })
+
+  it('frames augment icons by rarity', () => {
+    render(
+      <TagGrid
+        items={[{ id: 'g', name: '금', image: 'large.png', count: 0, rarity: 'GOLD' }]}
+        openId={null}
+        onToggle={() => {}}
+        renderPanel={() => null}
+      />,
+    )
+    expect(screen.getByRole('button', { name: '금' }).querySelector('img[src$="abilityframe_gold.png"]')).toBeInTheDocument()
   })
 
   it('shows the post count on each item', () => {

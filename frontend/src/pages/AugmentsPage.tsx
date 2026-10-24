@@ -106,7 +106,8 @@ export default function AugmentsPage() {
                   name: a.nameKo,
                   image: a.iconUrl,
                   count: countOf(a),
-                  tint: a.iconTinted ? a.rarity : undefined,
+                  rarity: a.rarity,
+                  tinted: a.iconTinted,
                 }))}
                 openId={openId}
                 onToggle={(id) => toggleItem(g.rarity, id)}

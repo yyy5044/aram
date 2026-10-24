@@ -27,6 +27,19 @@ describe('AugmentIcon', () => {
     expect(painted.getByRole('img', { name: '장갑 충격' })).toBeInTheDocument()
   })
 
+  it('puts the game rarity frame over big icons', () => {
+    const { container } = render(<AugmentIcon src="l.png" rarity="PRISMATIC" frame="image" className="h-13 w-13" />)
+    const frame = container.querySelector('img[src$="abilityframe_prismatic.png"]')
+    expect(frame).toBeInTheDocument()
+    expect(container.querySelector('img[src="l.png"]')).toBeInTheDocument()
+  })
+
+  it('draws a thin rarity ring around small icons', () => {
+    const gold = render(<AugmentIcon src="l.png" rarity="GOLD" frame="ring" className="h-6 w-6" />)
+    expect(gold.container.querySelector('[data-rarity-ring="GOLD"]')).toBeInTheDocument()
+    expect(gold.container.querySelector('img[src*="abilityframe"]')).toBeNull()
+  })
+
   it('uses different colors per rarity', () => {
     const colorOf = (rarity: 'PRISMATIC' | 'GOLD' | 'SILVER') => {
       const { container } = render(<AugmentIcon src="s.png" rarity={rarity} tinted />)

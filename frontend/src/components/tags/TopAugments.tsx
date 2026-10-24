@@ -28,6 +28,7 @@ export default function TopAugments({ championId }: { championId: string }) {
             src={augment.iconUrl}
             rarity={augment.rarity}
             tinted={augment.iconTinted}
+            frame="ring"
             className="h-5 w-5 rounded-full bg-slate-800"
           />
           {augment.nameKo} <span className="text-slate-400">{postCount}</span>

@@ -14,8 +14,8 @@ type Props<T extends Item> = {
   onChange: (ids: string[]) => void
   max: number
   iconOf: (item: T) => string | null
-  /** 흰 증강 아이콘이라 등급 색을 입혀야 하면 그 등급. */
-  tintOf?: (item: T) => AugmentRarity | undefined
+  /** 증강이면 등급(테두리 선)과 흰 아이콘인지. 챔피언은 비워요. */
+  augmentOf?: (item: T) => { rarity: AugmentRarity; tinted?: boolean } | undefined
   round?: boolean
   placeholder?: string
 }
@@ -29,7 +29,7 @@ export default function TagPicker<T extends Item>({
   onChange,
   max,
   iconOf,
-  tintOf,
+  augmentOf,
   round = false,
   placeholder,
 }: Props<T>) {
@@ -63,7 +63,7 @@ export default function TagPicker<T extends Item>({
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 py-0.5 pr-2 pl-0.5 text-sm"
             >
               {icon ? (
-                <TagIcon src={icon} tint={tintOf?.(item)} className={iconClass} />
+                <TagIcon src={icon} augment={augmentOf?.(item)} className={iconClass} />
               ) : (
                 <span className={`${iconClass} bg-slate-700`} />
               )}
@@ -118,7 +118,7 @@ export default function TagPicker<T extends Item>({
                 className="flex cursor-pointer items-center gap-2.5 px-2.5 py-2 hover:bg-slate-700"
               >
                 {icon ? (
-                <TagIcon src={icon} tint={tintOf?.(o)} className={iconClass} />
+                <TagIcon src={icon} augment={augmentOf?.(o)} className={iconClass} />
               ) : (
                 <span className={`${iconClass} bg-slate-700`} />
               )}
@@ -132,6 +132,15 @@ export default function TagPicker<T extends Item>({
   )
 }
 
-function TagIcon({ src, tint, className }: { src: string; tint?: AugmentRarity; className: string }) {
-  return <AugmentIcon src={src} rarity={tint ?? 'SILVER'} tinted={tint !== undefined} className={className} />
+function TagIcon({
+  src,
+  augment,
+  className,
+}: {
+  src: string
+  augment?: { rarity: AugmentRarity; tinted?: boolean }
+  className: string
+}) {
+  if (!augment) return <img src={src} alt="" className={className} />
+  return <AugmentIcon src={src} rarity={augment.rarity} tinted={augment.tinted} frame="ring" className={className} />
 }

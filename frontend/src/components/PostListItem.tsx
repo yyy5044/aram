@@ -69,7 +69,8 @@ export default function PostListItem({ post, compact = false }: { post: Item; co
                 rarity={a.rarity}
                 tinted={a.iconTinted}
                 alt={a.nameKo}
-                className="h-6 w-6 rounded-md border border-slate-700 bg-slate-800"
+                frame="ring"
+                className="h-6 w-6 rounded-md bg-slate-800"
               />
             ))}
           </div>

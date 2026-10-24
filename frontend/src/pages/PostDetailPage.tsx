@@ -94,7 +94,8 @@ export default function PostDetailPage() {
               id={a.id}
               nameKo={a.nameKo}
               imageUrl={a.iconUrl}
-              tint={a.iconTinted ? a.rarity : undefined}
+              rarity={a.rarity}
+              tinted={a.iconTinted}
             />
           ))}
         </div>

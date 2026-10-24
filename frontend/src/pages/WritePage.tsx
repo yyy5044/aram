@@ -213,7 +213,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
           onChange={change(setAugmentIds)}
           max={10}
           iconOf={(a) => a.iconUrl}
-          tintOf={(a) => (a.iconTinted ? a.rarity : undefined)}
+          augmentOf={(a) => ({ rarity: a.rarity, tinted: a.iconTinted })}
           placeholder="증강 검색…"
         />
         {fieldError('augmentIds')}

@@ -9,8 +9,9 @@ export type GridItem = {
   count: number
   /** 챔피언 초상화처럼 둥글게 보여줄지. */
   round?: boolean
-  /** 흰 증강 아이콘이라 이 등급 색을 입혀야 할 때. */
-  tint?: AugmentRarity
+  /** 증강 칸이면 등급. 게임 테두리를 두르고, tinted면 흰 아이콘에 등급 색을 입혀요. */
+  rarity?: AugmentRarity
+  tinted?: boolean
 }
 
 type Props = {
@@ -98,11 +99,18 @@ function Item({
             open ? 'border-amber-300 bg-slate-900' : 'border-transparent'
           }`}
         >
-          {item.image ? (
+          {item.image && item.rarity ? (
             <AugmentIcon
               src={item.image}
-              rarity={item.tint ?? 'SILVER'}
-              tinted={item.tint !== undefined}
+              rarity={item.rarity}
+              tinted={item.tinted}
+              frame="image"
+              className="mb-1.5 h-13 w-13 rounded-lg bg-slate-800"
+            />
+          ) : item.image ? (
+            <img
+              src={item.image}
+              alt=""
               className={`mb-1.5 h-13 w-13 bg-slate-800 ${item.round ? 'rounded-full' : 'rounded-lg'}`}
             />
           ) : (
