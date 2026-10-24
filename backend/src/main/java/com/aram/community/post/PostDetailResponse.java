@@ -8,6 +8,6 @@ import java.util.List;
 
 public record PostDetailResponse(long id, String title, @JsonRawValue String content, String gamePatch,
 		AuthorDto author, List<ChampionDto> champions, List<AugmentDto> augments, int likeCount, int commentCount,
-		boolean likedByMe, Instant createdAt, Instant updatedAt, boolean edited) {
+		boolean likedByMe, boolean scrappedByMe, Instant createdAt, Instant updatedAt, boolean edited) {
 
 }

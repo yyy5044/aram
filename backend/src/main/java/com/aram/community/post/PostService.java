@@ -43,11 +43,14 @@ public class PostService {
 
 	private final LikeLookup likeLookup;
 
+	private final ScrapLookup scrapLookup;
+
 	private final JsonMapper jsonMapper;
 
 	public PostService(PostRepository posts, ChampionRepository champions, AugmentRepository augments,
 			PatchRepository patches, PostContentValidator validator, ImagePostLinker imageLinker,
-			GameDataService gameData, LikeLookup likeLookup, JsonMapper jsonMapper) {
+			GameDataService gameData, LikeLookup likeLookup, ScrapLookup scrapLookup, JsonMapper jsonMapper) {
+		this.scrapLookup = scrapLookup;
 		this.posts = posts;
 		this.champions = champions;
 		this.augments = augments;
@@ -94,6 +97,7 @@ public class PostService {
 	public PostDetailResponse get(long postId, Long viewerId) {
 		Post post = find(postId);
 		boolean likedByMe = viewerId != null && likeLookup.isLiked(postId, viewerId);
+		boolean scrappedByMe = viewerId != null && scrapLookup.isScrapped(postId, viewerId);
 		return new PostDetailResponse(post.getId(), post.getTitle(), post.getContent(), post.getGamePatch(),
 				AuthorDto.of(post.getAuthor()),
 				post.getChampions()
@@ -102,7 +106,7 @@ public class PostService {
 					.map(gameData::toDto)
 					.toList(),
 				post.getAugments().stream().sorted(Comparator.comparing(Augment::getNameKo)).map(gameData::toDto).toList(),
-				post.getLikeCount(), post.getCommentCount(), likedByMe, post.getCreatedAt(), post.getUpdatedAt(),
+				post.getLikeCount(), post.getCommentCount(), likedByMe, scrappedByMe, post.getCreatedAt(), post.getUpdatedAt(),
 				post.isEdited());
 	}
 
