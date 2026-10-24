@@ -76,6 +76,15 @@ public class GameDataClient {
 		return versions;
 	}
 
+	/** CommunityDragon 자료 버전. 패치 중간에 자료가 고쳐지거나 늦게 올라와도 이 값이 바뀌어요. */
+	public String fetchCdragonVersion() {
+		String version = getTree(props.cdragonBaseUrl() + "/latest/content-metadata.json").path("version").asString("");
+		if (version.isBlank()) {
+			throw new IllegalStateException("CommunityDragon content-metadata has no version");
+		}
+		return version;
+	}
+
 	public List<ChampionData> fetchChampions(String ddragonVersion) {
 		JsonNode data = getTree(props.ddragonBaseUrl() + "/cdn/" + ddragonVersion + "/data/ko_KR/champion.json")
 			.path("data");

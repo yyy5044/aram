@@ -24,6 +24,8 @@ class GameDataSyncServiceTest extends IntegrationTest {
 
 	private static final String CHAMPIONS = "https://ddragon.leagueoflegends.com/cdn/16.21.1/data/ko_KR/champion.json";
 
+	private static final String CDRAGON_META = "https://raw.communitydragon.org/latest/content-metadata.json";
+
 	private static final String KIWI = "https://raw.communitydragon.org/latest/game/maps/modespecificdata/kiwi.bin.json";
 
 	private static final String STRINGS_KO = "https://raw.communitydragon.org/latest/game/ko_kr/data/menu/en_us/lol.stringtable.json";
@@ -68,8 +70,23 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		return new ClassPathResource("gamedata/" + name).getContentAsString(StandardCharsets.UTF_8);
 	}
 
-	private void expectFullSync(String kiwiFixture) throws IOException {
+	/** 6시간마다 하는 확인: 라이엇 패치 번호와 CommunityDragon 자료 버전. */
+	private void expectVersions(String metadataFixture) throws IOException {
 		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CDRAGON_META))
+			.andRespond(withSuccess(fixture(metadataFixture), MediaType.APPLICATION_JSON));
+	}
+
+	/** 버전 확인 뒤 무거운 자료(챔피언, 증강, 문자열 표)를 받아요. */
+	private void expectHeavyDownloads(String kiwiFixture) throws IOException {
+		server.expect(requestTo(CHAMPIONS))
+			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture(kiwiFixture), MediaType.APPLICATION_JSON));
+		expectStrings();
+	}
+
+	private void expectFullSync(String kiwiFixture) throws IOException {
+		expectVersions("content-metadata.json");
 		server.expect(requestTo(CHAMPIONS))
 			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture(kiwiFixture), MediaType.APPLICATION_JSON));
@@ -116,6 +133,43 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		assertThat(state().getCurrentGamePatch()).isEqualTo("26.21");
 		assertThat(state().getLastSyncedAt()).isNotNull();
 		assertThat(patchRepo.count()).isEqualTo(8);
+		assertThat(state().getCurrentCdragonVersion())
+			.isEqualTo("16.21.8298620+branch.releases-16-21.content.release");
+	}
+
+	@Test
+	void communityDragonUpdateOnSamePatchResyncs() throws IOException {
+		expectFullSync("kiwi.bin.json");
+		sync.sync();
+		server.verify();
+		server.reset();
+		// 라이엇 패치 번호는 그대로인데 CommunityDragon이 늦게 갱신된 경우예요.
+		expectVersions("content-metadata-newer.json");
+		expectHeavyDownloads("kiwi.bin.json");
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
+
+		server.verify();
+		assertThat(state().getCurrentCdragonVersion())
+			.isEqualTo("16.21.8312345+branch.releases-16-21.content.release");
+	}
+
+	@Test
+	void unreadableCommunityDragonVersionFallsBackToPatchNumber() throws IOException {
+		expectFullSync("kiwi.bin.json");
+		sync.sync();
+		server.verify();
+		server.reset();
+		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CDRAGON_META)).andRespond(withServerError());
+
+		// 버전 파일을 못 읽어도 동기화를 망가뜨리지 않고, 예전처럼 패치 번호만 봐요.
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UNCHANGED);
+
+		server.verify();
+		assertThat(state().getCurrentCdragonVersion())
+			.isEqualTo("16.21.8298620+branch.releases-16-21.content.release");
+		assertThat(state().getLastError()).isNull();
 	}
 
 	@Test
@@ -124,7 +178,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		sync.sync();
 		server.verify();
 		server.reset();
-		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		expectVersions("content-metadata.json");
 
 		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UNCHANGED);
 
@@ -149,7 +203,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at) values ('Keep', '남을 증강', 'x.png', true, now())");
 		jdbc.update("insert into champions (id, name_ko, image_file) values ('Ahri', '아리', 'Ahri.png')");
 		// 작은 자료에는 툴팁이 없어서 {{참조}} 2차 요청이 없고, 언어마다 한 번씩만 받아요.
-		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		expectVersions("content-metadata.json");
 		server.expect(requestTo(CHAMPIONS))
 			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi-small.bin.json"), MediaType.APPLICATION_JSON));
@@ -174,7 +228,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 	void championFailureDoesNotAdvanceVersion() throws IOException {
 		jdbc.update("update game_data_state set current_ddragon_version = '16.20.1', current_game_patch = '26.20' where id = 1");
 		jdbc.update("insert into champions (id, name_ko, image_file) values ('Ahri', '아리', 'Ahri.png')");
-		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		expectVersions("content-metadata.json");
 		server.expect(requestTo(CHAMPIONS)).andRespond(withServerError());
 
 		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.FAILED);
@@ -270,7 +324,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 	void englishStringsFailureFailsWholeSync() throws IOException {
 		jdbc.update("update game_data_state set current_ddragon_version = '16.20.1', current_game_patch = '26.20' where id = 1");
 		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at) values ('Keep', '남을 증강', 'x.png', true, now())");
-		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		expectVersions("content-metadata.json");
 		server.expect(requestTo(CHAMPIONS))
 			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi.bin.json"), MediaType.APPLICATION_JSON));
@@ -329,7 +383,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 
 	@Test
 	void clientListFailureKeepsStringTableNames() throws IOException {
-		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		expectVersions("content-metadata.json");
 		server.expect(requestTo(CHAMPIONS))
 			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi.bin.json"), MediaType.APPLICATION_JSON));

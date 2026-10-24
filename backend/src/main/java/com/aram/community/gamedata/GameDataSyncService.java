@@ -7,6 +7,7 @@ import com.aram.community.gamedata.text.AugmentLocale;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -62,11 +63,15 @@ public class GameDataSyncService {
 		try {
 			List<String> versions = client.fetchVersions();
 			String latest = versions.get(0);
+			Optional<String> cdragonVersion = fetchCdragonVersion();
 			tx.executeWithoutResult(s -> savePatches(versions));
 
 			GameDataState state = loadState();
-			boolean needsFull = !latest.equals(state.getCurrentDdragonVersion()) || champions.count() == 0
-					|| augments.count() == 0;
+			// CommunityDragon은 라이엇보다 늦게 갱신되거나 패치 중간에 자료를 고칠 때가 있어서, 그 버전이 바뀌어도 다시 받아요.
+			boolean cdragonChanged = cdragonVersion.isPresent()
+					&& !cdragonVersion.get().equals(state.getCurrentCdragonVersion());
+			boolean needsFull = !latest.equals(state.getCurrentDdragonVersion()) || cdragonChanged
+					|| champions.count() == 0 || augments.count() == 0;
 			if (!needsFull) {
 				tx.executeWithoutResult(s -> updateState(st -> st.markChecked(Instant.now())));
 				return SyncResult.UNCHANGED;
@@ -85,7 +90,8 @@ public class GameDataSyncService {
 			tx.executeWithoutResult(s -> updateState(st -> {
 				Instant now = Instant.now();
 				st.markChecked(now);
-				st.markSynced(latest, GamePatches.toGamePatch(latest), now);
+				st.markSynced(latest, GamePatches.toGamePatch(latest),
+						cdragonVersion.orElse(st.getCurrentCdragonVersion()), now);
 			}));
 			int unresolved = augmentData.stream().mapToInt(AugmentData::unresolvedCount).sum();
 			log.info("Game data synced to {} ({} champions, {} augments, {} unresolved placeholders)", latest,
@@ -100,6 +106,17 @@ public class GameDataSyncService {
 				st.markFailed(message);
 			}));
 			return SyncResult.FAILED;
+		}
+	}
+
+	/** 버전 파일을 못 읽어도 동기화를 멈추지 않고, 예전처럼 라이엇 패치 번호만 보게 해요. */
+	private Optional<String> fetchCdragonVersion() {
+		try {
+			return Optional.of(client.fetchCdragonVersion());
+		}
+		catch (RuntimeException e) {
+			log.warn("CommunityDragon version unavailable, checking the patch number only: {}", e.toString());
+			return Optional.empty();
 		}
 	}
 

@@ -22,6 +22,10 @@ public class GameDataState {
 	@Column(name = "current_game_patch", length = 10)
 	private String currentGamePatch;
 
+	/** 마지막으로 받은 CommunityDragon 자료 버전(content-metadata.json의 version). */
+	@Column(name = "current_cdragon_version", length = 120)
+	private String currentCdragonVersion;
+
 	@Column(name = "last_checked_at")
 	private Instant lastCheckedAt;
 
@@ -44,9 +48,10 @@ public class GameDataState {
 		this.lastCheckedAt = now;
 	}
 
-	public void markSynced(String ddragonVersion, String gamePatch, Instant now) {
+	public void markSynced(String ddragonVersion, String gamePatch, String cdragonVersion, Instant now) {
 		this.currentDdragonVersion = ddragonVersion;
 		this.currentGamePatch = gamePatch;
+		this.currentCdragonVersion = cdragonVersion;
 		this.lastSyncedAt = now;
 		this.lastError = null;
 	}
@@ -65,6 +70,10 @@ public class GameDataState {
 
 	public String getCurrentGamePatch() {
 		return currentGamePatch;
+	}
+
+	public String getCurrentCdragonVersion() {
+		return currentCdragonVersion;
 	}
 
 	public Instant getLastCheckedAt() {
