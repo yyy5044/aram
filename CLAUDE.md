@@ -22,7 +22,7 @@
 | `backend/` | Spring Boot 4.1, Java 21, JPA(Hibernate 7), Flyway, PostgreSQL 18, Spring Security OAuth2(디스코드) |
 | `frontend/` | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Tiptap 3 |
 
-백엔드는 기능별 패키지(`auth`, `user`, `gamedata`, `post`, `image`, `comment`, `like`, `common`)로 나뉜다. 프론트엔드는 `api/`, `components/`, `pages/`, `editor/`, `lib/`, `test/`.
+백엔드는 기능별 패키지(`auth`, `user`, `gamedata`, `post`, `image`, `comment`, `like`, `scrap`, `profile`, `common`)로 나뉜다. 프론트엔드는 `api/`, `components/`(프로필 부품은 `profile/`, 증강·챔피언 탭 부품은 `tags/`), `pages/`, `editor/`, `lib/`, `test/`.
 
 ## 실행과 테스트
 
@@ -39,7 +39,7 @@ cd frontend && npm test && npm run build && npm run lint
 
 ## 규칙
 
-- DB 변경은 `backend/src/main/resources/db/migration`에 새 Flyway 파일(`V6__...`부터)로만 한다. Hibernate는 `ddl-auto: validate`.
+- DB 변경은 `backend/src/main/resources/db/migration`에 새 Flyway 파일(`V8__...`부터)로만 한다. Hibernate는 `ddl-auto: validate`.
 - 본문 허용 서식은 서버 `post/PostContentValidator.java`와 화면 `editor/extensions.ts`가 같은 목록을 지킨다. 하나를 바꾸면 다른 쪽과 `editor/extensions.test.ts`도 바꾼다.
 - 오류 응답은 `{ code, message, fieldErrors }`, 메시지는 화면에 그대로 보여줄 한국어 문장. 코드는 `common/ErrorCode.java`.
 - 모든 쓰기 API는 서버에서 권한을 검사한다(`auth/CurrentUser.requireWithNickname` + 글쓴이/관리자 확인).
@@ -51,7 +51,7 @@ cd frontend && npm test && npm run build && npm run lint
 - Spring Boot 4: JSON은 **Jackson 3**(`tools.jackson.*`, `asString()`, `stringValue()`), 어노테이션은 그대로 `com.fasterxml.jackson.annotation`. `RestClient.Builder` 빈은 자동 등록되지 않는다(`RestClient.builder()` 사용). MockMvc 자동 설정은 `org.springframework.boot.webmvc.test.autoconfigure`.
 - 테스트 설정 `src/test/resources/application-test.yml`은 개발자의 `backend/.env` 값이 섞이지 않게 개발 로그인을 끈다.
 - 프론트엔드 테스트 렌더(`test/render.tsx`)는 실제 앱처럼 StrictMode로 감싼다. StrictMode에서만 드러나는 버그(효과 두 번 실행, 편집기 재생성)가 실제로 있었다.
-- 게임 데이터는 서버가 6시간마다 Data Dragon `versions.json`을 확인하고, 패치가 바뀌었을 때만 챔피언(`ko_KR/champion.json`)과 증강(CommunityDragon `kiwi.bin.json` + 한국어 문자열 표)을 다시 받는다. 패치 표기는 `16.21.1` → `26.21`.
+- 게임 데이터는 서버가 6시간마다 Data Dragon `versions.json`을 확인하고, 패치가 바뀌었을 때만 챔피언(`ko_KR/champion.json`)과 증강(CommunityDragon `kiwi.bin.json` + 한국어 문자열 표)을 다시 받는다. 패치 표기는 `16.21.1` → `26.21`. 증강 등급은 `kiwi.bin.json`의 `rarity`(없음·0 실버, 1 골드, 2 프리즘)에서 오고, `Enabled: false`인 증강은 받지 않는다. 증강 데이터 컬럼을 더했을 때는 마이그레이션에서 `game_data_state.current_ddragon_version`을 비워 시작 시 전체 재동기화를 유도한다(V7 참고).
 
 ## 환경 주의사항 (이 컴퓨터)
 
@@ -67,6 +67,7 @@ cd frontend && npm test && npm run build && npm run lint
 **완료**
 - 2026-10-24: 디스코드 앱 등록(앱 이름 `aram`, Client ID `1563452857179578451`), 로컬에서 실제 디스코드 로그인 성공. 관리자는 사용자 "하포"(디스코드 ID `472407196144107529`). 디스코드 개발자 포털 Redirects에는 `http://localhost:5173/login/oauth2/code/discord`만 등록돼 있다.
 - 2026-10-24: 프로필 페이지(`/users/:userId`, `/settings/profile`) — 활동 잔디(한국 시간, 53주/좁은 화면 26주), 통계, 쓴 글·쓴 댓글·스크랩 탭, 공개/비공개, 직접 올린 프로필 사진, 글 스크랩. 설계 `docs/superpowers/specs/2026-10-24-profile-design.md`, 계획 `docs/superpowers/plans/2026-10-24-profile.md`.
+- 2026-10-24: 증강·챔피언 탭(`/augments`, `/champions`) — 위쪽 메뉴 탭, 증강은 프리즘·골드·실버 묶음(접힘), 이름 검색과 가나다순/글 많은 순, 칸을 누르면 그 줄 아래로 글 목록(5개씩 더 보기)이 펼쳐지고 `?open=`에 남는다. 챔피언에는 자주 함께 쓰는 증강. API `GET /api/tag-counts`, `GET /api/champions/{id}/top-augments`, `GET /api/posts?size=`. 설계 `docs/superpowers/specs/2026-10-24-tag-browse-design.md`, 계획 `docs/superpowers/plans/2026-10-24-tag-browse.md`.
 
 **다음 단계**
 1. 배포: AWS Lightsail(약 2GB, 월 2만원 이내) + Docker Compose, 이미지 저장소 S3 구현(`image/ImageStorage`), 세션을 DB에 저장(지금은 메모리라 서버 재시작 시 모두 로그아웃), HTTPS, DB 백업, AWS 예산 알림. 배포 주소가 정해지면 디스코드 Redirects에 운영 주소를 추가하고, Vite 프록시 대신 리버스 프록시가 원래 Host를 넘기도록 한다(돌아올 주소가 Host로 만들어진다).
