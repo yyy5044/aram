@@ -30,8 +30,16 @@ export const legDay: Augment = {
   nameKo: '하체 운동의 날',
   iconUrl: 'https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/legday_small.png',
   active: true,
+  rarity: 'SILVER',
 }
-export const oldAugment: Augment = { id: 'OLD', nameKo: '옛 증강', iconUrl: 'https://example.test/old.png', active: false }
+export const oldAugment: Augment = { id: 'OLD', nameKo: '옛 증강', iconUrl: 'https://example.test/old.png', active: false, rarity: 'GOLD' }
+export const prismAugment: Augment = {
+  id: 'ARAM_GiantSlayer',
+  nameKo: '거인 학살자',
+  iconUrl: 'https://example.test/gs.png',
+  active: true,
+  rarity: 'PRISMATIC',
+}
 
 export const meYangho: Me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호', profilePublic: true, profileImageId: null, discordAvatarUrl: null }
 export const meMinsu: Me = { id: 2, nickname: '민수', avatarUrl: null, admin: false, suggestedNickname: '민수', profilePublic: true, profileImageId: null, discordAvatarUrl: null }

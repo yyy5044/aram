@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { apiFetch } from './client'
 import type { Page, PostDetail, PostListItem, PostRequest } from './types'
 
@@ -19,6 +19,25 @@ export function usePostList(params: PostListParams) {
     queryKey: ['posts', 'list', params],
     queryFn: () => apiFetch<Page<PostListItem>>(`/api/posts?${query}`),
     placeholderData: keepPreviousData,
+  })
+}
+
+export const TAG_POSTS_SIZE = 5
+
+export type TagPostsParams = { champion?: string; augment?: string; sort: PostSort }
+
+/** 태그 하나의 글을 5개씩 이어서 불러와요(펼침 영역용). */
+export function useTagPosts(params: TagPostsParams) {
+  return useInfiniteQuery({
+    queryKey: ['posts', 'tag', params],
+    queryFn: ({ pageParam }) => {
+      const query = new URLSearchParams({ sort: params.sort, page: String(pageParam), size: String(TAG_POSTS_SIZE) })
+      if (params.champion) query.set('champion', params.champion)
+      if (params.augment) query.set('augment', params.augment)
+      return apiFetch<Page<PostListItem>>(`/api/posts?${query}`)
+    },
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
   })
 }
 

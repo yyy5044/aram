@@ -25,12 +25,23 @@ export type Champion = {
   imageUrl: string | null
 }
 
+export type AugmentRarity = 'PRISMATIC' | 'GOLD' | 'SILVER'
+
 export type Augment = {
   id: string
   nameKo: string
   iconUrl: string
   active: boolean
+  rarity: AugmentRarity
 }
+
+/** 태그 id → 글 수. 글이 있는 태그만 들어 있어요. */
+export type TagCounts = {
+  champions: Record<string, number>
+  augments: Record<string, number>
+}
+
+export type TopAugment = { augment: Augment; postCount: number }
 
 export type Patches = {
   current: string | null
