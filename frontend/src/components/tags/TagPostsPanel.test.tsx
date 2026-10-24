@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ComponentProps } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { legDay, listItem, page } from '../../test/fixtures'
 import { json, mockApi, type MockRequest, type MockRoutes } from '../../test/mockApi'
@@ -22,7 +23,12 @@ function postsOf(total: number) {
   }
 }
 
-function setup(total: number, kind: 'augment' | 'champion' = 'augment', extra: MockRoutes = {}) {
+function setup(
+  total: number,
+  kind: 'augment' | 'champion' = 'augment',
+  extra: MockRoutes = {},
+  props: Partial<ComponentProps<typeof TagPostsPanel>> = {},
+) {
   const onClose = vi.fn()
   const api = mockApi({ 'GET /api/posts': postsOf(total), ...extra })
   renderWithProviders(
@@ -32,6 +38,7 @@ function setup(total: number, kind: 'augment' | 'champion' = 'augment', extra: M
       title={kind === 'augment' ? '하체 운동의 날' : '아무무'}
       subtitle={`게시글 ${total}개`}
       onClose={onClose}
+      {...props}
     />,
   )
   return { api, onClose }
@@ -95,6 +102,29 @@ describe('TagPostsPanel', () => {
     const { onClose } = setup(0)
     await userEvent.click(await screen.findByRole('button', { name: '닫기' }))
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('renders children under the title row and sort pills in the posts heading', async () => {
+    setup(7, 'augment', {}, { children: <p>카드 자리</p>, postsHeading: '이 증강 글 7개', compact: true })
+    const region = await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
+    expect(within(region).getByText('카드 자리')).toBeInTheDocument()
+    const heading = within(region).getByRole('heading', { name: '이 증강 글 7개' })
+    expect(await within(heading.parentElement!).findByRole('button', { name: '추천순' })).toBeInTheDocument()
+    // 제목 줄(h2가 있는 줄)에는 정렬 버튼이 없어요.
+    const titleRow = within(region).getByRole('heading', { name: '하체 운동의 날' }).parentElement!
+    expect(within(titleRow).queryByRole('button', { name: '추천순' })).not.toBeInTheDocument()
+    // 한 줄 목록이라 태그 아이콘이 없어요.
+    await within(region).findAllByRole('listitem')
+    expect(within(region).queryByRole('img')).not.toBeInTheDocument()
+  })
+
+  it('without postsHeading the sort pills stay in the title row (champion panel unchanged)', async () => {
+    setup(1, 'champion', { 'GET /api/champions/Amumu/top-augments': () => json([]) })
+    const region = await screen.findByRole('region', { name: '아무무 게시글' })
+    await within(region).findByText('latest 글 1')
+    const titleRow = within(region).getByRole('heading', { name: '아무무' }).parentElement!
+    expect(within(titleRow).getByRole('button', { name: '추천순' })).toBeInTheDocument()
+    expect(within(region).queryByRole('heading', { name: /이 증강 글/ })).not.toBeInTheDocument()
   })
 
   it('champion panel shows top augments linking to augment tab', async () => {

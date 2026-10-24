@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ApiError } from '../../api/client'
 import { useTagPosts, type PostSort } from '../../api/posts'
 import PostListItem from '../PostListItem'
@@ -11,10 +11,16 @@ type Props = {
   title: string
   subtitle: string
   onClose: () => void
+  /** 제목 줄 아래, 글 목록 위에 넣을 내용(증강 카드). */
+  children?: ReactNode
+  /** 있으면 글 목록 위에 이 제목과 정렬 버튼을 두고, 제목 줄에서는 정렬 버튼을 빼요. */
+  postsHeading?: string
+  /** 글 목록을 한 줄짜리로 보여줘요. */
+  compact?: boolean
 }
 
 /** 칸 아래로 펼쳐지는 글 목록. 5개씩 보여주고 「더 보기」로 이어 붙여요. */
-export default function TagPostsPanel({ kind, id, title, subtitle, onClose }: Props) {
+export default function TagPostsPanel({ kind, id, title, subtitle, onClose, children, postsHeading, compact = false }: Props) {
   const [sort, setSort] = useState<PostSort>('latest')
   const { data, error, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useTagPosts({
     sort,
@@ -23,6 +29,7 @@ export default function TagPostsPanel({ kind, id, title, subtitle, onClose }: Pr
   })
   const posts = data?.pages.flatMap((p) => p.items) ?? []
   const total = data?.pages[0]?.totalItems ?? 0
+  const pills = total > 0 && <SortPills value={sort} onChange={setSort} />
 
   return (
     <section
@@ -34,7 +41,7 @@ export default function TagPostsPanel({ kind, id, title, subtitle, onClose }: Pr
         <h2 className="font-bold">{title}</h2>
         <span className="text-xs text-slate-400">{subtitle}</span>
         <span className="flex-1" />
-        {total > 0 && <SortPills value={sort} onChange={setSort} />}
+        {!postsHeading && pills}
         <button
           type="button"
           aria-label="닫기"
@@ -44,7 +51,14 @@ export default function TagPostsPanel({ kind, id, title, subtitle, onClose }: Pr
           ✕
         </button>
       </div>
+      {children}
       {kind === 'champion' && <TopAugments championId={id} />}
+      {postsHeading && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-3">
+          <h3 className="text-sm font-bold">{postsHeading}</h3>
+          {pills}
+        </div>
+      )}
       {error && (
         <p className="py-6 text-center text-rose-400">
           {error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요'}
@@ -55,9 +69,9 @@ export default function TagPostsPanel({ kind, id, title, subtitle, onClose }: Pr
         <p className="py-6 text-center text-slate-400">아직 이 태그가 붙은 글이 없어요</p>
       )}
       {posts.length > 0 && (
-        <ul>
+        <ul className={compact ? 'overflow-hidden rounded-xl border border-slate-800' : undefined}>
           {posts.map((post) => (
-            <PostListItem key={post.id} post={post} />
+            <PostListItem key={post.id} post={post} compact={compact} />
           ))}
         </ul>
       )}

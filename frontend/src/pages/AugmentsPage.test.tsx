@@ -60,6 +60,28 @@ describe('AugmentsPage', () => {
     expect(screen.getByText('검색 결과가 없어요')).toBeInTheDocument()
   })
 
+  it('opening an augment shows its cards above the posts', async () => {
+    setup('/augments', {
+      'GET /api/augments/ARAM_LegDay': () =>
+        json({
+          id: 'ARAM_LegDay',
+          rarity: 'SILVER',
+          iconUrl: 'https://example.test/l.png',
+          original: { locale: 'en', name: 'Leg Day', description: 'Gain <speed>20% Move Speed</speed>.' },
+          translation: { locale: 'ko', name: '하체 운동의 날', description: '<speed>이동 속도가 20%</speed> 오릅니다.' },
+        }),
+    })
+    await userEvent.click(await screen.findByRole('button', { name: /^실버/ }))
+    await userEvent.click(screen.getByRole('button', { name: '하체 운동의 날' }))
+    const region = await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
+    expect(await within(region).findByRole('article', { name: 'Leg Day' })).toBeInTheDocument()
+    expect(within(region).getByRole('article', { name: '하체 운동의 날' })).toBeInTheDocument()
+    const cards = within(region).getByRole('article', { name: 'Leg Day' })
+    const heading = within(region).getByRole('heading', { name: '이 증강 글 3개' })
+    // 카드가 글 목록 제목보다 먼저 나와요.
+    expect(cards.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('opening an item writes ?open= and shows its panel', async () => {
     const { router } = setup()
     await userEvent.click(await screen.findByRole('button', { name: /^실버/ }))

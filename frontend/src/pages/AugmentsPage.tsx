@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAugments, useTagCounts } from '../api/gamedata'
 import type { Augment, AugmentRarity } from '../api/types'
+import AugmentCards from '../components/augment/AugmentCards'
 import TagGrid from '../components/tags/TagGrid'
 import TagPageStatus from '../components/tags/TagPageStatus'
 import TagPostsPanel from '../components/tags/TagPostsPanel'
@@ -112,7 +113,11 @@ export default function AugmentsPage() {
                       title={a.nameKo}
                       subtitle={`${g.label} 증강 · 게시글 ${countOf(a)}개`}
                       onClose={() => closePanel(g.rarity)}
-                    />
+                      postsHeading={`이 증강 글 ${countOf(a)}개`}
+                      compact
+                    >
+                      <AugmentCards augmentId={id} />
+                    </TagPostsPanel>
                   )
                 }}
               />
