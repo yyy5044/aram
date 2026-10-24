@@ -19,6 +19,9 @@ export type Heatmap = {
 
 const DAY_MS = 86_400_000
 
+/** 월 이름("10월")은 칸 3개 정도 너비라, 이보다 가까운 이름은 겹쳐요. */
+const MIN_LABEL_GAP = 3
+
 /** 0개 → 0, 1개 → 1, 2개 → 2, 3~4개 → 3, 5개 이상 → 4 */
 export function levelOf(total: number): HeatLevel {
   if (total <= 0) return 0
@@ -80,6 +83,10 @@ export function buildHeatmap(activity: Activity, weeks: 53 | 26): Heatmap {
     const source = firstOfMonth ?? (index === 0 ? column[0] : undefined)
     if (source) months.push({ column: index, label: `${Number(source.date.slice(5, 7))}월` })
   })
+  // 첫 열의 월 이름은 다음 달이 3열 안에 시작하면 글자가 겹치니 빼요(GitHub와 같은 규칙).
+  if (months.length >= 2 && months[0].column === 0 && months[1].column < MIN_LABEL_GAP) {
+    months.shift()
+  }
 
   const activeDays = activity.days.filter((d) => {
     const ms = parse(d.date)

@@ -51,7 +51,22 @@ describe('buildHeatmap', () => {
     const { columns, months } = buildHeatmap({ ...year, days: [] }, 53)
     const novColumn = columns.findIndex((c) => c.some((cell) => cell.date === '2025-11-01'))
     expect(months).toContainEqual({ column: novColumn, label: '11월' })
-    expect(months[0]).toEqual({ column: 0, label: '10월' })
     expect(new Set(months.map((m) => m.column)).size).toBe(months.length)
+  })
+
+  it('drops the first-column label when the next month starts right after, so labels do not overlap', () => {
+    // 2025-11-01 falls in column 1, so "10월" at column 0 would collide with "11월"
+    const { months } = buildHeatmap({ ...year, days: [] }, 53)
+    expect(months[0]).toEqual({ column: 1, label: '11월' })
+    for (let i = 1; i < months.length; i++) {
+      expect(months[i].column - months[i - 1].column).toBeGreaterThanOrEqual(3)
+    }
+  })
+
+  it('keeps the first-column label when the next month is far enough away', () => {
+    // from 2025-10-05: 2025-11-01 falls in column 3
+    const { months } = buildHeatmap({ from: '2025-10-05', to: '2026-10-10', days: [] }, 53)
+    expect(months[0]).toEqual({ column: 0, label: '10월' })
+    expect(months[1]).toEqual({ column: 3, label: '11월' })
   })
 })
