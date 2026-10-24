@@ -52,6 +52,8 @@ cd frontend && npm test && npm run build && npm run lint
 - 테스트 설정 `src/test/resources/application-test.yml`은 개발자의 `backend/.env` 값이 섞이지 않게 개발 로그인을 끈다.
 - 프론트엔드 테스트 렌더(`test/render.tsx`)는 실제 앱처럼 StrictMode로 감싼다. StrictMode에서만 드러나는 버그(효과 두 번 실행, 편집기 재생성)가 실제로 있었다.
 - 게임 데이터는 서버가 6시간마다 Data Dragon `versions.json`을 확인하고, 패치가 바뀌었을 때만 챔피언(`ko_KR/champion.json`)과 증강(CommunityDragon `kiwi.bin.json` + 한국어 문자열 표)을 다시 받는다. 패치 표기는 `16.21.1` → `26.21`. 증강 등급은 `kiwi.bin.json`의 `rarity`(없음·0 실버, 1 골드, 2 프리즘)에서 오고, `Enabled: false`인 증강은 받지 않는다. 증강 데이터 컬럼을 더했을 때는 마이그레이션에서 `game_data_state.current_ddragon_version`을 비워 시작 시 전체 재동기화를 유도한다(V7 참고).
+- 증강 설명은 동기화 때 언어별(영어·한국어)로 문자열 표를 받아 `gamedata/text/`에서 자리표시자(`@TotalShield@` 등)를 수치 표로 계산해 완성된 글로 `augment_texts`에 저장한다(V8). 언어를 더하려면 `AugmentLocale`에 항목을 추가한다. 못 채운 자리표시자는 그대로 남고 동기화 로그에 수가 찍힌다(지금 199개 증강에 언어당 20개쯤: 게임 중 누적치, 해시 이름 계산식, 스탯 번호 8·9·34 등). 색 표식 허용 목록은 서버 `AugmentDescriptionBuilder.COLOR_TAGS`와 화면 `lib/augmentDescription.ts`가 같아야 한다.
+- 화면 언어 설정(`lib/language.ts`, 머리말 드롭다운, localStorage `lang`)은 지금 증강 카드의 번역 언어만 바꾼다. 화면 문구 번역(i18n)은 아직 없다.
 
 ## 환경 주의사항 (이 컴퓨터)
 
@@ -67,6 +69,7 @@ cd frontend && npm test && npm run build && npm run lint
 **완료**
 - 2026-10-24: 디스코드 앱 등록(앱 이름 `aram`, Client ID `1563452857179578451`), 로컬에서 실제 디스코드 로그인 성공. 관리자는 사용자 "하포"(디스코드 ID `472407196144107529`). 디스코드 개발자 포털 Redirects에는 `http://localhost:5173/login/oauth2/code/discord`만 등록돼 있다.
 - 2026-10-24: 프로필 페이지(`/users/:userId`, `/settings/profile`) — 활동 잔디(한국 시간, 53주/좁은 화면 26주), 통계, 쓴 글·쓴 댓글·스크랩 탭, 공개/비공개, 직접 올린 프로필 사진, 글 스크랩. 설계 `docs/superpowers/specs/2026-10-24-profile-design.md`, 계획 `docs/superpowers/plans/2026-10-24-profile.md`.
+- 2026-10-24: 증강 카드 — 증강 탭에서 증강을 누르면 게임 카드 틀(CommunityDragon 그림)로 영어 원문 카드와 선택 언어 카드가 나란히 나오고(같은 언어면 한 장), 수치가 채워진 긴 설명에 게임 색 표식을 입힌다. 마우스를 올리면 복사 버튼, 머리말에 언어 설정(한국어·English), 글 목록은 한 줄짜리. API `GET /api/augments/{id}?lang=`. 설계 `docs/superpowers/specs/2026-10-24-augment-card-design.md`, 계획 `docs/superpowers/plans/2026-10-24-augment-card.md`.
 - 2026-10-24: 증강·챔피언 탭(`/augments`, `/champions`) — 위쪽 메뉴 탭, 증강은 프리즘·골드·실버 묶음(접힘), 이름 검색과 가나다순/글 많은 순, 칸을 누르면 그 줄 아래로 글 목록(5개씩 더 보기)이 펼쳐지고 `?open=`에 남는다. 챔피언에는 자주 함께 쓰는 증강. API `GET /api/tag-counts`, `GET /api/champions/{id}/top-augments`, `GET /api/posts?size=`. 설계 `docs/superpowers/specs/2026-10-24-tag-browse-design.md`, 계획 `docs/superpowers/plans/2026-10-24-tag-browse.md`.
 
 **다음 단계**
@@ -94,6 +97,12 @@ cd frontend && npm test && npm run build && npm run lint
 - 새 파일은 LF, 예전 파일은 CRLF로 섞여 있다(저장소 안은 모두 LF). `.gitattributes`로 통일할 수 있다.
 
 **프로필 검토에서 미뤄둔 작은 문제**
+**증강 카드에서 미뤄둔 작은 문제**
+- 복사 버튼은 보안 컨텍스트(https 또는 localhost)에서만 동작한다. 그 밖에서는 "복사하지 못했어요"가 뜬다(드래그 복사는 된다).
+- 스킬 증강의 `{{SpellName}}`은 챔피언마다 달라서 `[스킬]`/`[Ability]`로 보인다.
+- 못 채운 자리표시자(언어당 20개쯤)는 `@이름@` 그대로 보인다. 스탯 번호 8·9·34의 뜻과 `BuffCounter…`, `AbilityResource…` 종류를 알아내면 줄일 수 있다.
+- 영어 이름이나 툴팁이 없는 증강은 카드 자리에 "아직 설명이 없어요"가 보인다(지금 자료에는 없음).
+
 - 같은 이미지를 두 탭에서 동시에 "프로필 사진으로 저장"과 "본문에 넣기"를 하면 둘 다 통과할 수 있다(확인 후 저장 사이 경쟁). 그 글을 지우면 프로필 사진도 사라진다. 이미지 행 잠금이나 글 삭제 시 프로필 사진은 연결만 끊기로 막을 수 있다.
 - `UserService.saveCheckingNickname`이 모든 DB 제약 위반을 "이미 쓰고 있는 닉네임이에요"로 바꾼다. 저장 직전에 고른 사진이 정리 작업으로 지워지면 엉뚱한 문구가 나온다.
 - `ScrapButton`도 `LikeButton`처럼 처음 값만 써서, 글을 다시 불러와도 바뀐 스크랩 상태가 반영되지 않는다.
