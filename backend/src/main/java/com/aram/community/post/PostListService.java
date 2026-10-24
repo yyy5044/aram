@@ -39,15 +39,18 @@ public class PostListService {
 		this.gameData = gameData;
 	}
 
-	public PageResponse<PostListItem> list(String sort, int page, String championId, String augmentId) {
+	public PageResponse<PostListItem> list(String sort, int page, int size, String championId, String augmentId) {
 		Sort order = switch (sort) {
 			case "latest" -> LATEST;
 			case "likes" -> LIKES;
 			default -> throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("sort", "정렬은 latest 또는 likes만 쓸 수 있어요"));
 		};
 		requireValidPage(page);
+		if (size < 1 || size > PAGE_SIZE) {
+			throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("size", "한 번에 1~20개까지 볼 수 있어요"));
+		}
 		return toPage(posts.search(blankToNull(championId), blankToNull(augmentId),
-				PageRequest.of(page - 1, PAGE_SIZE, order)));
+				PageRequest.of(page - 1, size, order)));
 	}
 
 	/** 이 사용자가 쓴 글, 최신순. */

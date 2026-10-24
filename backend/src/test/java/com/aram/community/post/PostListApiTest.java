@@ -70,6 +70,27 @@ class PostListApiTest extends IntegrationTest {
 	}
 
 	@Test
+	void sizeLimitsPage() throws Exception {
+		for (int i = 0; i < 7; i++) {
+			insertPost("글 " + i, i, 0, 0);
+		}
+		mockMvc.perform(get("/api/posts?size=5"))
+			.andExpect(jsonPath("$.items.length()").value(5))
+			.andExpect(jsonPath("$.size").value(5))
+			.andExpect(jsonPath("$.totalPages").value(2));
+		mockMvc.perform(get("/api/posts?size=5&page=2")).andExpect(jsonPath("$.items.length()").value(2));
+	}
+
+	@Test
+	void sizeOutOfRangeIs400() throws Exception {
+		for (String size : new String[] { "0", "21" }) {
+			mockMvc.perform(get("/api/posts?size=" + size))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.fieldErrors.size").value("한 번에 1~20개까지 볼 수 있어요"));
+		}
+	}
+
+	@Test
 	void paginatesTwentyPerPage() throws Exception {
 		for (int i = 0; i < 21; i++) {
 			insertPost("글 " + i, i, 0, 0);

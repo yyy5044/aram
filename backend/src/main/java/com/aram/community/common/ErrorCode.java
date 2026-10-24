@@ -13,6 +13,7 @@ public enum ErrorCode {
 	NICKNAME_TAKEN(409, "이미 쓰고 있는 닉네임이에요"),
 	NOT_FOUND(404, "찾을 수 없어요"),
 	USER_NOT_FOUND(404, "사용자를 찾을 수 없어요"),
+	CHAMPION_NOT_FOUND(404, "챔피언을 찾을 수 없어요"),
 	PROFILE_PRIVATE(403, "비공개 프로필이에요"),
 	IMAGE_TOO_LARGE(413, "이미지는 10MB 이하만 올릴 수 있어요"),
 	UNSUPPORTED_IMAGE(400, "jpg, png, webp, gif 이미지만 올릴 수 있어요"),
