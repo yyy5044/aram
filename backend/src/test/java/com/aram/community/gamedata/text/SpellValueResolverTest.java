@@ -190,6 +190,18 @@ class SpellValueResolverTest {
 	}
 
 	@Test
+	void findsCalculationsAndValuesStoredUnderHashedNames() {
+		// 라이엇 자료는 이름을 모르는 계산식·수치를 소문자 이름의 FNV-1a 32비트 해시({4b11fb1c})로 내보내요.
+		SpellValues v = spell("{\"DataValues\":[{\"name\":\"{0e9b0e0e}\",\"values\":[2,2,2,2,2,2,2],\"__type\":\"SpellDataValue\"}],"
+				+ "\"mSpellCalculations\":{"
+				+ "\"{4b11fb1c}\":{\"mFormulaParts\":[{\"mStartValue\":15.0,\"mEndValue\":10.0,\"__type\":\"ByCharLevelInterpolationCalculationPart\"}],\"__type\":\"GameCalculation\"},"
+				+ "\"{a21a0bfc}\":{\"mFormulaParts\":[{\"mNumber\":0.4,\"__type\":\"NumberCalculationPart\"}],\"mDisplayAsPercent\":true,\"__type\":\"GameCalculation\"}}}");
+		assertThat(ko.resolve("Calc_Cooldown", v)).contains("15~10");
+		assertThat(ko.resolve("Calc_OnHit_Efficacy", v)).contains("40%");
+		assertThat(SpellValues.hashedName("Calc_Cooldown")).isEqualTo("{4b11fb1c}");
+	}
+
+	@Test
 	void formatsNumbers() {
 		assertThat(SpellValueResolver.formatNumber(150)).isEqualTo("150");
 		assertThat(SpellValueResolver.formatNumber(4.5)).isEqualTo("4.5");

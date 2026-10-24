@@ -1,5 +1,6 @@
 package com.aram.community.gamedata.text;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,12 +43,31 @@ public final class SpellValues {
 		return new SpellValues(dataValues, calculations);
 	}
 
+	/** 이름으로 찾고, 없으면 해시 이름({4b11fb1c})으로 한 번 더 찾아요. */
 	public Optional<List<Double>> dataValue(String name) {
-		return Optional.ofNullable(dataValues.get(name.toLowerCase(Locale.ROOT)));
+		return Optional.ofNullable(lookup(dataValues, name));
 	}
 
 	public Optional<JsonNode> calculation(String name) {
-		return Optional.ofNullable(calculations.get(name.toLowerCase(Locale.ROOT)));
+		return Optional.ofNullable(lookup(calculations, name));
+	}
+
+	private static <T> T lookup(Map<String, T> map, String name) {
+		T found = map.get(name.toLowerCase(Locale.ROOT));
+		return found != null ? found : map.get(hashedName(name));
+	}
+
+	/**
+	 * 라이엇 자료는 이름을 모르는 계산식·수치를 소문자 이름의 FNV-1a 32비트 해시로 내보내요(`{4b11fb1c}`).
+	 * 문자열 표의 해시(XXH3, {@link StringTableKeys})와는 다른 방식이에요.
+	 */
+	public static String hashedName(String name) {
+		int hash = 0x811c9dc5;
+		for (byte b : name.toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8)) {
+			hash ^= (b & 0xff);
+			hash *= 0x01000193;
+		}
+		return String.format("{%08x}", hash);
 	}
 
 }
