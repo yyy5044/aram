@@ -62,10 +62,15 @@ cd frontend && npm test && npm run build && npm run lint
 
 ## 남은 일
 
+작업을 마칠 때마다 이 목록을 실제 상태에 맞게 고친다.
+
+**완료**
+- 2026-10-24: 디스코드 앱 등록(앱 이름 `aram`, Client ID `1563452857179578451`), 로컬에서 실제 디스코드 로그인 성공. 관리자는 사용자 "하포"(디스코드 ID `472407196144107529`). 디스코드 개발자 포털 Redirects에는 `http://localhost:5173/login/oauth2/code/discord`만 등록돼 있다.
+
 **다음 단계**
-1. 사용자가 디스코드 앱을 등록하면 실제 디스코드 로그인을 처음으로 확인한다(아직 한 번도 검증되지 않음).
-2. 배포: AWS Lightsail(약 2GB, 월 2만원 이내) + Docker Compose, 이미지 저장소 S3 구현(`image/ImageStorage`), 세션을 DB에 저장(지금은 메모리라 서버 재시작 시 모두 로그아웃), HTTPS, DB 백업, AWS 예산 알림.
-3. 디자인 다듬기(지금은 틀만 잡은 상태).
+1. 배포: AWS Lightsail(약 2GB, 월 2만원 이내) + Docker Compose, 이미지 저장소 S3 구현(`image/ImageStorage`), 세션을 DB에 저장(지금은 메모리라 서버 재시작 시 모두 로그아웃), HTTPS, DB 백업, AWS 예산 알림. 배포 주소가 정해지면 디스코드 Redirects에 운영 주소를 추가하고, Vite 프록시 대신 리버스 프록시가 원래 Host를 넘기도록 한다(돌아올 주소가 Host로 만들어진다).
+2. 디자인 다듬기(지금은 틀만 잡은 상태).
+3. GitHub 푸시(아직 안 함, 공개 저장소).
 
 **v1 검토에서 미뤄둔 작은 문제**
 - `/posts/abc`, `/posts/abc/edit` 같은 잘못된 주소가 빈 화면으로 나온다("없는 글이에요"가 맞다).
