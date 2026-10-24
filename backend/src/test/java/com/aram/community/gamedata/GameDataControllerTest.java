@@ -45,6 +45,15 @@ class GameDataControllerTest extends IntegrationTest {
 	}
 
 	@Test
+	void augmentsIncludeRarity() throws Exception {
+		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at, rarity) values "
+				+ "('ARAM_GiantSlayer', '거인 학살자', 'gs.png', true, now(), 'PRISMATIC')");
+		mockMvc.perform(get("/api/augments"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[0].rarity").value("PRISMATIC"));
+	}
+
+	@Test
 	void patchesReturnsCurrentAndTopEight() throws Exception {
 		seed();
 		mockMvc.perform(get("/api/patches"))

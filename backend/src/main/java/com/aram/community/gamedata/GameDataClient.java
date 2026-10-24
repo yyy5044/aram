@@ -25,7 +25,7 @@ public class GameDataClient {
 	public record ChampionData(String id, String nameKo, String imageFile) {
 	}
 
-	public record AugmentData(String id, String nameKo, String iconPath) {
+	public record AugmentData(String id, String nameKo, String iconPath, AugmentRarity rarity) {
 	}
 
 	private final RestClient.Builder builder;
@@ -74,7 +74,8 @@ public class GameDataClient {
 		Set<String> nameKeys = new HashSet<>();
 		kiwi.properties().forEach(e -> {
 			JsonNode v = e.getValue();
-			if ("AugmentData".equals(v.path("__type").asString(""))) {
+			// 게임에서 꺼 둔 증강(Enabled: false)은 받지 않아요.
+			if ("AugmentData".equals(v.path("__type").asString("")) && v.path("Enabled").asBoolean(true)) {
 				raw.add(v);
 				nameKeys.add(v.path("NameTra").asString("").toLowerCase(Locale.ROOT));
 			}
@@ -89,7 +90,8 @@ public class GameDataClient {
 				continue;
 			}
 			String iconPath = icon.toLowerCase(Locale.ROOT).replaceAll("\\.tex$", ".png");
-			augments.add(new AugmentData(v.path("AugmentNameId").asString(), name, iconPath));
+			augments.add(new AugmentData(v.path("AugmentNameId").asString(), name, iconPath,
+					AugmentRarity.fromKiwi(v)));
 		}
 		return augments;
 	}

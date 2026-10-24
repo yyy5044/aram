@@ -2,6 +2,8 @@ package com.aram.community.gamedata;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -23,23 +25,29 @@ public class Augment {
 	@Column(nullable = false)
 	private boolean active;
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 10)
+	private AugmentRarity rarity;
+
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
 
 	protected Augment() {
 	}
 
-	public Augment(String id, String nameKo, String iconPath, Instant now) {
+	public Augment(String id, String nameKo, String iconPath, AugmentRarity rarity, Instant now) {
 		this.id = id;
 		this.nameKo = nameKo;
 		this.iconPath = iconPath;
+		this.rarity = rarity;
 		this.active = true;
 		this.updatedAt = now;
 	}
 
-	public void refresh(String nameKo, String iconPath, Instant now) {
+	public void refresh(String nameKo, String iconPath, AugmentRarity rarity, Instant now) {
 		this.nameKo = nameKo;
 		this.iconPath = iconPath;
+		this.rarity = rarity;
 		this.active = true;
 		this.updatedAt = now;
 	}
@@ -65,6 +73,10 @@ public class Augment {
 
 	public boolean isActive() {
 		return active;
+	}
+
+	public AugmentRarity getRarity() {
+		return rarity;
 	}
 
 	public Instant getUpdatedAt() {

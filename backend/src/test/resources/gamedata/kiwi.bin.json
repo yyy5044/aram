@@ -9,31 +9,36 @@
   "AugmentNameId": "Sonata",
   "NameTra": "Kiwi_Sonata_Name",
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/sonata_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "rarity": 1
  },
  "Maps/ModeSpecificData/Augments/SurgeField": {
   "AugmentNameId": "SurgeField",
   "NameTra": "Kiwi_SurgeField_Name",
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/surgefield_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "rarity": 2
  },
  "Maps/ModeSpecificData/Augments/EndlessDecimation": {
   "AugmentNameId": "EndlessDecimation",
   "NameTra": "Kiwi_EndlessDecimation_Name",
   "AugmentSmallIconPath": "assets/ux/cherry/augments/icons/endlessdecimate_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "rarity": 1
  },
  "Maps/ModeSpecificData/Augments/ARAM_Firefox": {
   "AugmentNameId": "ARAM_Firefox",
   "NameTra": "Kiwi_ARAM_Firefox_Name",
   "AugmentSmallIconPath": "assets/ux/cherry/augments/icons/firfox_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "rarity": 7
  },
  "Maps/ModeSpecificData/Augments/ARAM_GiantSlayer": {
   "AugmentNameId": "ARAM_GiantSlayer",
   "NameTra": "Kiwi_ARAM_GiantSlayer_Name",
   "AugmentSmallIconPath": "assets/ux/cherry/augments/icons/giantslayer_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "rarity": 2
  },
  "Maps/ModeSpecificData/Augments/ARAM_OkBoomerang": {
   "AugmentNameId": "ARAM_OkBoomerang",
@@ -145,5 +150,12 @@
  },
  "Maps/ModeSpecificData/Augments/Sonata/Augment_Sonata_SonaEHaste": {
   "__type": "SpellObject"
+ },
+ "Maps/ModeSpecificData/Augments/Disabled_Test": {
+  "AugmentNameId": "Disabled_Test",
+  "NameTra": "Kiwi_Bonk_Name",
+  "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/disabled_small.tex",
+  "Enabled": false,
+  "__type": "AugmentData"
  }
 }

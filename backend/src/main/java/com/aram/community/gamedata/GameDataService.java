@@ -58,7 +58,7 @@ public class GameDataService {
 
 	public AugmentDto toDto(Augment augment) {
 		return new AugmentDto(augment.getId(), augment.getNameKo(), augmentIconUrl(augment.getIconPath()),
-				augment.isActive());
+				augment.isActive(), augment.getRarity());
 	}
 
 	public List<ChampionDto> allChampions() {

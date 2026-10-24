@@ -145,6 +145,49 @@ class GameDataSyncServiceTest extends IntegrationTest {
 	}
 
 	@Test
+	void storesRarityFromKiwi() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		assertThat(augments.findById("SurgeField").orElseThrow().getRarity()).isEqualTo(AugmentRarity.PRISMATIC);
+		assertThat(augments.findById("Sonata").orElseThrow().getRarity()).isEqualTo(AugmentRarity.GOLD);
+		assertThat(augments.findById("ARAM_LegDay").orElseThrow().getRarity()).isEqualTo(AugmentRarity.SILVER);
+		// 알 수 없는 값(7)은 실버로 둬요.
+		assertThat(augments.findById("ARAM_Firefox").orElseThrow().getRarity()).isEqualTo(AugmentRarity.SILVER);
+	}
+
+	@Test
+	void skipsDisabledAugments() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		assertThat(augments.findById("Disabled_Test")).isEmpty();
+		assertThat(augments.count()).isEqualTo(22);
+	}
+
+	@Test
+	void disabledLaterDeactivatesExisting() throws IOException {
+		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at, rarity) values ('Disabled_Test', '꺼진 증강', 'x.png', true, now(), 'GOLD')");
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		assertThat(augments.findById("Disabled_Test").orElseThrow().isActive()).isFalse();
+	}
+
+	@Test
+	void refreshUpdatesRarity() throws IOException {
+		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at, rarity) values ('Sonata', '소나타', 'x.png', true, now(), 'SILVER')");
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		assertThat(augments.findById("Sonata").orElseThrow().getRarity()).isEqualTo(AugmentRarity.GOLD);
+	}
+
+	@Test
 	void successClearsPreviousError() throws IOException {
 		jdbc.update("update game_data_state set last_error = 'x' where id = 1");
 		expectFullSync("kiwi.bin.json");
