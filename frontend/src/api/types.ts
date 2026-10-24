@@ -8,6 +8,9 @@ export type Me = {
   avatarUrl: string | null
   admin: boolean
   suggestedNickname: string | null
+  profilePublic: boolean
+  profileImageId: string | null
+  discordAvatarUrl: string | null
 }
 
 export type Author = {
@@ -57,6 +60,7 @@ export type PostDetail = {
   likeCount: number
   commentCount: number
   likedByMe: boolean
+  scrappedByMe: boolean
   createdAt: string
   updatedAt: string
   edited: boolean
@@ -85,4 +89,33 @@ export type PostRequest = {
   championIds: string[]
   augmentIds: string[]
   gamePatch: string
+}
+
+export type ActivityDay = { date: string; posts: number; comments: number }
+
+export type Activity = { from: string; to: string; days: ActivityDay[] }
+
+export type Profile = {
+  id: number
+  nickname: string
+  avatarUrl: string | null
+  joinedAt: string
+  profilePublic: boolean
+  mine: boolean
+  locked: boolean
+  stats: { postCount: number; commentCount: number; scrapCount: number } | null
+  activity: Activity | null
+}
+
+export type MyComment = {
+  id: number
+  content: string
+  createdAt: string
+  post: { id: number; title: string }
+}
+
+export type ProfileUpdate = {
+  nickname: string
+  profileImageId: string | null
+  profilePublic: boolean
 }

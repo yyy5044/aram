@@ -38,6 +38,15 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: '증강 칼바람' })).toHaveAttribute('href', '/')
   })
 
+  it('has 내 프로필 in the menu linking to my profile, above 로그아웃', async () => {
+    mockApi({ 'GET /api/me': () => json(me) })
+    renderWithProviders(<Header />)
+    await userEvent.click(await screen.findByRole('button', { name: /양호/ }))
+    const items = screen.getAllByRole('menuitem')
+    expect(items.map((i) => i.textContent)).toEqual(['내 프로필', '로그아웃'])
+    expect(items[0]).toHaveAttribute('href', '/users/1')
+  })
+
   it('logs out from the profile menu', async () => {
     let loggedIn = true
     const api = mockApi({

@@ -47,7 +47,9 @@ export default function PostListItem({ post }: { post: Item }) {
           <span className="rounded-md border border-emerald-900 bg-emerald-950 px-1.5 font-bold text-emerald-400">
             {post.gamePatch}
           </span>
-          <span>{post.author.nickname}</span>
+          <Link to={`/users/${post.author.id}`} className="hover:text-slate-100 hover:underline">
+            {post.author.nickname}
+          </Link>
           <span>{relativeTime(post.createdAt)}</span>
           <span aria-label={`댓글 ${post.commentCount}개`}>💬 {post.commentCount}</span>
         </div>

@@ -36,6 +36,11 @@ describe('CommentSection', () => {
     expect(screen.getByText('수정됨')).toBeInTheDocument()
   })
 
+  it('links comment authors to their profiles', async () => {
+    setup(null)
+    expect(await screen.findByRole('link', { name: '민수' })).toHaveAttribute('href', '/users/2')
+  })
+
   it('shows login button to anonymous users', async () => {
     setup(null)
     expect(await screen.findByRole('button', { name: '로그인하고 댓글 달기' })).toBeInTheDocument()

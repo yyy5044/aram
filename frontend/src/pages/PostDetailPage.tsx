@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../api/client'
 import { useMe } from '../api/me'
 import { deletePost, usePost } from '../api/posts'
+import Avatar from '../components/Avatar'
 import CommentSection from '../components/CommentSection'
 import LikeButton from '../components/LikeButton'
 import TagChip from '../components/TagChip'
@@ -52,7 +53,10 @@ export default function PostDetailPage() {
         <span className="rounded-md border border-emerald-900 bg-emerald-950 px-1.5 font-bold text-emerald-400">
           {post.gamePatch}
         </span>
-        <span>{post.author.nickname}</span>
+        <Link to={`/users/${post.author.id}`} className="flex items-center gap-1.5 hover:text-slate-100 hover:underline">
+          <Avatar src={post.author.avatarUrl} size={20} />
+          {post.author.nickname}
+        </Link>
         <span>{relativeTime(post.createdAt)}</span>
         {post.edited && <span>수정됨</span>}
         <span className="ml-auto flex gap-1.5">

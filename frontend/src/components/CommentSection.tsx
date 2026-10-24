@@ -1,12 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { ApiError } from '../api/client'
 import { addComment, commentsKey, deleteComment, editComment, useComments } from '../api/comments'
 import { startDiscordLogin, useMe } from '../api/me'
 import { postKey } from '../api/posts'
 import type { Comment, Me } from '../api/types'
 import { relativeTime } from '../lib/relativeTime'
+import Avatar from './Avatar'
 import { useToast } from './toastContext'
 
 function errorText(e: unknown) {
@@ -118,14 +119,14 @@ function CommentItem({ comment, me, onChanged }: { comment: Comment; me: Me | nu
 
   return (
     <li className="flex gap-2.5 border-b border-slate-800 py-2.5">
-      {comment.author.avatarUrl ? (
-        <img src={comment.author.avatarUrl} alt="" className="h-8 w-8 flex-none rounded-full" />
-      ) : (
-        <span aria-hidden="true" className="h-8 w-8 flex-none rounded-full bg-indigo-500" />
-      )}
+      <Link to={`/users/${comment.author.id}`} tabIndex={-1} aria-hidden="true" className="flex-none">
+        <Avatar src={comment.author.avatarUrl} size={32} />
+      </Link>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-bold">{comment.author.nickname}</span>
+          <Link to={`/users/${comment.author.id}`} className="font-bold hover:underline">
+            {comment.author.nickname}
+          </Link>
           <span className="text-xs text-slate-500">{relativeTime(comment.createdAt)}</span>
           {comment.edited && <span className="text-xs text-slate-500">수정됨</span>}
           <span className="ml-auto flex gap-1.5">

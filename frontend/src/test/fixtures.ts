@@ -18,9 +18,9 @@ export const legDay: Augment = {
 }
 export const oldAugment: Augment = { id: 'OLD', nameKo: '옛 증강', iconUrl: 'https://example.test/old.png', active: false }
 
-export const meYangho: Me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호' }
-export const meMinsu: Me = { id: 2, nickname: '민수', avatarUrl: null, admin: false, suggestedNickname: '민수' }
-export const meAdmin: Me = { id: 9, nickname: '관리자', avatarUrl: null, admin: true, suggestedNickname: '관리자' }
+export const meYangho: Me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호', profilePublic: true, profileImageId: null, discordAvatarUrl: null }
+export const meMinsu: Me = { id: 2, nickname: '민수', avatarUrl: null, admin: false, suggestedNickname: '민수', profilePublic: true, profileImageId: null, discordAvatarUrl: null }
+export const meAdmin: Me = { id: 9, nickname: '관리자', avatarUrl: null, admin: true, suggestedNickname: '관리자', profilePublic: true, profileImageId: null, discordAvatarUrl: null }
 
 export function listItem(overrides: Partial<PostListItem> = {}): PostListItem {
   return {

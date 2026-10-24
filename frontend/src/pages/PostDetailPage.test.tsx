@@ -26,6 +26,7 @@ function detail(overrides: Partial<PostDetail> = {}): PostDetail {
     likeCount: 24,
     commentCount: 0,
     likedByMe: false,
+    scrappedByMe: false,
     createdAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
     updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
     edited: false,
@@ -56,6 +57,11 @@ describe('PostDetailPage', () => {
     expect(screen.getByRole('link', { name: /아무무$/ })).toHaveAttribute('href', '/champions/Amumu')
     expect(screen.getByRole('link', { name: /하체 운동의 날/ })).toHaveAttribute('href', '/augments/ARAM_LegDay')
     expect(screen.getByRole('link', { name: '‹ 목록으로' })).toHaveAttribute('href', '/')
+  })
+
+  it('links the author nickname to the profile', async () => {
+    setup(null)
+    expect(await screen.findByRole('link', { name: '양호' })).toHaveAttribute('href', '/users/1')
   })
 
   it('shows edit and delete only to the author', async () => {

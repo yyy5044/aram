@@ -31,6 +31,7 @@ function existing(overrides: Partial<PostDetail> = {}): PostDetail {
     likeCount: 0,
     commentCount: 0,
     likedByMe: false,
+    scrappedByMe: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     edited: false,

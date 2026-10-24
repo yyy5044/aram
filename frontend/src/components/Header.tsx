@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { ApiError } from '../api/client'
 import { logout, meKey, startDiscordLogin, useMe } from '../api/me'
+import Avatar from './Avatar'
 import { useToast } from './toastContext'
 
 export default function Header() {
@@ -56,11 +57,7 @@ export default function Header() {
                 onClick={() => setMenuOpen((open) => !open)}
                 className="flex items-center gap-2 rounded-lg px-2 py-1 text-sm text-slate-300 hover:bg-slate-800"
               >
-                {me.avatarUrl ? (
-                  <img src={me.avatarUrl} alt="" className="h-7 w-7 rounded-full" />
-                ) : (
-                  <span aria-hidden="true" className="h-7 w-7 rounded-full bg-indigo-500" />
-                )}
+                <Avatar src={me.avatarUrl} size={28} />
                 <span>{me.nickname ?? '닉네임 없음'}</span>
               </button>
               {menuOpen && (
@@ -68,6 +65,14 @@ export default function Header() {
                   role="menu"
                   className="absolute right-0 z-10 mt-1 w-32 overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-lg"
                 >
+                  <Link
+                    to={`/users/${me.id}`}
+                    role="menuitem"
+                    onClick={() => setMenuOpen(false)}
+                    className="block w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800"
+                  >
+                    내 프로필
+                  </Link>
                   <button
                     type="button"
                     role="menuitem"
