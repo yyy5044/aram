@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -41,6 +43,8 @@ public class GameDataClient {
 	}
 
 	private static final Pattern REFERENCE = Pattern.compile("\\{\\{\\s*([^}]+?)\\s*\\}\\}");
+
+	private static final Logger log = LoggerFactory.getLogger(GameDataClient.class);
 
 	private final RestClient.Builder builder;
 
@@ -102,6 +106,7 @@ public class GameDataClient {
 		keys.remove("");
 
 		Map<AugmentLocale, Map<String, String>> strings = new EnumMap<>(AugmentLocale.class);
+		Map<AugmentLocale, Map<String, String>> clientNames = new EnumMap<>(AugmentLocale.class);
 		for (AugmentLocale locale : AugmentLocale.values()) {
 			Map<String, String> table = new HashMap<>(fetchStrings(locale, keys));
 			Set<String> refs = new HashSet<>();
@@ -119,6 +124,7 @@ public class GameDataClient {
 				table.putAll(fetchStrings(locale, refs));
 			}
 			strings.put(locale, table);
+			clientNames.put(locale, fetchClientNames(locale));
 		}
 
 		Map<String, String> ko = strings.get(AugmentLocale.KO);
@@ -126,7 +132,8 @@ public class GameDataClient {
 		for (JsonNode v : raw) {
 			String nameKey = v.path("NameTra").asString("").toLowerCase(Locale.ROOT);
 			String tooltipKey = v.path("AugmentTooltipTra").asString("").toLowerCase(Locale.ROOT);
-			String nameKo = ko.get(nameKey);
+			String augmentId = v.path("AugmentNameId").asString();
+			String nameKo = nameOf(ko, nameKey, clientNames.get(AugmentLocale.KO), augmentId);
 			String icon = v.path("AugmentSmallIconPath").asString("");
 			if (nameKo == null || nameKo.isBlank() || icon.isBlank()) {
 				continue;
@@ -140,7 +147,7 @@ public class GameDataClient {
 			int unresolved = 0;
 			for (AugmentLocale locale : AugmentLocale.values()) {
 				Map<String, String> table = strings.get(locale);
-				String name = table.get(nameKey);
+				String name = nameOf(table, nameKey, clientNames.get(locale), augmentId);
 				String tooltip = table.get(tooltipKey);
 				if (name == null || name.isBlank() || tooltip == null || tooltip.isBlank()) {
 					continue;
@@ -155,10 +162,43 @@ public class GameDataClient {
 				}
 				texts.put(locale, new LocalizedText(name, result.description()));
 			}
-			augments.add(new AugmentData(v.path("AugmentNameId").asString(), nameKo, iconPath, largeIconPath,
-					AugmentRarity.fromKiwi(v), texts, unresolved));
+			augments.add(new AugmentData(augmentId, nameKo, iconPath, largeIconPath, AugmentRarity.fromKiwi(v), texts,
+					unresolved));
 		}
 		return augments;
+	}
+
+	/** 문자열 표의 이름이 우선이고, 없으면(새 증강은 표에 아직 없어요) 클라이언트 목록의 이름을 써요. */
+	private static String nameOf(Map<String, String> table, String nameKey, Map<String, String> clientNames,
+			String augmentId) {
+		String name = table.get(nameKey);
+		if (name != null && !name.isBlank()) {
+			return name;
+		}
+		return clientNames.get(augmentId);
+	}
+
+	/**
+	 * 클라이언트가 쓰는 증강 목록(cherry-augments.json, 이름은 옛것이지만 칼바람 증강도 들어 있어요)에서 id → 이름.
+	 * 보조 자료라 못 받으면 비워 두고 경고만 남겨요.
+	 */
+	Map<String, String> fetchClientNames(AugmentLocale locale) {
+		String url = props.cdragonBaseUrl() + "/latest/plugins/rcp-be-lol-game-data/global/" + locale.clientFolder()
+				+ "/v1/cherry-augments.json";
+		Map<String, String> names = new HashMap<>();
+		try {
+			for (JsonNode item : getTree(url)) {
+				String id = item.path("augmentNameId").asString("");
+				String name = item.path("nameTRA").asString("");
+				if (!id.isEmpty() && !name.isBlank()) {
+					names.put(id, name);
+				}
+			}
+		}
+		catch (RuntimeException e) {
+			log.warn("Client augment list unavailable for {}: {}", locale.code(), e.toString());
+		}
+		return names;
 	}
 
 	private static String toPng(String texPath) {

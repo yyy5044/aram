@@ -1,0 +1,18 @@
+[
+ {
+  "id": 3049,
+  "augmentNameId": "ArmoredImpact",
+  "nameTRA": "장갑 충격",
+  "simpleNameTRA": "",
+  "augmentSmallIconPath": "/lol-game-data/assets/ASSETS/UX/Kiwi/Augments/Icons/ArmoredImpact_small.png",
+  "rarity": "kGold"
+ },
+ {
+  "id": 1,
+  "augmentNameId": "ARAM_LegDay",
+  "nameTRA": "클라이언트 이름(무시)",
+  "simpleNameTRA": "",
+  "augmentSmallIconPath": "",
+  "rarity": "kSilver"
+ }
+]

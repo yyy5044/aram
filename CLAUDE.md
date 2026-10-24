@@ -52,7 +52,7 @@ cd frontend && npm test && npm run build && npm run lint
 - 테스트 설정 `src/test/resources/application-test.yml`은 개발자의 `backend/.env` 값이 섞이지 않게 개발 로그인을 끈다.
 - 프론트엔드 테스트 렌더(`test/render.tsx`)는 실제 앱처럼 StrictMode로 감싼다. StrictMode에서만 드러나는 버그(효과 두 번 실행, 편집기 재생성)가 실제로 있었다.
 - 게임 데이터는 서버가 6시간마다 Data Dragon `versions.json`을 확인하고, 패치가 바뀌었을 때만 챔피언(`ko_KR/champion.json`)과 증강(CommunityDragon `kiwi.bin.json` + 한국어 문자열 표)을 다시 받는다. 패치 표기는 `16.21.1` → `26.21`. 증강 등급은 `kiwi.bin.json`의 `rarity`(없음·0 실버, 1 골드, 2 프리즘)에서 오고, `Enabled: false`인 증강은 받지 않는다. 증강 데이터 컬럼을 더했을 때는 마이그레이션에서 `game_data_state.current_ddragon_version`을 비워 시작 시 전체 재동기화를 유도한다(V7 참고).
-- 증강 설명은 동기화 때 언어별(영어·한국어)로 문자열 표를 받아 `gamedata/text/`에서 자리표시자(`@TotalShield@` 등)를 수치 표로 계산해 완성된 글로 `augment_texts`에 저장한다(V8). 언어를 더하려면 `AugmentLocale`에 항목을 추가한다. 못 채운 자리표시자는 그대로 남고 동기화 로그에 수가 찍힌다(지금 199개 증강에 언어당 20개쯤: 게임 중 누적치, 해시 이름 계산식, 스탯 번호 8·9·34 등). 색 표식 허용 목록은 서버 `AugmentDescriptionBuilder.COLOR_TAGS`와 화면 `lib/augmentDescription.ts`가 같아야 한다.
+- 증강 설명은 동기화 때 언어별(영어·한국어)로 문자열 표를 받아 `gamedata/text/`에서 자리표시자(`@TotalShield@` 등)를 수치 표로 계산해 완성된 글로 `augment_texts`에 저장한다(V8). 언어를 더하려면 `AugmentLocale`에 항목을 추가한다. 못 채운 자리표시자는 그대로 남고 동기화 로그에 수가 찍힌다(지금 199개 증강에 언어당 20개쯤: 게임 중 누적치, 해시 이름 계산식, 스탯 번호 8·9·34 등). 색 표식 허용 목록은 서버 `AugmentDescriptionBuilder.COLOR_TAGS`와 화면 `lib/augmentDescription.ts`가 같아야 한다. 새 패치 증강은 CommunityDragon 문자열 표에 이름·툴팁 키가 아직 없을 때가 있다(16.21 기준 41개, "장갑 충격" 등). 이름은 클라이언트 증강 목록 `plugins/rcp-be-lol-game-data/global/{ko_kr|default}/v1/cherry-augments.json`(이름은 옛것이지만 칼바람 증강도 들어 있음)에서 보충하고, 툴팁은 없으므로 카드에 "아직 설명이 없어요"가 보인다. 이 목록은 보조 자료라 못 받아도 동기화는 계속된다.
 - 화면 언어 설정(`lib/language.ts`, 머리말 드롭다운, localStorage `lang`)은 지금 증강 카드의 번역 언어만 바꾼다. 화면 문구 번역(i18n)은 아직 없다.
 
 ## 환경 주의사항 (이 컴퓨터)

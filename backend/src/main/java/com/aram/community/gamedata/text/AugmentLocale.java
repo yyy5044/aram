@@ -6,16 +6,19 @@ import java.util.Optional;
 /** 설명을 만드는 언어. 코드(en, ko)와 CommunityDragon 폴더 이름, 언어별 문구를 가져요. */
 public enum AugmentLocale {
 
-	EN("en", "en_us", "[Ability]",
+	EN("en", "en_us", "default", "[Ability]",
 			Map.of(0, "AP", 1, "Armor", 2, "AD", 6, "Magic Resist", 7, "Move Speed", 11, "Ability Haste", 12, "max Health"),
 			"bonus ", "total "),
-	KO("ko", "ko_kr", "[스킬]",
+	KO("ko", "ko_kr", "ko_kr", "[스킬]",
 			Map.of(0, "주문력", 1, "방어력", 2, "공격력", 6, "마법 저항력", 7, "이동 속도", 11, "스킬 가속", 12, "최대 체력"),
 			"추가 ", "전체 ");
 
 	private final String code;
 
 	private final String folder;
+
+	/** 클라이언트 자료(plugins/rcp-be-lol-game-data/global/…)의 언어 폴더. 영어는 default예요. */
+	private final String clientFolder;
 
 	private final String spellPlaceholder;
 
@@ -25,10 +28,11 @@ public enum AugmentLocale {
 
 	private final String totalPrefix;
 
-	AugmentLocale(String code, String folder, String spellPlaceholder, Map<Integer, String> statNames,
-			String bonusPrefix, String totalPrefix) {
+	AugmentLocale(String code, String folder, String clientFolder, String spellPlaceholder,
+			Map<Integer, String> statNames, String bonusPrefix, String totalPrefix) {
 		this.code = code;
 		this.folder = folder;
+		this.clientFolder = clientFolder;
 		this.spellPlaceholder = spellPlaceholder;
 		this.statNames = statNames;
 		this.bonusPrefix = bonusPrefix;
@@ -50,6 +54,10 @@ public enum AugmentLocale {
 
 	public String folder() {
 		return folder;
+	}
+
+	public String clientFolder() {
+		return clientFolder;
 	}
 
 	/** 챔피언마다 다른 스킬 이름({{SpellName}}) 자리에 넣는 글. */

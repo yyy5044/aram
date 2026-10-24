@@ -30,6 +30,10 @@ class GameDataSyncServiceTest extends IntegrationTest {
 
 	private static final String STRINGS_EN = "https://raw.communitydragon.org/latest/game/en_us/data/menu/en_us/lol.stringtable.json";
 
+	private static final String CLIENT_KO = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/ko_kr/v1/cherry-augments.json";
+
+	private static final String CLIENT_EN = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json";
+
 	@Autowired
 	GameDataSyncService sync;
 
@@ -72,16 +76,23 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		expectStrings();
 	}
 
-	/** 언어마다 문자열 표를 두 번 받아요: 이름·툴팁 키, 그리고 툴팁 안 {{참조}} 키. 영어 먼저, 한국어 다음. */
+	/**
+	 * 언어마다 문자열 표를 두 번 받고(이름·툴팁 키, 툴팁 안 {{참조}} 키), 이어서 클라이언트 증강 목록(문자열 표에 없는 새 증강의 이름)을 받아요.
+	 * 영어 먼저, 한국어 다음.
+	 */
 	private void expectStrings() throws IOException {
 		server.expect(requestTo(STRINGS_EN))
 			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(STRINGS_EN))
 			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CLIENT_EN))
+			.andRespond(withSuccess(fixture("client-augments-en.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(STRINGS_KO))
 			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(STRINGS_KO))
 			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CLIENT_KO))
+			.andRespond(withSuccess(fixture("client-augments.json"), MediaType.APPLICATION_JSON));
 	}
 
 	private GameDataState state() {
@@ -97,7 +108,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		server.verify();
 		assertThat(champions.count()).isEqualTo(3);
 		assertThat(champions.findById("Amumu").orElseThrow().getNameKo()).isEqualTo("아무무");
-		assertThat(augments.count()).isEqualTo(22);
+		assertThat(augments.count()).isEqualTo(23);
 		Augment legDay = augments.findById("ARAM_LegDay").orElseThrow();
 		assertThat(legDay.getNameKo()).isEqualTo("하체 운동의 날");
 		assertThat(legDay.getIconPath()).isEqualTo("assets/ux/cherry/augments/icons/legday_small.png");
@@ -144,8 +155,12 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi-small.bin.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(STRINGS_EN))
 			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CLIENT_EN))
+			.andRespond(withSuccess(fixture("client-augments-en.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(STRINGS_KO))
 			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CLIENT_KO))
+			.andRespond(withSuccess(fixture("client-augments.json"), MediaType.APPLICATION_JSON));
 
 		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.FAILED);
 
@@ -189,7 +204,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		sync.sync();
 
 		assertThat(augments.findById("Disabled_Test")).isEmpty();
-		assertThat(augments.count()).isEqualTo(22);
+		assertThat(augments.count()).isEqualTo(23);
 	}
 
 	@Test
@@ -278,6 +293,45 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		// 소나타의 한국어 툴팁은 집계 줄뿐이라 빈 설명이 되고, 그 언어 행은 저장하지 않아요.
 		assertThat(texts.findById(new AugmentTextId("Sonata", "ko"))).isEmpty();
 		assertThat(texts.findById(new AugmentTextId("Sonata", "en")).orElseThrow().getDescription()).isEqualTo("Plays a song.");
+	}
+
+	@Test
+	void namesNewAugmentsFromClientList() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		// 문자열 표에 없는 새 증강은 클라이언트 목록의 이름으로 들어가고, 설명은 없어서 글 행이 없어요.
+		Augment armored = augments.findById("ArmoredImpact").orElseThrow();
+		assertThat(armored.getNameKo()).isEqualTo("장갑 충격");
+		assertThat(armored.getRarity()).isEqualTo(AugmentRarity.GOLD);
+		assertThat(texts.findByIdAugmentId("ArmoredImpact")).isEmpty();
+		// 문자열 표에 있는 이름이 우선이에요.
+		assertThat(augments.findById("ARAM_LegDay").orElseThrow().getNameKo()).isEqualTo("하체 운동의 날");
+	}
+
+	@Test
+	void clientListFailureKeepsStringTableNames() throws IOException {
+		server.expect(requestTo(VERSIONS)).andRespond(withSuccess(fixture("versions.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CHAMPIONS))
+			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi.bin.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_EN))
+			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_EN))
+			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CLIENT_EN)).andRespond(withServerError());
+		server.expect(requestTo(STRINGS_KO))
+			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_KO))
+			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(CLIENT_KO)).andRespond(withServerError());
+
+		// 클라이언트 목록은 보조 자료라 실패해도 동기화는 성공하고, 그 이름만 있는 증강은 빠져요.
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
+
+		assertThat(augments.findById("ArmoredImpact")).isEmpty();
+		assertThat(augments.findById("ARAM_LegDay")).isPresent();
 	}
 
 	@Test

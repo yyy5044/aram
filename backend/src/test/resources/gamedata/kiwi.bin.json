@@ -145,7 +145,9 @@
   "AugmentNameId": "ArmoredImpact",
   "NameTra": "Kiwi_Augment_ArmoredImpact_Name",
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/armoredimpact_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "rarity": 1,
+  "AugmentTooltipTra": "Kiwi_Augment_ArmoredImpact_Tooltip"
  },
  "Maps/ModeSpecificData/Augments/Sonata/Resources": {
   "__type": "ResourceResolver"
