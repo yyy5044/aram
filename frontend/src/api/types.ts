@@ -1,3 +1,4 @@
+import type { Language } from '../lib/language'
 import type { JSONContent } from '@tiptap/core'
 
 /** 백엔드 응답 타입. 필드 이름은 서버 record와 똑같아요. */
@@ -33,6 +34,22 @@ export type Augment = {
   iconUrl: string
   active: boolean
   rarity: AugmentRarity
+}
+
+/** 증강의 언어별 이름과 설명. description에는 서버가 남긴 색 표식(<magicDamage> 등)과 <br>만 있어요. */
+export type AugmentText = {
+  locale: Language
+  name: string
+  description: string
+}
+
+/** 카드용 상세. original은 영어, translation은 선택 언어(원문과 같거나 없으면 null). */
+export type AugmentDetail = {
+  id: string
+  rarity: AugmentRarity
+  iconUrl: string
+  original: AugmentText | null
+  translation: AugmentText | null
 }
 
 /** 태그 id → 글 수. 글이 있는 태그만 들어 있어요. */
