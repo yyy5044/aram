@@ -3,6 +3,7 @@ package com.aram.community.image;
 import com.aram.community.common.ApiException;
 import com.aram.community.common.ErrorCode;
 import com.aram.community.post.ImagePostLinker;
+import com.aram.community.user.UserRepository;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,12 @@ public class DbImagePostLinker implements ImagePostLinker {
 
 	private final ImageService imageService;
 
-	public DbImagePostLinker(ImageRepository images, ImageService imageService) {
+	private final UserRepository users;
+
+	public DbImagePostLinker(ImageRepository images, ImageService imageService, UserRepository users) {
 		this.images = images;
 		this.imageService = imageService;
+		this.users = users;
 	}
 
 	@Override
@@ -31,6 +35,10 @@ public class DbImagePostLinker implements ImagePostLinker {
 		if (ids.isEmpty()) {
 			images.unlinkAll(postId);
 			return;
+		}
+		// 프로필 사진을 본문에 넣으면, 글을 지울 때 프로필 사진도 함께 지워져요. 그래서 막아요.
+		if (users.existsByProfileImageIdIn(ids)) {
+			throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("content", "프로필 사진은 본문에 넣을 수 없어요"));
 		}
 		List<Image> found = images.findAllById(ids);
 		boolean allUsable = found.size() == ids.size() && found.stream()

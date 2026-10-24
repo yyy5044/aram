@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,22 @@ public class UserService {
 
 	@Transactional
 	public User changeNickname(long userId, String raw) {
+		String nickname = validNickname(userId, raw);
+		User user = load(userId);
+		user.changeNickname(nickname);
+		return saveCheckingNickname(user);
+	}
+
+	/** 프로필 수정: 닉네임, 직접 올린 사진(null이면 디스코드 사진), 공개 여부를 한 번에 바꿔요. 사진 검증은 호출하는 쪽에서 해요. */
+	@Transactional
+	public User updateProfile(long userId, String rawNickname, UUID profileImageId, boolean profilePublic) {
+		String nickname = validNickname(userId, rawNickname);
+		User user = load(userId);
+		user.updateProfile(nickname, profileImageId, profilePublic);
+		return saveCheckingNickname(user);
+	}
+
+	private String validNickname(long userId, String raw) {
 		String nickname = raw == null ? "" : raw.trim();
 		if (!NICKNAME.matcher(nickname).matches()) {
 			throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("nickname", NICKNAME_RULE));
@@ -50,8 +67,14 @@ public class UserService {
 		if (users.nicknameTakenByOther(nickname, userId)) {
 			throw new ApiException(ErrorCode.NICKNAME_TAKEN);
 		}
-		User user = users.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
-		user.changeNickname(nickname);
+		return nickname;
+	}
+
+	private User load(long userId) {
+		return users.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
+	}
+
+	private User saveCheckingNickname(User user) {
 		try {
 			return users.saveAndFlush(user);
 		}

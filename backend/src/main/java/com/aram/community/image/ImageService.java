@@ -74,6 +74,17 @@ public class ImageService {
 		return new Served(image.getContentType(), data);
 	}
 
+	/** 프로필 사진으로 쓸 수 있는지: 있는 이미지이고, 내가 올렸고, 글에 쓰이지 않아야 해요. */
+	@Transactional(readOnly = true)
+	public void requireUsableAsProfile(UUID imageId, long userId) {
+		boolean usable = images.findById(imageId)
+			.map(i -> i.getUploaderId() == userId && i.getPostId() == null)
+			.orElse(false);
+		if (!usable) {
+			throw new ApiException(ErrorCode.INVALID_INPUT, java.util.Map.of("profileImageId", "쓸 수 없는 이미지예요"));
+		}
+	}
+
 	/** DB 행은 지금 지우고, 파일은 트랜잭션이 커밋된 뒤에 지워요. 파일이 이미 없어도 괜찮아요. */
 	@Transactional
 	public void deleteAll(List<Image> targets) {

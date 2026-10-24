@@ -12,7 +12,8 @@ public interface ImageRepository extends JpaRepository<Image, UUID> {
 
 	List<Image> findByPostId(Long postId);
 
-	@Query("select i from Image i where i.postId is null and i.createdAt < :cutoff")
+	@Query("select i from Image i where i.postId is null and i.createdAt < :cutoff "
+			+ "and not exists (select 1 from User u where u.profileImageId = i.id)")
 	List<Image> findUnlinkedBefore(Instant cutoff);
 
 	@Modifying
