@@ -138,10 +138,10 @@ public class GameDataSyncService {
 		for (AugmentData a : incoming.values()) {
 			Augment augment = existing.get(a.id());
 			if (augment == null) {
-				augments.save(new Augment(a.id(), a.nameKo(), a.iconPath(), a.rarity(), now));
+				augments.save(new Augment(a.id(), a.nameKo(), a.iconPath(), a.iconPath(), a.rarity(), now));
 			}
 			else {
-				augment.refresh(a.nameKo(), a.iconPath(), a.rarity(), now);
+				augment.refresh(a.nameKo(), a.iconPath(), a.iconPath(), a.rarity(), now);
 			}
 		}
 		existing.values().stream().filter(a -> !incoming.containsKey(a.getId())).forEach(a -> a.deactivate(now));

@@ -22,6 +22,10 @@ public class Augment {
 	@Column(name = "icon_path", nullable = false, length = 200)
 	private String iconPath;
 
+	/** 카드에 쓰는 큰 아이콘. */
+	@Column(name = "large_icon_path", nullable = false, length = 200)
+	private String largeIconPath;
+
 	@Column(nullable = false)
 	private boolean active;
 
@@ -35,18 +39,21 @@ public class Augment {
 	protected Augment() {
 	}
 
-	public Augment(String id, String nameKo, String iconPath, AugmentRarity rarity, Instant now) {
+	public Augment(String id, String nameKo, String iconPath, String largeIconPath, AugmentRarity rarity,
+			Instant now) {
 		this.id = id;
 		this.nameKo = nameKo;
 		this.iconPath = iconPath;
+		this.largeIconPath = largeIconPath;
 		this.rarity = rarity;
 		this.active = true;
 		this.updatedAt = now;
 	}
 
-	public void refresh(String nameKo, String iconPath, AugmentRarity rarity, Instant now) {
+	public void refresh(String nameKo, String iconPath, String largeIconPath, AugmentRarity rarity, Instant now) {
 		this.nameKo = nameKo;
 		this.iconPath = iconPath;
+		this.largeIconPath = largeIconPath;
 		this.rarity = rarity;
 		this.active = true;
 		this.updatedAt = now;
@@ -69,6 +76,10 @@ public class Augment {
 
 	public String getIconPath() {
 		return iconPath;
+	}
+
+	public String getLargeIconPath() {
+		return largeIconPath;
 	}
 
 	public boolean isActive() {
