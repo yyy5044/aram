@@ -101,7 +101,13 @@ export default function AugmentsPage() {
           {g.open && (
             <div className="border-t border-slate-800 px-3 pt-2 pb-3">
               <TagGrid
-                items={g.matches.map((a) => ({ id: a.id, name: a.nameKo, image: a.iconUrl, count: countOf(a) }))}
+                items={g.matches.map((a) => ({
+                  id: a.id,
+                  name: a.nameKo,
+                  image: a.iconUrl,
+                  count: countOf(a),
+                  tint: a.iconTinted ? a.rarity : undefined,
+                }))}
                 openId={openId}
                 onToggle={(id) => toggleItem(g.rarity, id)}
                 renderPanel={(id) => {

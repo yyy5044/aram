@@ -88,7 +88,14 @@ export default function PostDetailPage() {
             <TagChip key={c.id} kind="champion" id={c.id} nameKo={c.nameKo} imageUrl={c.imageUrl} />
           ))}
           {post.augments.map((a) => (
-            <TagChip key={a.id} kind="augment" id={a.id} nameKo={a.nameKo} imageUrl={a.iconUrl} />
+            <TagChip
+              key={a.id}
+              kind="augment"
+              id={a.id}
+              nameKo={a.nameKo}
+              imageUrl={a.iconUrl}
+              tint={a.iconTinted ? a.rarity : undefined}
+            />
           ))}
         </div>
       )}

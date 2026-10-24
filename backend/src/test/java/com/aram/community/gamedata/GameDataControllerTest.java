@@ -41,7 +41,32 @@ class GameDataControllerTest extends IntegrationTest {
 			.andExpect(jsonPath("$.length()").value(2))
 			.andExpect(jsonPath("$[?(@.id == 'Old')].active").value(false))
 			.andExpect(jsonPath("$[?(@.id == 'ARAM_LegDay')].iconUrl").value(
-					"https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/legday_small.png"));
+					"https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/legday_small.png"))
+			// 색 있는 큰 아이콘이 없으면 흰 작은 아이콘이라 화면이 등급 색을 입혀요.
+			.andExpect(jsonPath("$[?(@.id == 'ARAM_LegDay')].iconTinted").value(true));
+	}
+
+	@Test
+	void sharedColoredIconIsNotTinted() throws Exception {
+		// 스킬 증강의 공용 아이콘은 작은 것과 큰 것이 같은 파일이고 이미 등급 색이 있어요.
+		jdbc.update("insert into augments (id, name_ko, icon_path, large_icon_path, active, updated_at, rarity) values "
+				+ "('SpellVolley', '3연발', 'assets/ux/kiwi/augments/icons/genericabilityaugmenticon_prismatic.png', "
+				+ "'assets/ux/kiwi/augments/icons/genericabilityaugmenticon_prismatic.png', true, now(), 'PRISMATIC')");
+		mockMvc.perform(get("/api/augments"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[0].iconTinted").value(false));
+	}
+
+	@Test
+	void augmentsUseColoredLargeIconWhenAvailable() throws Exception {
+		jdbc.update("insert into augments (id, name_ko, icon_path, large_icon_path, active, updated_at, rarity) values "
+				+ "('ARAM_CourageoftheColossus', '거석상의 용기', 'assets/ux/cherry/augments/icons/courageofthecolossus_small.png', "
+				+ "'assets/ux/cherry/augments/icons/courageofthecolossus_large.png', true, now(), 'PRISMATIC')");
+		mockMvc.perform(get("/api/augments"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[0].iconUrl").value(
+					"https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/courageofthecolossus_large.png"))
+			.andExpect(jsonPath("$[0].iconTinted").value(false));
 	}
 
 	@Test
@@ -81,6 +106,7 @@ class GameDataControllerTest extends IntegrationTest {
 			.andExpect(jsonPath("$.rarity").value("PRISMATIC"))
 			.andExpect(jsonPath("$.iconUrl").value(
 					"https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/icons/wisdomofages_large.png"))
+			.andExpect(jsonPath("$.iconTinted").value(false))
 			.andExpect(jsonPath("$.original.locale").value("en"))
 			.andExpect(jsonPath("$.original.name").value("Ominous Pact"))
 			.andExpect(jsonPath("$.translation.locale").value("ko"))

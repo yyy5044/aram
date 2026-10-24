@@ -32,6 +32,8 @@ export type Augment = {
   id: string
   nameKo: string
   iconUrl: string
+  /** 색 있는 큰 아이콘이 없어 흰 작은 아이콘을 줬을 때 true. 화면이 등급 색을 입혀요. */
+  iconTinted?: boolean
   active: boolean
   rarity: AugmentRarity
 }
@@ -48,6 +50,8 @@ export type AugmentDetail = {
   id: string
   rarity: AugmentRarity
   iconUrl: string
+  /** 색 있는 큰 아이콘이 없어 흰 작은 아이콘을 줬을 때 true. 화면이 등급 색을 입혀요. */
+  iconTinted?: boolean
   original: AugmentText | null
   translation: AugmentText | null
 }

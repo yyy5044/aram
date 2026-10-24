@@ -1,6 +1,7 @@
 import type { AugmentRarity, AugmentText } from '../../api/types'
 import { parseDescription, toPlainText } from '../../lib/augmentDescription'
 import { useToast } from '../toastContext'
+import AugmentIcon from './AugmentIcon'
 
 const SELECTION = 'https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/augmentselection/'
 
@@ -29,10 +30,10 @@ const OCTAGON = '[clip-path:polygon(29%_0,71%_0,100%_29%,100%_71%,71%_100%,29%_1
 
 const BOLTS = ['left-1/2 top-1.5', 'left-1/2 bottom-1.5', 'left-3.5 top-[30%]', 'left-3.5 bottom-[30%]', 'right-3.5 top-[30%]', 'right-3.5 bottom-[30%]']
 
-type Props = { text: AugmentText; rarity: AugmentRarity; iconUrl: string }
+type Props = { text: AugmentText; rarity: AugmentRarity; iconUrl: string; iconTinted?: boolean }
 
 /** 게임 카드를 닮은 증강 카드 한 장. 마우스를 올리면 복사 버튼이 나타나요. */
-export default function AugmentCard({ text, rarity, iconUrl }: Props) {
+export default function AugmentCard({ text, rarity, iconUrl, iconTinted = false }: Props) {
   const toast = useToast()
   const label = RARITY_LABELS[text.locale === 'ko' ? 'ko' : 'other'][rarity]
 
@@ -70,7 +71,7 @@ export default function AugmentCard({ text, rarity, iconUrl }: Props) {
           className={`relative grid h-[120px] w-[120px] flex-none place-items-center bg-gradient-to-b from-slate-500 to-slate-700 ${OCTAGON}`}
         >
           <div className={`grid h-[106px] w-[106px] place-items-center bg-[#141922] ${OCTAGON}`}>
-            <img src={iconUrl} alt="" className="h-[84px] w-[84px] object-contain" />
+            <AugmentIcon src={iconUrl} rarity={rarity} tinted={iconTinted} className="h-[84px] w-[84px] object-contain" />
           </div>
           {BOLTS.map((pos) => (
             <span

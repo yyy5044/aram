@@ -25,11 +25,11 @@ export default function AugmentCards({ augmentId }: { augmentId: string }) {
   return (
     <div className="flex flex-wrap justify-center gap-9 py-2">
       <Column tag="원문" name={languageName(ORIGINAL_LANGUAGE)}>
-        <CardOrEmpty text={data.original} rarity={data.rarity} iconUrl={data.iconUrl} />
+        <CardOrEmpty text={data.original} rarity={data.rarity} iconUrl={data.iconUrl} iconTinted={data.iconTinted} />
       </Column>
       {showTranslation && (
         <Column tag="번역" name={languageName(language)}>
-          <CardOrEmpty text={data.translation} rarity={data.rarity} iconUrl={data.iconUrl} />
+          <CardOrEmpty text={data.translation} rarity={data.rarity} iconUrl={data.iconUrl} iconTinted={data.iconTinted} />
         </Column>
       )}
     </div>
@@ -48,8 +48,18 @@ function Column({ tag, name, children }: { tag: string; name: string; children: 
   )
 }
 
-function CardOrEmpty({ text, rarity, iconUrl }: { text: AugmentText | null; rarity: AugmentRarity; iconUrl: string }) {
-  if (text) return <AugmentCard text={text} rarity={rarity} iconUrl={iconUrl} />
+function CardOrEmpty({
+  text,
+  rarity,
+  iconUrl,
+  iconTinted,
+}: {
+  text: AugmentText | null
+  rarity: AugmentRarity
+  iconUrl: string
+  iconTinted?: boolean
+}) {
+  if (text) return <AugmentCard text={text} rarity={rarity} iconUrl={iconUrl} iconTinted={iconTinted} />
   return (
     <div className="grid h-[492px] w-[300px] place-items-center rounded-[14px] border border-dashed border-slate-700 text-sm text-slate-500">
       아직 설명이 없어요

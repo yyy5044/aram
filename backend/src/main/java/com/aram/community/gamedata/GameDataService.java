@@ -66,8 +66,22 @@ public class GameDataService {
 	}
 
 	public AugmentDto toDto(Augment augment) {
-		return new AugmentDto(augment.getId(), augment.getNameKo(), augmentIconUrl(augment.getIconPath()),
-				augment.isActive(), augment.getRarity());
+		return new AugmentDto(augment.getId(), augment.getNameKo(), augmentIconUrl(coloredIconPath(augment)),
+				needsTint(augment), augment.isActive(), augment.getRarity());
+	}
+
+	/** 큰 아이콘(등급 색 있음)이 있으면 그것, 없으면 작은 아이콘. */
+	private static String coloredIconPath(Augment augment) {
+		String large = augment.getLargeIconPath();
+		return large == null || large.isBlank() ? augment.getIconPath() : large;
+	}
+
+	/**
+	 * 보여줄 아이콘이 흰 작은 아이콘(`…_small.png`)이라 화면이 등급 색을 입혀야 하는지. 큰 아이콘 파일이 없는 새 증강이
+	 * 그래요. 스킬 증강의 공용 아이콘처럼 작은 것과 큰 것이 같은 파일이면 이미 색이 있어서 입히지 않아요.
+	 */
+	private static boolean needsTint(Augment augment) {
+		return coloredIconPath(augment).endsWith("_small.png");
 	}
 
 	public List<ChampionDto> allChampions() {
@@ -85,7 +99,8 @@ public class GameDataService {
 			.filter(locale -> locale != AugmentLocale.EN)
 			.map(locale -> byLocale.get(locale.code()))
 			.orElse(null);
-		return new AugmentDetailDto(augment.getId(), augment.getRarity(), augmentIconUrl(augment.getLargeIconPath()),
+		return new AugmentDetailDto(augment.getId(), augment.getRarity(), augmentIconUrl(coloredIconPath(augment)),
+				needsTint(augment),
 				original == null ? null : AugmentTextDto.from(original),
 				translation == null ? null : AugmentTextDto.from(translation));
 	}

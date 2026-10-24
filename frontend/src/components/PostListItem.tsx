@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import type { PostListItem as Item } from '../api/types'
 import { relativeTime } from '../lib/relativeTime'
+import AugmentIcon from './augment/AugmentIcon'
 
 /**
  * 목록 한 줄: 추천 수, 제목, 챔피언·증강 아이콘, 패치, 글쓴이, 시간, 댓글 수.
@@ -62,11 +63,12 @@ export default function PostListItem({ post, compact = false }: { post: Item; co
               ),
             )}
             {post.augments.map((a) => (
-              <img
+              <AugmentIcon
                 key={a.id}
                 src={a.iconUrl}
+                rarity={a.rarity}
+                tinted={a.iconTinted}
                 alt={a.nameKo}
-                title={a.nameKo}
                 className="h-6 w-6 rounded-md border border-slate-700 bg-slate-800"
               />
             ))}

@@ -23,6 +23,12 @@ describe('AugmentCard', () => {
     expect(document.querySelector('img[src="i.png"]')).toBeInTheDocument()
   })
 
+  it('paints a white icon when the server says it needs tinting', () => {
+    renderWithProviders(<AugmentCard text={text} rarity="GOLD" iconUrl="small.png" iconTinted />)
+    const article = screen.getByRole('article', { name: '불길한 서약' })
+    expect(article.querySelector('img[src="small.png"]')).toBeNull()
+  })
+
   it('uses English rarity labels for en text', () => {
     renderWithProviders(
       <AugmentCard text={{ locale: 'en', name: 'Ominous Pact', description: 'x' }} rarity="SILVER" iconUrl="i.png" />,

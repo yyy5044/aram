@@ -22,6 +22,22 @@ describe('TagGrid', () => {
     expect(grid.lastElementChild).toHaveTextContent('패널 b')
   })
 
+  it('paints augment icons that need a rarity color', () => {
+    render(
+      <TagGrid
+        items={[
+          { id: 'x', name: '색칠', image: 'small.png', count: 0, tint: 'GOLD' },
+          { id: 'y', name: '그대로', image: 'large.png', count: 0 },
+        ]}
+        openId={null}
+        onToggle={() => {}}
+        renderPanel={() => null}
+      />,
+    )
+    expect(screen.getByRole('button', { name: '색칠' }).querySelector('img')).toBeNull()
+    expect(screen.getByRole('button', { name: '그대로' }).querySelector('img')).toHaveAttribute('src', 'large.png')
+  })
+
   it('shows the post count on each item', () => {
     render(<TagGrid items={items} openId={null} onToggle={() => {}} renderPanel={() => null} />)
     expect(within(screen.getByRole('button', { name: '다' })).getByText('글 2개')).toBeInTheDocument()

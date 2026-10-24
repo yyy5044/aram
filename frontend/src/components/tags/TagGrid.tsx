@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import type { AugmentRarity } from '../../api/types'
+import AugmentIcon from '../augment/AugmentIcon'
 
 export type GridItem = {
   id: string
@@ -7,6 +9,8 @@ export type GridItem = {
   count: number
   /** 챔피언 초상화처럼 둥글게 보여줄지. */
   round?: boolean
+  /** 흰 증강 아이콘이라 이 등급 색을 입혀야 할 때. */
+  tint?: AugmentRarity
 }
 
 type Props = {
@@ -95,9 +99,10 @@ function Item({
           }`}
         >
           {item.image ? (
-            <img
+            <AugmentIcon
               src={item.image}
-              alt=""
+              rarity={item.tint ?? 'SILVER'}
+              tinted={item.tint !== undefined}
               className={`mb-1.5 h-13 w-13 bg-slate-800 ${item.round ? 'rounded-full' : 'rounded-lg'}`}
             />
           ) : (
