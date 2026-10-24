@@ -1,6 +1,8 @@
 import type { RouteObject } from 'react-router'
 import AppLayout from './components/AppLayout'
+import AugmentsPage from './pages/AugmentsPage'
 import AuthDonePage from './pages/AuthDonePage'
+import ChampionsPage from './pages/ChampionsPage'
 import ErrorPage from './pages/ErrorPage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -22,6 +24,8 @@ export const appRoutes: RouteObject[] = [
       { path: '/write', element: <WritePage /> },
       { path: '/users/:userId', element: <ProfilePage /> },
       { path: '/settings/profile', element: <ProfileEditPage /> },
+      { path: '/augments', element: <AugmentsPage /> },
+      { path: '/champions', element: <ChampionsPage /> },
       { path: '/champions/:championId', element: <TagPage kind="champion" /> },
       { path: '/augments/:augmentId', element: <TagPage kind="augment" /> },
       { path: '/welcome', element: <WelcomePage /> },

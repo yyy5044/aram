@@ -1,0 +1,51 @@
+import { useState } from 'react'
+import { useChampions, useTagCounts } from '../api/gamedata'
+import type { Champion } from '../api/types'
+import TagGrid from '../components/tags/TagGrid'
+import TagPageStatus from '../components/tags/TagPageStatus'
+import TagPostsPanel from '../components/tags/TagPostsPanel'
+import TagToolbar from '../components/tags/TagToolbar'
+import { useOpenTag } from '../components/tags/useOpenTag'
+import { matchesName, sortTags, type TagSort } from '../lib/tagSearch'
+
+/** 챔피언 목록. 챔피언을 누르면 그 아래로 글 목록과 자주 함께 쓰는 증강이 펼쳐져요. */
+export default function ChampionsPage() {
+  const champions = useChampions()
+  const counts = useTagCounts()
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState<TagSort>('name')
+  const [openId, toggle, close] = useOpenTag()
+
+  if (champions.isPending || counts.isPending || champions.error || counts.error) {
+    return <TagPageStatus pending={champions.isPending || counts.isPending} error={champions.error ?? counts.error} />
+  }
+
+  const countOf = (c: Champion) => counts.data.champions[c.id] ?? 0
+  const matches = sortTags(
+    champions.data.filter((c) => matchesName(c.nameKo, query)),
+    sort,
+    (c) => c.nameKo,
+    countOf,
+  )
+
+  return (
+    <section>
+      <TagToolbar query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} placeholder="챔피언 이름 검색" />
+      {matches.length === 0 ? (
+        <p className="py-16 text-center text-slate-400">검색 결과가 없어요</p>
+      ) : (
+        <TagGrid
+          items={matches.map((c) => ({ id: c.id, name: c.nameKo, image: c.imageUrl, count: countOf(c), round: true }))}
+          openId={openId}
+          onToggle={toggle}
+          renderPanel={(id) => {
+            const c = champions.data.find((x) => x.id === id)!
+            return (
+              <TagPostsPanel kind="champion" id={id} title={c.nameKo} subtitle={`게시글 ${countOf(c)}개`} onClose={close} />
+            )
+          }}
+        />
+      )}
+    </section>
+  )
+}

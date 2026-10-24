@@ -1,0 +1,47 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { amumu, jinx, page } from '../test/fixtures'
+import { json, mockApi } from '../test/mockApi'
+import { renderWithProviders } from '../test/render'
+import ChampionsPage from './ChampionsPage'
+
+afterEach(() => vi.unstubAllGlobals())
+
+function setup(route = '/champions') {
+  mockApi({
+    'GET /api/champions': () => json([jinx, amumu]),
+    'GET /api/tag-counts': () => json({ champions: { Jinx: 5 }, augments: {} }),
+    'GET /api/posts': () => json(page([])),
+    'GET /api/champions/Amumu/top-augments': () => json([]),
+  })
+  return renderWithProviders(<ChampionsPage />, { path: '/champions', route })
+}
+
+const names = () => screen.getAllByRole('button', { name: /^(아무무|징크스)$/ }).map((b) => b.getAttribute('aria-label'))
+
+describe('ChampionsPage', () => {
+  it('lists champions with counts and sorts', async () => {
+    setup()
+    await screen.findByRole('button', { name: '아무무' })
+    expect(names()).toEqual(['아무무', '징크스'])
+    expect(within(screen.getByRole('button', { name: '아무무' })).getByText('글 0개')).toBeInTheDocument()
+    expect(within(screen.getByRole('button', { name: '징크스' })).getByText('글 5개')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '글 많은 순' }))
+    expect(names()).toEqual(['징크스', '아무무'])
+  })
+
+  it('opens champion panel with ?open=', async () => {
+    const { router } = setup()
+    await userEvent.click(await screen.findByRole('button', { name: '아무무' }))
+    expect(router.state.location.search).toBe('?open=Amumu')
+    const region = await screen.findByRole('region', { name: '아무무 게시글' })
+    expect(within(region).getByText('게시글 0개')).toBeInTheDocument()
+  })
+
+  it('search with no result', async () => {
+    setup()
+    await userEvent.type(await screen.findByLabelText('이름 검색'), 'zzz')
+    expect(screen.getByText('검색 결과가 없어요')).toBeInTheDocument()
+  })
+})
