@@ -5,7 +5,7 @@ import { useToast } from '../toastContext'
 const SELECTION = 'https://raw.communitydragon.org/latest/game/assets/ux/cherry/augments/augmentselection/'
 
 /** 게임이 쓰는 카드 그림. 512×512 그림 가운데 312px만 카드라서 492px로 키워 좌우 96px씩 잘라 보여요. */
-export const CARD_ASSETS = {
+const CARD_ASSETS = {
   background: SELECTION + 'augmentcard_bg.png',
   frame: {
     SILVER: SELECTION + 'augmentcard_frame_silver.png',
