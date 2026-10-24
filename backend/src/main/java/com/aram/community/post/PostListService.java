@@ -45,11 +45,30 @@ public class PostListService {
 			case "likes" -> LIKES;
 			default -> throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("sort", "정렬은 latest 또는 likes만 쓸 수 있어요"));
 		};
+		requireValidPage(page);
+		return toPage(posts.search(blankToNull(championId), blankToNull(augmentId),
+				PageRequest.of(page - 1, PAGE_SIZE, order)));
+	}
+
+	/** 이 사용자가 쓴 글, 최신순. */
+	public PageResponse<PostListItem> listByAuthor(long authorId, int page) {
+		requireValidPage(page);
+		return toPage(posts.findByAuthor_Id(authorId, PageRequest.of(page - 1, PAGE_SIZE, LATEST)));
+	}
+
+	/** 이 사용자가 스크랩한 글, 스크랩한 시간의 최신순. */
+	public PageResponse<PostListItem> listScrapsOf(long userId, int page) {
+		requireValidPage(page);
+		return toPage(posts.findScrappedBy(userId, PageRequest.of(page - 1, PAGE_SIZE)));
+	}
+
+	public static void requireValidPage(int page) {
 		if (page < 1) {
 			throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("page", "페이지는 1부터 시작해요"));
 		}
-		Page<Post> result = posts.search(blankToNull(championId), blankToNull(augmentId),
-				PageRequest.of(page - 1, PAGE_SIZE, order));
+	}
+
+	private PageResponse<PostListItem> toPage(Page<Post> result) {
 		List<Long> ids = result.getContent().stream().map(Post::getId).toList();
 		Map<Long, List<ChampionDto>> champions = ids.isEmpty() ? Map.of()
 				: posts.findChampionTags(ids)

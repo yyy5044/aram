@@ -25,6 +25,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 			""")
 	Page<Post> search(String championId, String augmentId, Pageable pageable);
 
+	@EntityGraph(attributePaths = "author")
+	Page<Post> findByAuthor_Id(Long authorId, Pageable pageable);
+
+	long countByAuthor_Id(Long authorId);
+
+	/** 스크랩한 시간의 최신순. Scrap 엔티티는 scrap 패키지에 있어요. */
+	@EntityGraph(attributePaths = "author")
+	@Query(value = "select p from Post p, Scrap s where s.postId = p.id and s.userId = :userId order by s.createdAt desc, p.id desc",
+			countQuery = "select count(s) from Scrap s where s.userId = :userId")
+	Page<Post> findScrappedBy(Long userId, Pageable pageable);
+
 	interface PostChampion {
 
 		Long getPostId();

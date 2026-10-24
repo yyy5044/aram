@@ -1,6 +1,8 @@
 package com.aram.community.comment;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,6 +12,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
 	@EntityGraph(attributePaths = "author")
 	List<Comment> findByPostIdOrderByCreatedAtAscIdAsc(Long postId);
+
+	Page<Comment> findByAuthor_IdOrderByCreatedAtDescIdDesc(Long authorId, Pageable pageable);
+
+	long countByAuthor_Id(Long authorId);
 
 	/** 댓글 수를 실제 개수로 다시 맞춰요. */
 	@Modifying
