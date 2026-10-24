@@ -1,0 +1,29 @@
+{
+ "entries": {
+  "kiwi_aram_legday_name": "Leg Day",
+  "kiwi_sonata_name": "Sonata",
+  "kiwi_surgefield_name": "Surge Field",
+  "kiwi_endlessdecimation_name": "Endless Decimation",
+  "kiwi_aram_firefox_name": "Firefox",
+  "kiwi_aram_giantslayer_name": "Giant Slayer",
+  "kiwi_aram_okboomerang_name": "OK Boomerang",
+  "kiwi_aram_itskillingtime_name": "It's Killing Time",
+  "kiwi_aram_infernotriggered_name": "Inferno Triggered",
+  "kiwi_aram_spintowin_name": "Spin to Win",
+  "kiwi_veilofwarding_name": "Veil of Warding",
+  "kiwi_missile_split_name": "Missile Split",
+  "kiwi_ability_selfaoe_doublecast_name": "Double Cast",
+  "kiwi_aram_overextender_name": "Overextender",
+  "kiwi_aram_searingdawn_name": "Searing Dawn",
+  "upgradedeathdance_name": "Death Dance Upgrade",
+  "kiwi_snapback_name": "Snap Back",
+  "kiwi_bonk_name": "Bonk",
+  "kiwi_augment_divinedomain_name": "Divine Domain",
+  "kiwi_quest_sneakerhead_name": "Sneakerhead",
+  "augment_pincushion_name": "Pin Cushion",
+  "kiwi_aram_shadowrunner_name": "Shadow Runner",
+  "kiwi_aram_legday_tooltip": "{{Kiwi_ARAM_LegDay_Summary}}<br><br>Distance Run: @f1@",
+  "kiwi_aram_legday_summary": "Gain <speed>@MSBonus*100@% Move Speed</speed>.",
+  "kiwi_surgefield_tooltip": "@Damage@ damage"
+ }
+}

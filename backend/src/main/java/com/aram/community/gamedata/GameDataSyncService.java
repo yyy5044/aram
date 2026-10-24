@@ -2,6 +2,8 @@ package com.aram.community.gamedata;
 
 import com.aram.community.gamedata.GameDataClient.AugmentData;
 import com.aram.community.gamedata.GameDataClient.ChampionData;
+import com.aram.community.gamedata.GameDataClient.LocalizedText;
+import com.aram.community.gamedata.text.AugmentLocale;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,8 @@ public class GameDataSyncService {
 
 	private final AugmentRepository augments;
 
+	private final AugmentTextRepository texts;
+
 	private final PatchRepository patches;
 
 	private final GameDataStateRepository states;
@@ -43,10 +47,12 @@ public class GameDataSyncService {
 	private final TransactionTemplate tx;
 
 	public GameDataSyncService(GameDataClient client, ChampionRepository champions, AugmentRepository augments,
-			PatchRepository patches, GameDataStateRepository states, TransactionTemplate tx) {
+			AugmentTextRepository texts, PatchRepository patches, GameDataStateRepository states,
+			TransactionTemplate tx) {
 		this.client = client;
 		this.champions = champions;
 		this.augments = augments;
+		this.texts = texts;
 		this.patches = patches;
 		this.states = states;
 		this.tx = tx;
@@ -81,8 +87,9 @@ public class GameDataSyncService {
 				st.markChecked(now);
 				st.markSynced(latest, GamePatches.toGamePatch(latest), now);
 			}));
-			log.info("Game data synced to {} ({} champions, {} augments)", latest, championData.size(),
-					augmentData.size());
+			int unresolved = augmentData.stream().mapToInt(AugmentData::unresolvedCount).sum();
+			log.info("Game data synced to {} ({} champions, {} augments, {} unresolved placeholders)", latest,
+					championData.size(), augmentData.size(), unresolved);
 			return SyncResult.UPDATED;
 		}
 		catch (RuntimeException e) {
@@ -135,13 +142,26 @@ public class GameDataSyncService {
 			.collect(Collectors.toMap(Augment::getId, Function.identity()));
 		Map<String, AugmentData> incoming = data.stream()
 			.collect(Collectors.toMap(AugmentData::id, Function.identity(), (a, b) -> a));
+		Map<AugmentTextId, AugmentText> existingTexts = texts.findAll()
+			.stream()
+			.collect(Collectors.toMap(AugmentText::getId, Function.identity()));
 		for (AugmentData a : incoming.values()) {
 			Augment augment = existing.get(a.id());
 			if (augment == null) {
-				augments.save(new Augment(a.id(), a.nameKo(), a.iconPath(), a.iconPath(), a.rarity(), now));
+				augments.save(new Augment(a.id(), a.nameKo(), a.iconPath(), a.largeIconPath(), a.rarity(), now));
 			}
 			else {
-				augment.refresh(a.nameKo(), a.iconPath(), a.iconPath(), a.rarity(), now);
+				augment.refresh(a.nameKo(), a.iconPath(), a.largeIconPath(), a.rarity(), now);
+			}
+			for (Map.Entry<AugmentLocale, LocalizedText> e : a.texts().entrySet()) {
+				AugmentTextId id = new AugmentTextId(a.id(), e.getKey().code());
+				AugmentText text = existingTexts.get(id);
+				if (text == null) {
+					texts.save(new AugmentText(id, e.getValue().name(), e.getValue().description(), now));
+				}
+				else {
+					text.refresh(e.getValue().name(), e.getValue().description(), now);
+				}
 			}
 		}
 		existing.values().stream().filter(a -> !incoming.containsKey(a.getId())).forEach(a -> a.deactivate(now));

@@ -3,7 +3,10 @@
   "AugmentNameId": "ARAM_LegDay",
   "NameTra": "Kiwi_ARAM_LegDay_Name",
   "AugmentSmallIconPath": "assets/ux/cherry/augments/icons/legday_small.tex",
-  "__type": "AugmentData"
+  "__type": "AugmentData",
+  "AugmentTooltipTra": "Kiwi_ARAM_LegDay_Tooltip",
+  "AugmentLargeIconPath": "assets/ux/cherry/augments/icons/legday_large.tex",
+  "RootSpell": "Maps/ModeSpecificData/Augments/ARAM_LegDay/Augment_ARAM_LegDay"
  },
  "Maps/ModeSpecificData/Augments/Sonata": {
   "AugmentNameId": "Sonata",
@@ -17,7 +20,8 @@
   "NameTra": "Kiwi_SurgeField_Name",
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/surgefield_small.tex",
   "__type": "AugmentData",
-  "rarity": 2
+  "rarity": 2,
+  "AugmentTooltipTra": "Kiwi_SurgeField_Tooltip"
  },
  "Maps/ModeSpecificData/Augments/EndlessDecimation": {
   "AugmentNameId": "EndlessDecimation",
@@ -157,5 +161,27 @@
   "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/disabled_small.tex",
   "Enabled": false,
   "__type": "AugmentData"
+ },
+ "Maps/ModeSpecificData/Augments/ARAM_LegDay/Augment_ARAM_LegDay": {
+  "ObjectName": "Augment_ARAM_LegDay",
+  "mSpell": {
+   "DataValues": [
+    {
+     "name": "MSBonus",
+     "values": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+     ],
+     "__type": "SpellDataValue"
+    }
+   ],
+   "__type": "SpellDataResource"
+  },
+  "__type": "SpellObject"
  }
 }
