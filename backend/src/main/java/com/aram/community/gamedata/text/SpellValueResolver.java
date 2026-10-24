@@ -18,15 +18,15 @@ public final class SpellValueResolver {
 
 	private static final Pattern TAIL = Pattern.compile("^(.+?)\\*(-?\\d+(?:\\.\\d+)?)$");
 
-	/** 숫자 범위(같으면 하나) 또는 이미 만들어진 글. 스탯 부분은 항상 `(+…)`로 감싸요. */
-	private record Part(Double lo, Double hi, String text, boolean stat) {
+	/** 숫자 범위(같으면 하나) 또는 이미 만들어진 글. 스탯 부분은 항상 `(+…)`로 감싸요. percent면 뒤에 %를 붙여요. */
+	private record Part(Double lo, Double hi, String text, boolean stat, boolean percent) {
 
 		static Part number(double lo, double hi) {
-			return new Part(lo, hi, null, false);
+			return new Part(lo, hi, null, false, false);
 		}
 
 		static Part text(String text, boolean stat) {
-			return new Part(null, null, text, stat);
+			return new Part(null, null, text, stat, false);
 		}
 
 		boolean numeric() {
@@ -34,14 +34,19 @@ public final class SpellValueResolver {
 		}
 
 		Part times(double factor) {
-			return numeric() ? number(lo * factor, hi * factor) : this;
+			return numeric() ? new Part(lo * factor, hi * factor, null, false, percent) : this;
+		}
+
+		/** 백분율 표시: 숫자에 100을 곱하고 %를 붙여요. 스탯 부분은 이미 %라서 그대로예요. */
+		Part asPercent() {
+			return numeric() ? new Part(lo * 100, hi * 100, null, false, true) : this;
 		}
 
 		String render() {
 			if (!numeric()) {
 				return text;
 			}
-			return formatRange(lo, hi);
+			return formatRange(lo, hi) + (percent ? "%" : "");
 		}
 
 	}
@@ -105,7 +110,7 @@ public final class SpellValueResolver {
 				return Optional.empty();
 			}
 			double factor = multiplier.get().lo();
-			return Optional.of(base.get().stream().map(p -> p.times(factor)).toList());
+			return Optional.of(displayAsPercent(c, base.get().stream().map(p -> p.times(factor)).toList()));
 		}
 		List<Part> result = new ArrayList<>();
 		for (JsonNode fp : c.path("mFormulaParts")) {
@@ -115,11 +120,27 @@ public final class SpellValueResolver {
 			}
 			result.add(part.get());
 		}
-		return result.isEmpty() ? Optional.empty() : Optional.of(result);
+		return result.isEmpty() ? Optional.empty() : Optional.of(displayAsPercent(c, result));
+	}
+
+	private static List<Part> displayAsPercent(JsonNode calc, List<Part> parts) {
+		if (!calc.path("mDisplayAsPercent").asBoolean(false)) {
+			return parts;
+		}
+		return parts.stream().map(Part::asPercent).toList();
 	}
 
 	private Optional<Part> part(JsonNode fp, SpellValues values) {
 		String type = fp.path("__type").asString("");
+		// 이름이 해시로만 남은 종류 중, 두 수치 사이 범위는 모양으로 알아볼 수 있어요.
+		if (fp.has("StartDataValue") && fp.has("EndDataValue")) {
+			Optional<List<Double>> lo = values.dataValue(fp.path("StartDataValue").asString(""));
+			Optional<List<Double>> hi = values.dataValue(fp.path("EndDataValue").asString(""));
+			if (lo.isEmpty() || hi.isEmpty()) {
+				return Optional.empty();
+			}
+			return Optional.of(Part.number(lo.get().get(0), hi.get().get(0)));
+		}
 		switch (type) {
 			case "NumberCalculationPart": {
 				double n = fp.path("mNumber").asDouble(0);
@@ -159,8 +180,15 @@ public final class SpellValueResolver {
 	}
 
 	private Optional<Part> joinSubparts(JsonNode fp, SpellValues values, String separator) {
+		List<JsonNode> subs = new ArrayList<>();
+		fp.path("mSubparts").forEach(subs::add);
+		// 곱은 mSubparts 대신 mPart1·mPart2로 올 때도 있어요.
+		if (subs.isEmpty() && fp.has("mPart1") && fp.has("mPart2")) {
+			subs.add(fp.get("mPart1"));
+			subs.add(fp.get("mPart2"));
+		}
 		List<String> rendered = new ArrayList<>();
-		for (JsonNode sub : fp.path("mSubparts")) {
+		for (JsonNode sub : subs) {
 			Optional<Part> part = part(sub, values);
 			if (part.isEmpty()) {
 				return Optional.empty();

@@ -49,7 +49,7 @@ export default function AugmentCard({ text, rarity, iconUrl }: Props) {
   return (
     <article
       aria-label={text.name}
-      className="group relative h-[492px] w-[300px] flex-none overflow-hidden rounded-[14px] select-text"
+      className="group relative h-[492px] w-[300px] flex-none overflow-clip rounded-[14px] select-text"
     >
       <img src={CARD_ASSETS.background} alt="" className="absolute top-0 -left-24 h-[492px] w-[492px] max-w-none" />
       <img src={CARD_ASSETS.frame[rarity]} alt="" className="absolute top-0 -left-24 h-[492px] w-[492px] max-w-none" />

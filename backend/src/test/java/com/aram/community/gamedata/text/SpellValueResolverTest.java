@@ -125,6 +125,42 @@ class SpellValueResolverTest {
 	}
 
 	@Test
+	void knowsArmorMagicResistMoveSpeedAndHaste() {
+		SpellValues v = spell("{\"DataValues\":[" + same("Conv", 0.25) + "],\"mSpellCalculations\":{"
+				+ "\"Ar\":{\"mFormulaParts\":[{\"mStat\":1,\"mStatFormula\":2,\"mCoefficient\":1.25,\"__type\":\"StatByCoefficientCalculationPart\"}],\"__type\":\"GameCalculation\"},"
+				+ "\"Mr\":{\"mFormulaParts\":[{\"mStat\":6,\"mStatFormula\":2,\"mCoefficient\":1.25,\"__type\":\"StatByCoefficientCalculationPart\"}],\"__type\":\"GameCalculation\"},"
+				+ "\"Ms\":{\"mFormulaParts\":[{\"mStat\":7,\"mDataValue\":\"Conv\",\"__type\":\"StatByNamedDataValueCalculationPart\"}],\"__type\":\"GameCalculation\"},"
+				+ "\"Ah\":{\"mFormulaParts\":[{\"mStat\":11,\"mDataValue\":\"Conv\",\"__type\":\"StatByNamedDataValueCalculationPart\"}],\"__type\":\"GameCalculation\"}}}");
+		assertThat(ko.resolve("Ar", v)).contains("(+전체 방어력의 125%)");
+		assertThat(en.resolve("Mr", v)).contains("(+125% total Magic Resist)");
+		assertThat(ko.resolve("Ms", v)).contains("(+이동 속도의 25%)");
+		assertThat(en.resolve("Ah", v)).contains("(+25% Ability Haste)");
+	}
+
+	@Test
+	void productWithPart1AndPart2() {
+		SpellValues v = spell("{\"DataValues\":[" + same("A", 2) + "," + same("B", 5) + "],\"mSpellCalculations\":{"
+				+ "\"P\":{\"mFormulaParts\":[{\"mPart1\":{\"mDataValue\":\"A\",\"__type\":\"NamedDataValueCalculationPart\"},"
+				+ "\"mPart2\":{\"mDataValue\":\"B\",\"__type\":\"NamedDataValueCalculationPart\"},\"__type\":\"ProductOfSubPartsCalculationPart\"}],\"__type\":\"GameCalculation\"}}}");
+		assertThat(ko.resolve("P", v)).contains("2 × 5");
+	}
+
+	@Test
+	void rangeBetweenTwoDataValues() {
+		SpellValues v = spell("{\"DataValues\":[" + same("Lo", 10) + "," + same("Hi", 30) + "],\"mSpellCalculations\":{"
+				+ "\"R\":{\"mFormulaParts\":[{\"StartDataValue\":\"Lo\",\"EndDataValue\":\"Hi\",\"__type\":\"{ee18a47b}\"}],\"__type\":\"GameCalculation\"}}}");
+		assertThat(ko.resolve("R", v)).contains("10~30");
+	}
+
+	@Test
+	void displayAsPercentMultipliesNumbers() {
+		SpellValues v = spell("{\"DataValues\":[" + same("X", 0.1) + "],\"mSpellCalculations\":{"
+				+ "\"Pct\":{\"mFormulaParts\":[{\"mDataValue\":\"X\",\"__type\":\"NamedDataValueCalculationPart\"},"
+				+ "{\"mStat\":7,\"mDataValue\":\"X\",\"__type\":\"StatByNamedDataValueCalculationPart\"}],\"mDisplayAsPercent\":true,\"__type\":\"GameCalculation\"}}}");
+		assertThat(en.resolve("Pct", v)).contains("10% (+10% Move Speed)");
+	}
+
+	@Test
 	void formatsNumbers() {
 		assertThat(SpellValueResolver.formatNumber(150)).isEqualTo("150");
 		assertThat(SpellValueResolver.formatNumber(4.5)).isEqualTo("4.5");

@@ -6,8 +6,12 @@ import java.util.Optional;
 /** 설명을 만드는 언어. 코드(en, ko)와 CommunityDragon 폴더 이름, 언어별 문구를 가져요. */
 public enum AugmentLocale {
 
-	EN("en", "en_us", "[Ability]", Map.of(0, "AP", 2, "AD", 12, "max Health"), "bonus ", "total "),
-	KO("ko", "ko_kr", "[스킬]", Map.of(0, "주문력", 2, "공격력", 12, "최대 체력"), "추가 ", "전체 ");
+	EN("en", "en_us", "[Ability]",
+			Map.of(0, "AP", 1, "Armor", 2, "AD", 6, "Magic Resist", 7, "Move Speed", 11, "Ability Haste", 12, "max Health"),
+			"bonus ", "total "),
+	KO("ko", "ko_kr", "[스킬]",
+			Map.of(0, "주문력", 1, "방어력", 2, "공격력", 6, "마법 저항력", 7, "이동 속도", 11, "스킬 가속", 12, "최대 체력"),
+			"추가 ", "전체 ");
 
 	private final String code;
 
