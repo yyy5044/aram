@@ -6,6 +6,7 @@ import { deletePost, usePost } from '../api/posts'
 import Avatar from '../components/Avatar'
 import CommentSection from '../components/CommentSection'
 import LikeButton from '../components/LikeButton'
+import ScrapButton from '../components/ScrapButton'
 import TagChip from '../components/TagChip'
 import { useToast } from '../components/toastContext'
 import PostContentView from '../editor/PostContentView'
@@ -92,8 +93,9 @@ export default function PostDetailPage() {
         </div>
       )}
 
-      <div className="flex justify-center border-y border-slate-800 py-4">
+      <div className="flex justify-center gap-2.5 border-y border-slate-800 py-4">
         <LikeButton key={post.id} postId={post.id} likeCount={post.likeCount} likedByMe={post.likedByMe} />
+        <ScrapButton key={`scrap-${post.id}`} postId={post.id} scrappedByMe={post.scrappedByMe} />
       </div>
 
       <CommentSection postId={post.id} />

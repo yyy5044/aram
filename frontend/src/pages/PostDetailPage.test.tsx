@@ -117,6 +117,14 @@ describe('PostDetailPage', () => {
     expect(screen.getByRole('button', { name: /추천 24/ })).toHaveAttribute('aria-pressed', 'false')
   })
 
+  it('shows the scrap button next to the like button', async () => {
+    setup(meMinsu, detail({ scrappedByMe: true }))
+    const like = await screen.findByRole('button', { name: /추천 24/ })
+    const scrap = screen.getByRole('button', { name: '★ 스크랩됨' })
+    expect(like.parentElement).toBe(scrap.parentElement)
+    expect(like.compareDocumentPosition(scrap) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('likes and unlikes', async () => {
     setup(meMinsu, detail(), {
       'PUT /api/posts/5/like': () => json({ likeCount: 25, likedByMe: true }),

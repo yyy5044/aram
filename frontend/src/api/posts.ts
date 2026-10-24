@@ -53,3 +53,13 @@ export function createPost(body: PostRequest) {
 export function updatePost(postId: number, body: PostRequest) {
   return apiFetch<void>(`/api/posts/${postId}`, { method: 'PUT', json: body })
 }
+
+export type ScrapState = { scrappedByMe: boolean }
+
+export function scrapPost(postId: number) {
+  return apiFetch<ScrapState>(`/api/posts/${postId}/scrap`, { method: 'PUT' })
+}
+
+export function unscrapPost(postId: number) {
+  return apiFetch<ScrapState>(`/api/posts/${postId}/scrap`, { method: 'DELETE' })
+}
