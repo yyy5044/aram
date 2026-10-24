@@ -7,6 +7,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import PostDetailPage from './pages/PostDetailPage'
 import TagPage from './pages/TagPage'
 import WelcomePage from './pages/WelcomePage'
+import ProfilePage from './pages/ProfilePage'
 import WritePage from './pages/WritePage'
 
 export const appRoutes: RouteObject[] = [
@@ -18,6 +19,7 @@ export const appRoutes: RouteObject[] = [
       { path: '/posts/:postId', element: <PostDetailPage /> },
       { path: '/posts/:postId/edit', element: <WritePage /> },
       { path: '/write', element: <WritePage /> },
+      { path: '/users/:userId', element: <ProfilePage /> },
       { path: '/champions/:championId', element: <TagPage kind="champion" /> },
       { path: '/augments/:augmentId', element: <TagPage kind="augment" /> },
       { path: '/welcome', element: <WelcomePage /> },

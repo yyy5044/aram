@@ -1,4 +1,19 @@
-import type { Augment, Champion, Me, Page, PostListItem } from '../api/types'
+import type { Augment, Champion, Me, Page, PostListItem, Profile } from '../api/types'
+
+export function profile(overrides: Partial<Profile> = {}): Profile {
+  return {
+    id: 1,
+    nickname: '하포',
+    avatarUrl: null,
+    joinedAt: '2026-10-24T07:34:31Z',
+    profilePublic: true,
+    mine: false,
+    locked: false,
+    stats: { postCount: 12, commentCount: 37, scrapCount: 5 },
+    activity: { from: '2025-10-19', to: '2026-10-24', days: [{ date: '2026-10-24', posts: 1, comments: 2 }] },
+    ...overrides,
+  }
+}
 
 export const amumu: Champion = {
   id: 'Amumu',
