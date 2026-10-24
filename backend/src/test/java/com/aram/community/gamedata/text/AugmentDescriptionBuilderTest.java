@@ -113,6 +113,16 @@ class AugmentDescriptionBuilderTest {
 	}
 
 	@Test
+	void dropsTrackingLineWithTailAndPercent() {
+		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
+		AugmentDescriptionBuilder.Result r = b.build("Attacks deal bonus damage.<br><br>Bonus Attack Speed: @f1.1*100@%",
+				SpellValues.from(List.of()));
+
+		assertThat(r.description()).isEqualTo("Attacks deal bonus damage.");
+		assertThat(r.unresolved()).isEmpty();
+	}
+
+	@Test
 	void unknownReferenceOnTrackingLineLeavesNothing() {
 		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
 		AugmentDescriptionBuilder.Result r = b.build("{{Kiwi_PressureCooker_Tooltip@f4@}}", SpellValues.from(List.of()));

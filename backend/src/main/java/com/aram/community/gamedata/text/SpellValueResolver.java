@@ -86,6 +86,10 @@ public final class SpellValueResolver {
 			if (first && !scaled.stat()) {
 				sb.append(scaled.render());
 			}
+			else if (first) {
+				// 스탯 계수만 있는 값은 괄호 없이 읽어요: "(+최대 마나의 50%)" → "최대 마나의 50%".
+				sb.append(bare(scaled.render()));
+			}
 			else if (scaled.stat()) {
 				sb.append(scaled.render());
 			}
@@ -121,13 +125,49 @@ public final class SpellValueResolver {
 		}
 		List<Part> result = new ArrayList<>();
 		for (JsonNode fp : c.path("mFormulaParts")) {
-			Optional<Part> part = part(fp, values);
-			if (part.isEmpty()) {
+			Optional<List<Part>> expanded = expand(fp, values);
+			if (expanded.isEmpty()) {
 				return Optional.empty();
 			}
-			result.add(part.get());
+			result.addAll(expanded.get());
 		}
-		return result.isEmpty() ? Optional.empty() : Optional.of(displayAsPercent(c, result));
+		if (result.isEmpty()) {
+			return Optional.empty();
+		}
+		// 일반 계산식에도 배수(mMultiplier)가 붙을 때가 있어요. 숫자에는 곱하고, 스탯 계수에는 곱해 보일 수 없어서 비워요.
+		if (c.has("mMultiplier")) {
+			Optional<Part> multiplier = part(c.path("mMultiplier"), values);
+			if (multiplier.isEmpty() || !multiplier.get().numeric() || result.stream().anyMatch(p -> !p.numeric())) {
+				return Optional.empty();
+			}
+			double factor = multiplier.get().lo();
+			result = result.stream().map(p -> p.times(factor)).toList();
+		}
+		return Optional.of(displayAsPercent(c, result));
+	}
+
+	/** 부분 하나를 펼쳐요. 합(SumOfSubParts)은 숫자끼리면 더한 값 하나로, 스탯이 섞이면 부분들로 풀어요. */
+	private Optional<List<Part>> expand(JsonNode fp, SpellValues values) {
+		if (!"SumOfSubPartsCalculationPart".equals(fp.path("__type").asString(""))) {
+			return part(fp, values).map(List::of);
+		}
+		List<Part> subs = new ArrayList<>();
+		for (JsonNode sub : fp.path("mSubparts")) {
+			Optional<List<Part>> expanded = expand(sub, values);
+			if (expanded.isEmpty()) {
+				return Optional.empty();
+			}
+			subs.addAll(expanded.get());
+		}
+		if (subs.isEmpty()) {
+			return Optional.empty();
+		}
+		if (subs.stream().allMatch(Part::numeric)) {
+			double lo = subs.stream().mapToDouble(Part::lo).sum();
+			double hi = subs.stream().mapToDouble(Part::hi).sum();
+			return Optional.of(List.of(Part.number(lo, hi)));
+		}
+		return Optional.of(subs);
 	}
 
 	private static List<Part> displayAsPercent(JsonNode calc, List<Part> parts) {
@@ -168,8 +208,20 @@ public final class SpellValueResolver {
 				}
 				return statPart(fp, data.get().get(0));
 			}
-			case "SumOfSubPartsCalculationPart":
-				return joinSubparts(fp, values, " + ");
+			case "SumOfSubPartsCalculationPart": {
+				// 곱 안에 들어간 합처럼 부분 하나로 써야 할 때예요. 숫자끼리면 더하고, 아니면 글로 이어요.
+				Optional<List<Part>> expanded = expand(fp, values);
+				if (expanded.isEmpty()) {
+					return Optional.empty();
+				}
+				List<Part> list = expanded.get();
+				return Optional.of(list.size() == 1 ? list.get(0)
+						: Part.text(String.join(" + ", list.stream().map(Part::render).toList()), false));
+			}
+			case "AbilityResourceByCoefficientCalculationPart":
+				return Optional.of(Part.text(
+						locale.statScaling(formatNumber(fp.path("mCoefficient").asDouble(0) * 100), locale.maxManaLabel()),
+						true));
 			case "ProductOfSubPartsCalculationPart":
 				return joinSubparts(fp, values, " × ");
 			default:
@@ -183,6 +235,9 @@ public final class SpellValueResolver {
 			return Optional.empty();
 		}
 		String label = locale.statPrefix(fp.path("mStatFormula").asInt(0)) + stat.get();
+		if (Math.abs(coefficient) >= 10) {
+			return Optional.of(Part.text(locale.perOnePercent(formatNumber(coefficient / 100), label), true));
+		}
 		return Optional.of(Part.text(locale.statScaling(formatNumber(coefficient * 100), label), true));
 	}
 
@@ -227,6 +282,13 @@ public final class SpellValueResolver {
 			value += perLevel;
 		}
 		return Optional.of(value);
+	}
+
+	private static String bare(String statText) {
+		if (statText.startsWith("(+") && statText.endsWith(")")) {
+			return statText.substring(2, statText.length() - 1);
+		}
+		return statText;
 	}
 
 	private static Part range(List<Double> values) {

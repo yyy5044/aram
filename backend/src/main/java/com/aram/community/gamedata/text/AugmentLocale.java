@@ -7,10 +7,12 @@ import java.util.Optional;
 public enum AugmentLocale {
 
 	EN("en", "en_us", "default", "[Ability]",
-			Map.of(0, "AP", 1, "Armor", 2, "AD", 6, "Magic Resist", 7, "Move Speed", 11, "Ability Haste", 12, "max Health"),
+			Map.of(0, "AP", 1, "Armor", 2, "AD", 6, "Magic Resist", 7, "Move Speed", 9, "Critical Strike Damage", 11,
+					"Ability Haste", 12, "max Health", 34, "Heal and Shield Power"),
 			"bonus ", "total "),
 	KO("ko", "ko_kr", "ko_kr", "[스킬]",
-			Map.of(0, "주문력", 1, "방어력", 2, "공격력", 6, "마법 저항력", 7, "이동 속도", 11, "스킬 가속", 12, "최대 체력"),
+			Map.of(0, "주문력", 1, "방어력", 2, "공격력", 6, "마법 저항력", 7, "이동 속도", 9, "치명타 피해", 11, "스킬 가속", 12,
+					"최대 체력", 34, "체력 회복 및 보호막 효과"),
 			"추가 ", "전체 ");
 
 	private final String code;
@@ -77,6 +79,16 @@ public enum AugmentLocale {
 			case 2 -> totalPrefix;
 			default -> "";
 		};
+	}
+
+	/** 마나 비례 부분(AbilityResource)의 이름. 칼바람 증강에서는 최대 마나예요. */
+	public String maxManaLabel() {
+		return this == KO ? "최대 마나" : "max Mana";
+	}
+
+	/** 계수가 아주 큰 스탯(체력 회복 및 보호막 효과 ×750 등)은 "1%당 7.5"로 읽어요. */
+	public String perOnePercent(String amount, String statLabel) {
+		return this == KO ? "(+" + statLabel + " 1%당 " + amount + ")" : "(+" + amount + " per 1% " + statLabel + ")";
 	}
 
 	/** 스탯 계수 글. 예: 한국어 "(+최대 체력의 4%)", 영어 "(+4% max Health)". */

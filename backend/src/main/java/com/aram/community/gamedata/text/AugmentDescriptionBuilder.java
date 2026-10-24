@@ -24,7 +24,7 @@ public final class AugmentDescriptionBuilder {
 
 	private static final Pattern REFERENCE = Pattern.compile("\\{\\{\\s*([^}]+?)\\s*\\}\\}");
 
-	private static final Pattern TRACKING = Pattern.compile("@f\\d+(?:\\.\\d+)?@");
+	private static final Pattern TRACKING = Pattern.compile("@f\\d+(?:\\.\\d+)?(?:\\*-?\\d+)?@");
 
 	private static final Pattern STAT_TRACKING = Pattern.compile("<statTracking>.*?</statTracking>", Pattern.DOTALL);
 
@@ -115,6 +115,8 @@ public final class AugmentDescriptionBuilder {
 		String rest = TAG.matcher(line).replaceAll("");
 		rest = REFERENCE.matcher(rest).replaceAll("");
 		rest = TRACKING.matcher(rest).replaceAll("").strip();
+		// "추가 공격 속도: @f1.1*100@%"처럼 값 뒤에 단위가 붙어도 이름표 줄로 봐요.
+		rest = rest.replaceAll("[%\\s]+$", "");
 		return rest.isEmpty() || rest.endsWith(":");
 	}
 

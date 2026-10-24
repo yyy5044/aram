@@ -35,10 +35,14 @@ public final class SpellValues {
 				List<Double> list = new ArrayList<>();
 				values.forEach(v -> list.add(v.asDouble()));
 				dataValues.putIfAbsent(name, list);
+				// 계산식이 수치를 해시 이름으로 가리킬 때도 있어서 해시로도 찾을 수 있게 해 둬요.
+				dataValues.putIfAbsent(hashedName(name), list);
 			}
-			spell.path("mSpellCalculations")
-				.properties()
-				.forEach(e -> calculations.putIfAbsent(e.getKey().toLowerCase(Locale.ROOT), e.getValue()));
+			spell.path("mSpellCalculations").properties().forEach(e -> {
+				String name = e.getKey().toLowerCase(Locale.ROOT);
+				calculations.putIfAbsent(name, e.getValue());
+				calculations.putIfAbsent(hashedName(name), e.getValue());
+			});
 		}
 		return new SpellValues(dataValues, calculations);
 	}
