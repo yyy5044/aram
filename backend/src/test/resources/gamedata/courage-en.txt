@@ -1,0 +1,1 @@
+Gain <shield>@TotalShield@ Shield</shield> after <status>Immobilizing</status> or <status>Grounding</status> an enemy champion.<br><br>Shields Generated: @f2@

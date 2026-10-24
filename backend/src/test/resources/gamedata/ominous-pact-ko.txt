@@ -1,0 +1,1 @@
+<scaleHealth>잃은 체력</scaleHealth>에 비례하여 <magicDamage>주문력을 @APPerLevel@</magicDamage>, <speed>이동 속도를 @MSMod*100@%</speed>, <omnivamp>모든 피해 흡혈을 @MaxOmnivamp*100@%</omnivamp>을 얻습니다. 스킬 사용 시 현재 체력의 @SpellHealthCost*100@%를 소모합니다.<br><br><rules>체력이 @HealthThresholdTT*100@%일 때 최대 효과를 얻습니다.</rules><br>

@@ -1,0 +1,188 @@
+{
+ "Maps/ModeSpecificData/Augments/OminousPact": {
+  "AugmentNameId": "OminousPact",
+  "NameTra": "Kiwi_OminousPact_Name",
+  "DescriptionTra": "Kiwi_OminousPact_Summary",
+  "AugmentTooltipTra": "Kiwi_OmninousPact_Tooltip",
+  "RootSpell": "Maps/ModeSpecificData/Augments/OminousPact/Augment_OminousPact",
+  "mAugmentTags": 2,
+  "mBuildTags": 40,
+  "TooltipData": {
+   "{c4182067}": "Kiwi_OminousPact_Summary",
+   "__type": "{5b441d9b}"
+  },
+  "AugmentLevelData": {
+   "__type": "{21dad86e}"
+  },
+  "AugmentLargeIconPath": "assets/ux/cherry/augments/icons/wisdomofages_large.tex",
+  "AugmentSmallIconPath": "assets/ux/cherry/augments/icons/wisdomofages_small.tex",
+  "AugmentDisplayTags": [
+   2
+  ],
+  "rarity": 2,
+  "AugmentPlatformId": 1332,
+  "ResourceResolver": "Maps/ModeSpecificData/Augments/OminousPact/Resources",
+  "__type": "AugmentData"
+ },
+ "Maps/ModeSpecificData/Augments/OminousPact/Augment_OminousPact": {
+  "ObjectName": "Augment_OminousPact",
+  "objectPath": "Maps/ModeSpecificData/Augments/OminousPact/Augment_OminousPact",
+  "mScriptName": "Augment_OminousPact",
+  "mSpell": {
+   "DataValues": [
+    {
+     "name": "MaxOmnivamp",
+     "values": [
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224,
+      0.20000000298023224
+     ],
+     "__type": "SpellDataValue"
+    },
+    {
+     "name": "MSMod",
+     "values": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+     ],
+     "__type": "SpellDataValue"
+    },
+    {
+     "name": "SpellHealthCost",
+     "values": [
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806,
+      0.05000000074505806
+     ],
+     "__type": "SpellDataValue"
+    },
+    {
+     "name": "HealthThresholdTT",
+     "values": [
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896
+     ],
+     "__type": "SpellDataValue"
+    },
+    {
+     "name": "MaxLevel",
+     "values": [
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
+     ],
+     "__type": "SpellDataValue"
+    }
+   ],
+   "DataValuesModeOverride": {
+    "cherry": {
+     "SpellDataValues": [
+      {
+       "name": "MaxOmnivamp",
+       "values": [
+        0.20000000298023224,
+        0.20000000298023224,
+        0.3499999940395355,
+        0.4000000059604645,
+        0.4000000059604645,
+        0.4000000059604645,
+        0.4000000059604645
+       ],
+       "__type": "SpellDataValue"
+      },
+      {
+       "name": "MSMod",
+       "values": [
+        0.5,
+        0.5,
+        1.0,
+        1.25,
+        1.25,
+        1.25,
+        1.25
+       ],
+       "__type": "SpellDataValue"
+      }
+     ],
+     "__type": "SpellDataValueVector"
+    }
+   },
+   "mSpellCalculations": {
+    "APPerLevel": {
+     "mFormulaParts": [
+      {
+       "mStartValue": 75.0,
+       "mEndValue": 150.0,
+       "__type": "ByCharLevelInterpolationCalculationPart"
+      }
+     ],
+     "__type": "GameCalculation"
+    }
+   },
+   "mImgIconName": [
+    "ASSETS/Spells/Icons2D/22.dds"
+   ],
+   "mResourceResolvers": [
+    "Maps/ModeSpecificData/Augments/OminousPact/Resources"
+   ],
+   "mClientData": {
+    "mTooltipData": {
+     "mObjectName": "Augment_OminousPact",
+     "mFormat": "{d7c27163}",
+     "mLocKeys": {
+      "keyName": "Kiwi_OminousPact_Name",
+      "keySummary": "Kiwi_OminousPact_Summary"
+     },
+     "mLists": {
+      "LevelUp": {
+       "levelCount": 2,
+       "Elements": [
+        {
+         "type": "MaxOmnivamp",
+         "multiplier": 100.0,
+         "nameOverride": "Spell_ListType_Omnivamp",
+         "Style": 1,
+         "__type": "TooltipInstanceListElement"
+        },
+        {
+         "type": "MSMod",
+         "multiplier": 100.0,
+         "nameOverride": "Spell_ListType_MovementSpeed",
+         "Style": 1,
+         "__type": "TooltipInstanceListElement"
+        }
+       ],
+       "__type": "TooltipInstanceList"
+      }
+     },
+     "__type": "TooltipInstanceSpell"
+    },
+    "__type": "SpellDataResourceClient"
+   },
+   "__type": "SpellDataResource"
+  },
+  "__type": "SpellObject"
+ }
+}

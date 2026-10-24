@@ -1,0 +1,1 @@
+적 챔피언을 <status>이동 불가</status> 상태로 만들거나 <status>이동 스킬을 사용할 수 없게</status> 하면 <shield>@TotalShield@의 보호막</shield>을 얻습니다.<br><br>생성한 보호막: @f2@

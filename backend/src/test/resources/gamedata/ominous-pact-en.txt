@@ -1,0 +1,1 @@
+Gain <magicDamage>@APPerLevel@ Ability Power</magicDamage>, <speed>@MSMod*100@% Movement Speed</speed>, and <omnivamp>@MaxOmnivamp*100@% Omnivamp</omnivamp> based on <scaleHealth>missing Health</scaleHealth>. Spell casts cost @SpellHealthCost*100@% of your current Health.<br><br><rules>Max benefit at @HealthThresholdTT*100@% Health.</rules><br>
