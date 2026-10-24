@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation } from 'react-router'
 import { ApiError } from '../api/client'
 import { logout, meKey, startDiscordLogin, useMe } from '../api/me'
 import Avatar from './Avatar'
+import LanguageSelect from './LanguageSelect'
 import { useToast } from './toastContext'
 
 const TABS = [
@@ -53,6 +54,7 @@ export default function Header() {
           ))}
         </nav>
         <span className="flex-1" />
+        <LanguageSelect />
         {!isPending && !me && (
           <button
             type="button"

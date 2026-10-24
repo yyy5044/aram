@@ -8,6 +8,7 @@ import Header from './Header'
 afterEach(() => {
   vi.unstubAllGlobals()
   sessionStorage.clear()
+  localStorage.clear()
 })
 
 const me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호' }
@@ -28,6 +29,16 @@ describe('Header', () => {
     await userEvent.click(await screen.findByRole('button', { name: '디스코드로 로그인' }))
     expect(sessionStorage.getItem('aram.returnTo')).toBe('/posts/7')
     expect(assign).toHaveBeenCalledWith('/oauth2/authorization/discord')
+  })
+
+  it('offers a language select that changes the setting', async () => {
+    mockApi({ 'GET /api/me': () => json(null) })
+    renderWithProviders(<Header />)
+    const select = await screen.findByRole('combobox', { name: '언어' })
+    expect(select).toHaveValue('ko')
+    await userEvent.selectOptions(select, 'en')
+    expect(select).toHaveValue('en')
+    expect(localStorage.getItem('lang')).toBe('en')
   })
 
   it('shows nickname and 글쓰기 when logged in', async () => {

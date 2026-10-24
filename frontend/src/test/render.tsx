@@ -3,6 +3,7 @@ import { render } from '@testing-library/react'
 import { StrictMode, type ReactElement } from 'react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { ToastProvider } from '../components/Toast'
+import LanguageProvider from '../components/LanguageProvider'
 import LocationProbe from './LocationProbe'
 
 export function makeQueryClient() {
@@ -15,9 +16,11 @@ function renderRouter(routes: RouteObject[], initialEntry: string) {
   const utils = render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <LanguageProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </LanguageProvider>
       </QueryClientProvider>
     </StrictMode>,
   )
