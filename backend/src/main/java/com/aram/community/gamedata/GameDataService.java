@@ -1,8 +1,14 @@
 package com.aram.community.gamedata;
 
+import com.aram.community.common.ApiException;
+import com.aram.community.common.ErrorCode;
+import com.aram.community.gamedata.text.AugmentLocale;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +25,17 @@ public class GameDataService {
 
 	private final AugmentRepository augments;
 
+	private final AugmentTextRepository texts;
+
 	private final PatchRepository patches;
 
 	private final GameDataStateRepository states;
 
-	public GameDataService(ChampionRepository champions, AugmentRepository augments, PatchRepository patches,
-			GameDataStateRepository states) {
+	public GameDataService(ChampionRepository champions, AugmentRepository augments, AugmentTextRepository texts,
+			PatchRepository patches, GameDataStateRepository states) {
 		this.champions = champions;
 		this.augments = augments;
+		this.texts = texts;
 		this.patches = patches;
 		this.states = states;
 	}
@@ -63,6 +72,22 @@ public class GameDataService {
 
 	public List<ChampionDto> allChampions() {
 		return champions.findAll().stream().sorted(Comparator.comparing(Champion::getNameKo)).map(this::toDto).toList();
+	}
+
+	/** 카드용 상세. original은 영어 행, translation은 lang 행(영어이거나 모르는 언어이거나 행이 없으면 null). */
+	public AugmentDetailDto augmentDetail(String id, String lang) {
+		Augment augment = augments.findById(id).orElseThrow(() -> new ApiException(ErrorCode.AUGMENT_NOT_FOUND));
+		Map<String, AugmentText> byLocale = texts.findByIdAugmentId(id)
+			.stream()
+			.collect(Collectors.toMap(t -> t.getId().locale(), Function.identity()));
+		AugmentText original = byLocale.get(AugmentLocale.EN.code());
+		AugmentText translation = AugmentLocale.fromCode(lang)
+			.filter(locale -> locale != AugmentLocale.EN)
+			.map(locale -> byLocale.get(locale.code()))
+			.orElse(null);
+		return new AugmentDetailDto(augment.getId(), augment.getRarity(), augmentIconUrl(augment.getLargeIconPath()),
+				original == null ? null : AugmentTextDto.from(original),
+				translation == null ? null : AugmentTextDto.from(translation));
 	}
 
 	public List<AugmentDto> allAugments() {
