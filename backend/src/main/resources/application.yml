@@ -41,8 +41,9 @@ spring:
             user-name-attribute: id
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 11MB
+      # 영상 원본 200MB(+여유). 사진 10MB 한도는 ImageService가 따로 검사해요.
+      max-file-size: 210MB
+      max-request-size: 211MB
 
 server:
   servlet:

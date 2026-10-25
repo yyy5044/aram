@@ -55,6 +55,12 @@ public class LocalImageStorage implements ImageStorage {
 		}
 	}
 
+	@Override
+	public Optional<Path> path(String key) {
+		Path p = resolve(key);
+		return Files.isRegularFile(p) ? Optional.of(p) : Optional.empty();
+	}
+
 	private Path resolve(String key) {
 		Path p = root.resolve(key).normalize();
 		if (!p.startsWith(root)) {
