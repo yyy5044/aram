@@ -63,7 +63,8 @@ public class PostContentValidator {
 		walk(root, text, images, videos);
 
 		String plain = text.toString().strip();
-		if (plain.isEmpty()) {
+		// 제목과 클립(또는 사진)만 있는 글도 올릴 수 있어요. 글자·사진·영상이 모두 없을 때만 막아요.
+		if (plain.isEmpty() && images.isEmpty() && videos.isEmpty()) {
 			throw invalid("본문을 입력해주세요");
 		}
 		if (plain.length() > MAX_TEXT) {

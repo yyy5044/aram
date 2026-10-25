@@ -80,6 +80,16 @@ class PostVideoTest extends VideoTestSupport {
 	}
 
 	@Test
+	void clipOnlyPostSaves() throws Exception {
+		UUID clip = readyVideo(author);
+
+		long postId = createdId(createPost(author, doc(video(clip))));
+
+		assertThat(postIdOf(clip)).isEqualTo(postId);
+		mockMvc.perform(get("/api/posts/" + postId)).andExpect(jsonPath("$.content.content[0].type").value("video"));
+	}
+
+	@Test
 	void othersVideoRejected() throws Exception {
 		UUID clip = readyVideo(testUsers.create("민수"));
 
