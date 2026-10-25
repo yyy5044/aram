@@ -51,3 +51,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// Docker 이미지가 이름을 알고 복사할 수 있게 실행 jar 이름을 고정해요.
+tasks.named('bootJar') {
+	archiveFileName = 'app.jar'
+}

@@ -1,0 +1,45 @@
+# 운영 서버의 앞문. https 인증서를 알아서 받고 갱신해요.
+# 도메인으로 들어온 요청만 받아요. IP로 들어오면 응답하지 않아요. http는 https로 넘겨요.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# API와 디스코드 로그인은 백엔드로. Caddy는 원래 Host를 그대로 넘기고 X-Forwarded-Proto를 붙여요.
+	@backend path /api/* /oauth2/* /login/oauth2/*
+	handle @backend {
+		reverse_proxy backend:8080
+	}
+
+	# 파일 이름에 해시가 붙은 화면 파일은 오래 캐시해요. 없는 파일은 404로 둬요(index.html로 넘기면 흰 화면이 돼요).
+	handle /assets/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# 그 밖의 주소는 화면 파일, 없으면 index.html(React Router가 처리해요).
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		@index path /index.html
+		header @index Cache-Control "no-cache"
+		file_server
+	}
+
+	# 백엔드가 응답하지 않으면(업데이트 중) 안내를 보여줘요.
+	handle_errors 502 503 504 {
+		@api path /api/*
+		handle @api {
+			header Content-Type "application/json; charset=utf-8"
+			header Cache-Control "no-store"
+			respond `{"code":"MAINTENANCE","message":"잠시 업데이트 중이에요. 조금 뒤에 다시 시도해 주세요."}` 503
+		}
+		handle {
+			root * /srv
+			rewrite * /maintenance.html
+			header Cache-Control "no-store"
+			file_server {
+				status 503
+			}
+		}
+	}
+}
