@@ -1,9 +1,6 @@
 import { autoUpdate, computePosition, flip, offset, shift } from '@floating-ui/dom'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { useAugmentDetail } from '../../api/gamedata'
-import { useLanguage } from '../../lib/language'
-import AugmentTooltip, { TOOLTIP_BOX } from './AugmentTooltip'
 
 /** 마우스를 이만큼 올려 두면 설명 상자가 떠요. 지나가다 스친 박스까지 띄우지 않게요. */
 const OPEN_DELAY = 200
@@ -11,19 +8,21 @@ const OPEN_DELAY = 200
 const CLOSE_DELAY = 120
 
 type Props = {
-  augmentId: string
+  /** 박스의 접근성 이름(aria-label). 그대로 써요. 예: "거석상의 용기 증강 설명 보기" */
   label: string
   children: ReactNode
+  /** 뜨는 설명 상자 안에 그릴 내용. */
+  content: ReactNode
   /** 글쓰기 편집기 안에서는 false: Tab·누르기로 박스에 초점이 가면 글 쓰던 자리(커서)를 잃어요. */
   focusable?: boolean
 }
 
 /**
- * 본문 증강 박스를 감싸서 그 증강의 작은 설명 상자를 띄워요. PC는 마우스를 올리면, 휴대폰은 누르면 열리고,
+ * 본문 증강·아이템 박스를 감싸서 작은 설명 상자를 띄워요. PC는 마우스를 올리면, 휴대폰은 누르면 열리고,
  * 박스·상자 밖으로 나가거나 바깥을 누르거나 Esc를 누르면 닫혀요. 키보드로 박스에 오면 열려요.
  * 박스는 눌러도 다른 화면으로 가지 않아요.
  */
-export default function AugmentHoverCard({ augmentId, label, children, focusable = true }: Props) {
+export default function HoverTooltip({ label, children, content, focusable = true }: Props) {
   const [open, setOpen] = useState(false)
   const boxRef = useRef<HTMLSpanElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -95,7 +94,7 @@ export default function AugmentHoverCard({ augmentId, label, children, focusable
         ref={boxRef}
         role="button"
         tabIndex={focusable ? 0 : undefined}
-        aria-label={`${label} 증강 설명 보기`}
+        aria-label={label}
         aria-expanded={open}
         className="cursor-default rounded-mark focus-visible:outline-2 focus-visible:outline-teal"
         {...hover}
@@ -134,24 +133,10 @@ export default function AugmentHoverCard({ augmentId, label, children, focusable
               pressingCard.current = true
             }}
           >
-            <TooltipBody augmentId={augmentId} />
+            {content}
           </div>,
           document.body,
         )}
     </>
   )
-}
-
-/** 선택 언어의 설명 상자. 번역이 없으면 원문을 보여줘요. */
-function TooltipBody({ augmentId }: { augmentId: string }) {
-  const { language } = useLanguage()
-  const { data, isPending, isError } = useAugmentDetail(augmentId, language)
-
-  const text = data ? (data.translation ?? data.original) : null
-  if (data && text) {
-    return <AugmentTooltip text={text} rarity={data.rarity} iconUrl={data.iconUrl} iconTinted={data.iconTinted} />
-  }
-  const message = isPending ? '불러오는 중…' : isError ? '증강 정보를 불러오지 못했어요' : '아직 설명이 없어요'
-  // 다 받은 뒤 상자 크기가 바뀌면 autoUpdate가 자리를 다시 잡아요.
-  return <p className={`${TOOLTIP_BOX} text-center text-[15px] text-nav`}>{message}</p>
 }

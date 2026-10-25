@@ -1,7 +1,7 @@
 import type { Editor, JSONContent } from '@tiptap/core'
 import { act, fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { Augment, Champion } from '../api/types'
+import type { Augment, Champion, Item } from '../api/types'
 import { json, mockApi } from '../test/mockApi'
 import { renderWithProviders } from '../test/render'
 import PostEditor from './PostEditor'
@@ -9,12 +9,24 @@ import PostEditor from './PostEditor'
 const xin: Champion = { id: 'XinZhao', nameKo: '신짜오', imageUrl: 'https://x/XinZhao.png' }
 const stoneGuts: Augment = { id: 'StoneGuts', nameKo: '거석상의 용기', iconUrl: 'https://x/sg.png', active: true, rarity: 'GOLD' }
 
+const heart: Item = {
+  id: '3084',
+  nameKo: '강철심장',
+  tier: 'LEGENDARY',
+  priceTotal: 3000,
+  iconUrl: 'https://x/item/3084.png',
+  fromIds: [],
+  intoIds: [],
+  active: true,
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 async function setup(content: JSONContent = { type: 'doc', content: [{ type: 'paragraph' }] }) {
   mockApi({
     'GET /api/champions': () => json([xin]),
     'GET /api/augments': () => json([stoneGuts]),
+    'GET /api/items': () => json([heart]),
   })
   const onMention = vi.fn()
   const onError = vi.fn()
@@ -40,7 +52,7 @@ function mentions(editor: Editor) {
   return found
 }
 
-const MENU = { name: '넣을 챔피언·증강' }
+const MENU = { name: '넣을 챔피언·증강·아이템' }
 
 describe('@ menu', () => {
   it('finds a champion by initial consonants and inserts its box on Enter', async () => {
@@ -67,6 +79,19 @@ describe('@ menu', () => {
     fireEvent.keyDown(dom, { key: 'Enter' })
     expect(mentions(editor)).toEqual([{ kind: 'augment', id: 'StoneGuts', label: '거석상의 용기' }])
     expect(onMention).toHaveBeenCalledWith('augment', 'StoneGuts')
+  })
+
+  it('finds an item by initial consonants and labels it as an item', async () => {
+    const { editor, dom, onMention } = await setup()
+    type(editor, '@ㄱㅊ')
+    const menu = await screen.findByRole('listbox', MENU)
+    expect(menu).toHaveTextContent('강철심장')
+    const row = screen.getByRole('option', { name: /강철심장/ })
+    expect(row).toHaveTextContent('아이템')
+    expect(row.querySelector('img')?.className).toContain('rounded-mark')
+    fireEvent.keyDown(dom, { key: 'Enter' })
+    expect(mentions(editor)).toEqual([{ kind: 'item', id: '3084', label: '강철심장' }])
+    expect(onMention).toHaveBeenCalledWith('item', '3084')
   })
 
   it('asks for a name when only @ is typed', async () => {

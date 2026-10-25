@@ -1,9 +1,9 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { Augment, Champion } from '../api/types'
+import type { Augment, Champion, Item, ItemDetail } from '../api/types'
 import { json, mockApi } from '../test/mockApi'
 import { renderWithProviders } from '../test/render'
 import TagMentionChip from './TagMentionChip'
@@ -11,10 +11,33 @@ import TagMentionChip from './TagMentionChip'
 const xin: Champion = { id: 'XinZhao', nameKo: '신짜오', imageUrl: 'https://x/XinZhao.png' }
 const stoneGuts: Augment = { id: 'StoneGuts', nameKo: '거석상의 용기', iconUrl: 'https://x/sg.png', active: true, rarity: 'GOLD' }
 
+const heart: Item = {
+  id: '3084',
+  nameKo: '강철심장',
+  tier: 'LEGENDARY',
+  priceTotal: 3000,
+  iconUrl: 'https://x/item/3084.png',
+  fromIds: [],
+  intoIds: [],
+  active: true,
+}
+const heartDetail: ItemDetail = {
+  id: '3084',
+  tier: 'LEGENDARY',
+  priceTotal: 3000,
+  iconUrl: 'https://x/item/3084.png',
+  fromIds: [],
+  intoIds: [],
+  original: { locale: 'en', name: 'Heartsteel', description: 'Gain health' },
+  translation: { locale: 'ko', name: '강철심장', description: '체력을 얻어요' },
+}
+
 function withLists() {
   mockApi({
     'GET /api/champions': () => json([xin]),
     'GET /api/augments': () => json([stoneGuts]),
+    'GET /api/items': () => json([heart]),
+    'GET /api/items/3084': () => json(heartDetail),
   })
 }
 
@@ -87,5 +110,49 @@ describe('TagMentionChip', () => {
     const { router } = renderWithProviders(<TagMentionChip kind="champion" id="XinZhao" label="신짜오" />, { route: '/posts/1', path: '/posts/:id' })
     await userEvent.click(screen.getByText('신짜오'))
     expect(router.state.location.pathname).toBe('/posts/1')
+  })
+
+  it('draws an item with a square icon, a gold name and a dotted underline', async () => {
+    withLists()
+    renderWithProviders(<TagMentionChip kind="item" id="3084" label="강철심장" />)
+    await vi.waitFor(() => expect(document.querySelector('img[src="https://x/item/3084.png"]')).not.toBeNull())
+    const img = document.querySelector('img') as HTMLImageElement
+    expect(img.className).toContain('rounded-mark')
+    expect(img.className).toContain('h-[1.15em]')
+    const name = screen.getByText('강철심장')
+    expect(name.className).toContain('text-gold-deep')
+    expect(name.className).toContain('decoration-dotted')
+    expect(name.closest('[data-mention-box]')?.className).not.toMatch(/border|bg-/)
+  })
+
+  it('opens the item tooltip on hover', async () => {
+    withLists()
+    renderWithProviders(<TagMentionChip kind="item" id="3084" label="강철심장" />)
+    const box = screen.getByRole('button', { name: '강철심장 아이템 설명 보기' })
+    fireEvent.pointerEnter(box, { pointerType: 'mouse' })
+    expect(await screen.findByRole('article', { name: '강철심장' })).toBeInTheDocument()
+    expect(screen.getByText('3000 골드 · 전설')).toBeInTheDocument()
+    expect(screen.getByText('체력을 얻어요')).toBeInTheDocument()
+  })
+
+  it('shows only the saved name, still hoverable, when the item is not in the list', async () => {
+    withLists()
+    renderWithProviders(<TagMentionChip kind="item" id="9999" label="사라진 아이템" inEditor />)
+    expect(screen.getByText('사라진 아이템')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '사라진 아이템 아이템 설명 보기' })).not.toHaveAttribute('tabindex')
+    await new Promise((r) => setTimeout(r, 20))
+    expect(document.querySelector('img')).toBeNull()
+  })
+
+  it('draws no icon for an item without an icon address', async () => {
+    mockApi({
+      'GET /api/champions': () => json([]),
+      'GET /api/augments': () => json([]),
+      'GET /api/items': () => json([{ ...heart, iconUrl: null }]),
+    })
+    renderWithProviders(<TagMentionChip kind="item" id="3084" label="강철심장" />)
+    await new Promise((r) => setTimeout(r, 20))
+    expect(document.querySelector('img')).toBeNull()
+    expect(screen.getByText('강철심장').className).toContain('text-gold-deep')
   })
 })

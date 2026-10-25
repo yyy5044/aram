@@ -2,7 +2,7 @@ import type { Editor, JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '../api/client'
-import { useAugments, useChampions } from '../api/gamedata'
+import { useAugments, useChampions, useItems } from '../api/gamedata'
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_POST, uploadImage } from '../api/images'
 import { mentionCandidates, type MentionKind } from '../lib/mentionCandidates'
 import { EditorUploadsContext } from './editorUploads'
@@ -53,16 +53,20 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
   const mentionRef = useRef(onMention)
   const champions = useChampions().data
   const augments = useAugments().data
-  const listsRef = useRef({ champions, augments })
+  const items = useItems().data
+  const listsRef = useRef({ champions, augments, items })
   useEffect(() => {
     onErrorRef.current = onError
     pendingRef.current = onPendingChange
     mentionRef.current = onMention
-    listsRef.current = { champions, augments }
+    listsRef.current = { champions, augments, items }
   })
   // @ 메뉴도 편집기가 처음 만들어질 때 고정돼서, 목록과 콜백은 ref로 읽어요.
   const [mentions] = useState<MentionSource>(() => ({
-    candidates: (query) => mentionCandidates(query, listsRef.current.champions ?? [], listsRef.current.augments ?? []),
+    candidates: (query) => {
+      const lists = listsRef.current
+      return mentionCandidates(query, lists.champions ?? [], lists.augments ?? [], lists.items ?? [])
+    },
     onPicked: (kind, id) => mentionRef.current?.(kind, id),
     onError: (message) => onErrorRef.current(message),
   }))

@@ -1,9 +1,10 @@
 import { act, fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AugmentDetail } from '../../api/types'
-import { json, mockApi } from '../../test/mockApi'
-import { renderWithProviders } from '../../test/render'
-import AugmentHoverCard from './AugmentHoverCard'
+import type { AugmentDetail } from '../api/types'
+import { json, mockApi } from '../test/mockApi'
+import { renderWithProviders } from '../test/render'
+import AugmentTooltipBody from './augment/AugmentTooltipBody'
+import HoverTooltip from './HoverTooltip'
 
 const floating = vi.hoisted(() => ({ calls: [] as { placement?: string; middleware: string[]; shift?: unknown }[] }))
 vi.mock('@floating-ui/dom', async (importOriginal) => {
@@ -38,9 +39,9 @@ const detail: AugmentDetail = {
 function draw() {
   renderWithProviders(
     <div>
-      <AugmentHoverCard augmentId="StoneGuts" label="거석상의 용기">
+      <HoverTooltip label="거석상의 용기 증강 설명 보기" content={<AugmentTooltipBody augmentId="StoneGuts" />}>
         <span>박스</span>
-      </AugmentHoverCard>
+      </HoverTooltip>
       <p>바깥</p>
     </div>,
   )
@@ -49,7 +50,7 @@ function draw() {
 
 const wait = (ms: number) => act(() => new Promise((r) => setTimeout(r, ms)))
 
-describe('AugmentHoverCard', () => {
+describe('HoverTooltip', () => {
   it('opens on hover after a short delay', async () => {
     mockApi({ 'GET /api/augments/StoneGuts': () => json(detail) })
     const box = draw()
@@ -87,9 +88,9 @@ describe('AugmentHoverCard', () => {
 
   it('cannot be focused inside the editor', () => {
     renderWithProviders(
-      <AugmentHoverCard augmentId="StoneGuts" label="거석상의 용기" focusable={false}>
+      <HoverTooltip label="거석상의 용기 증강 설명 보기" content={<AugmentTooltipBody augmentId="StoneGuts" />} focusable={false}>
         <span>박스</span>
-      </AugmentHoverCard>,
+      </HoverTooltip>,
     )
     expect(screen.getByRole('button', { name: '거석상의 용기 증강 설명 보기' })).not.toHaveAttribute('tabindex')
   })

@@ -129,6 +129,8 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
 
   /** @ 메뉴로 넣은 챔피언·증강을 태그 칸에도 더해요. 이미 있으면 그대로, 칸이 차 있으면 본문에만 둬요. */
   function addMentionedTag(kind: MentionKind, id: string) {
+    // 아이템 태그 칸은 글쓰기 화면 작업에서 붙여요. 그때까지는 본문 박스만 들어가요.
+    if (kind === 'item') return
     const [ids, setIds, max] =
       kind === 'champion' ? [championIds, setChampionIds, MAX_CHAMPIONS] : [augmentIds, setAugmentIds, MAX_AUGMENTS]
     if (ids.includes(id)) return

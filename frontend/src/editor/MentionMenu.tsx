@@ -11,9 +11,9 @@ type Props = {
   ref?: Ref<MentionMenuHandle>
 }
 
-const KIND_LABEL = { champion: '챔피언', augment: '증강' } as const
+const KIND_LABEL = { champion: '챔피언', augment: '증강', item: '아이템' } as const
 
-/** @ 를 치면 뜨는 챔피언·증강 후보. 위·아래로 고르고 Enter나 누르기로 넣어요. */
+/** @ 를 치면 뜨는 챔피언·증강·아이템 후보. 위·아래로 고르고 Enter나 누르기로 넣어요. */
 export default function MentionMenu({ items, query, command, ref }: Props) {
   const [selected, setSelected] = useState(0)
   const [lastItems, setLastItems] = useState(items)
@@ -50,7 +50,7 @@ export default function MentionMenu({ items, query, command, ref }: Props) {
   if (items.length === 0) return null
 
   return (
-    <div role="listbox" aria-label="넣을 챔피언·증강" className={box}>
+    <div role="listbox" aria-label="넣을 챔피언·증강·아이템" className={box}>
       {items.map((item, i) => (
         <button
           key={`${item.kind}:${item.id}`}
@@ -72,6 +72,8 @@ export default function MentionMenu({ items, query, command, ref }: Props) {
               frame="ring"
               className="h-5 w-5 flex-none rounded-mark bg-night"
             />
+          ) : item.kind === 'item' ? (
+            <img src={item.iconUrl} alt="" className="h-5 w-5 flex-none rounded-mark bg-night" />
           ) : (
             <img src={item.iconUrl} alt="" className="h-5 w-5 flex-none rounded-full" />
           )}
