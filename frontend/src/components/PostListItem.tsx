@@ -54,7 +54,7 @@ export default function PostListItem({ post, compact = false }: { post: Item; co
               />
             ))}
             {post.items.map((i) => (
-              <TagChip key={i.id} kind="item" id={i.id} nameKo={i.nameKo} imageUrl={i.iconUrl} size="sm" link />
+              <TagChip key={i.id} kind="item" id={i.id} nameKo={i.nameKo} imageUrl={i.iconUrl} size="sm" />
             ))}
           </div>
         )}

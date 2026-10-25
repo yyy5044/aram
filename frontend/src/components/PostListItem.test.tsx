@@ -28,13 +28,14 @@ describe('PostListItem', () => {
     expect(container.querySelector('[data-likes]')).toHaveTextContent('추천 24')
   })
 
-  it('shows item chips linking to the item page, even without champions or augments', () => {
+  it('shows item chips as plain icon + name, even without champions or augments', () => {
     renderWithProviders(
       <ul>
         <PostListItem post={listItem({ champions: [], augments: [], items: [heartsteel] })} />
       </ul>,
     )
-    expect(screen.getByRole('link', { name: /심장 강타/ })).toHaveAttribute('href', '/items/3084')
+    expect(screen.getByText('심장 강타')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /심장 강타/ })).not.toBeInTheDocument()
   })
 
   it('puts the gold corner frame only on liked posts', () => {
