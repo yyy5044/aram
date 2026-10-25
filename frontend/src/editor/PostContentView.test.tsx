@@ -24,4 +24,35 @@ describe('PostContentView', () => {
     expect(video.loop).toBe(true)
     vi.restoreAllMocks()
   })
+
+  it('draws a mention inside a list item as a box', async () => {
+    renderWithProviders(
+      <PostContentView
+        content={{
+          type: 'doc',
+          content: [
+            {
+              type: 'bulletList',
+              content: [
+                {
+                  type: 'listItem',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'tagMention', attrs: { kind: 'champion', id: 'XinZhao', label: '신짜오' } },
+                        { type: 'text', text: ' 추천해요' },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+      />,
+    )
+    await vi.waitFor(() => expect(document.querySelector('li [data-mention-box]')).not.toBeNull())
+    expect(document.querySelector('li [data-mention-box]')?.textContent).toBe('신짜오')
+  })
 })

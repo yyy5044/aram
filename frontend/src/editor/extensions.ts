@@ -3,11 +3,12 @@ import { Placeholder } from '@tiptap/extensions'
 import Image from '@tiptap/extension-image'
 import StarterKit from '@tiptap/starter-kit'
 import { SlashCommand } from './SlashCommand'
+import { TagMentionNode } from './TagMentionNode'
 import { UploadBoxNode } from './UploadBoxNode'
 import { VideoNode } from './VideoNode'
 
 /**
- * 본문에 허용하는 서식: 문단, 줄바꿈, 글머리·번호 목록, 인용, 이미지, 영상 클립, 굵게, 기울임.
+ * 본문에 허용하는 서식: 문단, 줄바꿈, 글머리·번호 목록, 인용, 이미지, 영상 클립, 챔피언·증강 박스, 굵게, 기울임.
  * 서버(PostContentValidator)와 같은 규칙이에요. 여기에 없는 서식은 저장도 표시도 안 돼요.
  */
 export function postExtensions(): Extensions {
@@ -23,6 +24,7 @@ export function postExtensions(): Extensions {
     }),
     Image.configure({ inline: false, allowBase64: false }),
     VideoNode,
+    TagMentionNode,
   ]
 }
 
