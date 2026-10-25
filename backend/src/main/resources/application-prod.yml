@@ -1,0 +1,23 @@
+# 운영 서버 설정. 서버의 Docker 이미지가 SPRING_PROFILES_ACTIVE=prod로 켜요.
+# 비밀 값은 서버 /opt/aram/.env에서 환경 변수로 들어와요.
+spring:
+  datasource:
+    # Compose 안의 db 서비스
+    url: jdbc:postgresql://db:5432/aram
+    username: aram
+    password: ${POSTGRES_PASSWORD}
+
+server:
+  # Caddy가 붙인 X-Forwarded-Proto를 믿어서, 디스코드 로그인 후 돌아올 주소를 https로 만들어요.
+  # Tomcat은 사설 IP(Docker 내부망)에서 온 머리글만 믿어요.
+  forward-headers-strategy: native
+  servlet:
+    session:
+      cookie:
+        # 로그인 쿠키는 https에서만 오가요.
+        secure: true
+
+app:
+  images:
+    # Compose의 images 볼륨
+    dir: /data/images

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -17,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 로컬 확인용 로그인. 디스코드 없이 사용자로 로그인해요. app.dev-login.enabled=true일 때만 등록돼요. 운영에서는 절대 켜지 않아요.
+ * 환경 변수가 설정 파일보다 우선해서, 운영(prod)에서는 설정 값과 상관없이 프로필로 막아요.
  */
 @RestController
+@Profile("!prod")
 @ConditionalOnProperty(name = "app.dev-login.enabled", havingValue = "true")
 public class DevLoginController {
 
