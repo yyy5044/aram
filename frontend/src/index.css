@@ -58,6 +58,14 @@ body {
 .editor-area .tiptap {
   min-height: 220px;
 }
+/* 빈 본문 안내(/를 입력하면 …): 첫 줄에 흐리게 보이고 누르거나 글을 쓰면 사라져요. */
+.editor-area .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--color-ink-3);
+  pointer-events: none;
+}
 
 /* 본문 표시: 편집기 결과물에 기본 서식을 입혀요. */
 .post-content .tiptap {
