@@ -67,6 +67,22 @@ describe('slash menu', () => {
     expect(editor.getText()).toContain('/x')
   })
 
+  it('does not grab a word that merely starts with v', async () => {
+    const { editor, dom } = setup()
+    type(editor, '/vote')
+    await new Promise((r) => setTimeout(r, 20))
+    expect(screen.queryByRole('listbox', { name: '넣을 블록' })).not.toBeInTheDocument()
+    fireEvent.keyDown(dom, { key: 'Enter' })
+    expect(editor.getText()).toContain('/vote')
+    expect(screen.queryByText('파일을 업로드해주세요')).not.toBeInTheDocument()
+  })
+
+  it('still matches the full word 영상', async () => {
+    const { editor } = setup()
+    type(editor, '/영상')
+    expect(await screen.findByRole('listbox', { name: '넣을 블록' })).toHaveTextContent('영상')
+  })
+
   it('closes on Escape and keeps the slash', async () => {
     const { editor, dom } = setup()
     type(editor, '/')
