@@ -5,11 +5,12 @@ import ActivityHeatmap from '../components/profile/ActivityHeatmap'
 import ProfileHeader from '../components/profile/ProfileHeader'
 import ProfileStats from '../components/profile/ProfileStats'
 import ProfileTabs from '../components/profile/ProfileTabs'
+import { parseRouteId } from '../lib/routeId'
 import NotFoundPage from './NotFoundPage'
 
 /** 사용자 프로필. 비공개이고 본인이 아니면 자물쇠만 보여줘요. */
 export default function ProfilePage() {
-  const userId = Number(useParams().userId)
+  const userId = parseRouteId(useParams().userId) ?? Number.NaN
   const { data: profile, error, isPending } = useProfile(userId)
 
   if (!Number.isFinite(userId) || (error instanceof ApiError && error.status === 404)) {

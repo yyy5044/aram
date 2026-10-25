@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -33,12 +34,15 @@ public class SecurityConfig {
 			.requestMatchers("/api/**").authenticated()
 			.anyRequest().permitAll());
 		http.oauth2Login(oauth -> oauth.userInfoEndpoint(info -> info.userService(discordUserService))
-			.successHandler(loginSuccessHandler));
+			.successHandler(loginSuccessHandler)
+			// 디스코드에서 취소하거나 실패하면 화면이 안내 문구를 띄우고 원래 보던 곳으로 돌려보내요.
+			.failureUrl("/auth/done?error"));
 		http.csrf(csrf -> csrf.spa());
 		http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 		http.exceptionHandling(ex -> ex
 			.authenticationEntryPoint((req, res, e) -> writeError(res, jsonMapper, ErrorCode.UNAUTHORIZED))
-			.accessDeniedHandler((req, res, e) -> writeError(res, jsonMapper, ErrorCode.FORBIDDEN)));
+			.accessDeniedHandler((req, res, e) -> writeError(res, jsonMapper,
+					e instanceof CsrfException ? ErrorCode.CSRF_INVALID : ErrorCode.FORBIDDEN)));
 		http.logout(logout -> logout.logoutUrl("/api/logout")
 			.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)));
 		return http.build();

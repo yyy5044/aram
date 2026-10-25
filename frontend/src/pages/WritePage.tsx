@@ -10,6 +10,7 @@ import type { Augment, Champion, Patches, PostDetail } from '../api/types'
 import TagPicker from '../components/TagPicker'
 import { useToast } from '../components/toastContext'
 import PostEditor from '../editor/PostEditor'
+import { parseRouteId } from '../lib/routeId'
 import NotFoundPage from './NotFoundPage'
 
 const LEAVE_MESSAGE = '작성 중인 내용이 사라져요. 나갈까요?'
@@ -17,7 +18,7 @@ const LEAVE_MESSAGE = '작성 중인 내용이 사라져요. 나갈까요?'
 /** 글쓰기(/write)와 글 수정(/posts/:postId/edit). */
 export default function WritePage() {
   const params = useParams()
-  const editId = params.postId ? Number(params.postId) : null
+  const editId = params.postId ? (parseRouteId(params.postId) ?? Number.NaN) : null
   const { data: me, isPending: meLoading } = useMe()
   const location = useLocation()
   const post = usePost(editId ?? Number.NaN)
@@ -44,7 +45,7 @@ export default function WritePage() {
     )
   }
   if (editId !== null) {
-    if (post.error || (post.data && me && post.data.author.id !== me.id)) return <NotFoundPage message="없는 글이에요" />
+    if (Number.isNaN(editId) || post.error || (post.data && me && post.data.author.id !== me.id)) return <NotFoundPage message="없는 글이에요" />
     if (post.isPending) return null
   }
   if (patches.isPending) return null

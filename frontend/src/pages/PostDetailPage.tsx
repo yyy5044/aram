@@ -11,17 +11,18 @@ import TagChip from '../components/TagChip'
 import { useToast } from '../components/toastContext'
 import PostContentView from '../editor/PostContentView'
 import { relativeTime } from '../lib/relativeTime'
+import { parseRouteId } from '../lib/routeId'
 import NotFoundPage from './NotFoundPage'
 
 export default function PostDetailPage() {
-  const postId = Number(useParams().postId)
+  const postId = parseRouteId(useParams().postId) ?? Number.NaN
   const { data: post, error, isPending } = usePost(postId)
   const { data: me } = useMe()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const toast = useToast()
 
-  if (error instanceof ApiError && error.status === 404) return <NotFoundPage message="없는 글이에요" />
+  if (Number.isNaN(postId) || (error instanceof ApiError && error.status === 404)) return <NotFoundPage message="없는 글이에요" />
   if (error) {
     return <p className="py-10 text-center text-rose-400">{error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요'}</p>
   }

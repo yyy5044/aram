@@ -182,6 +182,11 @@ describe('WritePage', () => {
     expect(await screen.findByText('없는 글이에요')).toBeInTheDocument()
   })
 
+  it('shows not found for a malformed edit address', async () => {
+    setup(meYangho, '/posts/abc/edit')
+    expect(await screen.findByText('없는 글이에요')).toBeInTheDocument()
+  })
+
   it('rejects oversized image before upload', async () => {
     const { api } = setup(meYangho)
     const big = new File([new Uint8Array(11 * 1024 * 1024)], 'big.png', { type: 'image/png' })

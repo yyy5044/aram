@@ -46,6 +46,13 @@ function setup(me: Me | null, post: PostDetail = detail(), extra: MockRoutes = {
 }
 
 describe('PostDetailPage', () => {
+  it.each(['abc', '1.5', '0'])('shows not found for the malformed address /posts/%s', async (id) => {
+    const api = mockApi({ 'GET /api/me': () => json(null) })
+    renderWithProviders(<PostDetailPage />, { path: '/posts/:postId', route: `/posts/${id}` })
+    expect(await screen.findByText('없는 글이에요')).toBeInTheDocument()
+    expect(api.calls.filter((c) => c.path.startsWith('/api/posts'))).toHaveLength(0)
+  })
+
   it('renders title, meta, content, and tag chips', async () => {
     setup(null, detail({ edited: true }))
     expect(await screen.findByRole('heading', { name: '아무무는 이 증강 두 개면 한타 지배합니다' })).toBeInTheDocument()
