@@ -125,6 +125,20 @@ public class PostService {
 	private record Input(String title, ValidatedContent content, Set<Champion> champions, Set<Augment> augments) {
 	}
 
+	/** 본문 박스의 챔피언·증강이 실제로 있는지 봐요. 사용 중이 아닌(옛) 증강도 있는 것으로 쳐요. */
+	private void requireMentionedTagsExist(List<Mention> mentions) {
+		Set<String> championIds = new LinkedHashSet<>();
+		Set<String> augmentIds = new LinkedHashSet<>();
+		for (Mention m : mentions) {
+			("champion".equals(m.kind()) ? championIds : augmentIds).add(m.id());
+		}
+		boolean allExist = champions.findAllById(championIds).size() == championIds.size()
+				&& augments.findAllById(augmentIds).size() == augmentIds.size();
+		if (!allExist) {
+			throw field("content", "없는 챔피언·증강이 들어 있어요");
+		}
+	}
+
 	private Input prepare(PostRequest req, Set<String> alreadyAttachedAugments) {
 		String title = req.title().strip();
 		if (title.isEmpty()) {
@@ -134,6 +148,7 @@ public class PostService {
 			throw field("title", "제목은 100자 이하로 써주세요");
 		}
 		ValidatedContent content = validator.validate(jsonMapper.writeValueAsString(req.content()));
+		requireMentionedTagsExist(content.mentions());
 		if (!patches.existsByGamePatch(req.gamePatch())) {
 			throw field("gamePatch", "고를 수 없는 패치예요");
 		}
