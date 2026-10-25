@@ -45,7 +45,7 @@ export default function MentionMenu({ items, query, command, ref }: Props) {
 
   const box = 'w-60 border border-line bg-surface py-1 shadow-pop'
   if (query.trim() === '') {
-    return <div className={`${box} px-3 py-2.5 text-[13px] text-ink-3`}>챔피언이나 증강 이름을 쳐 주세요</div>
+    return <div className={`${box} px-3 py-2.5 text-[13px] text-ink-3`}>챔피언·증강·아이템 이름을 쳐 주세요</div>
   }
   if (items.length === 0) return null
 
