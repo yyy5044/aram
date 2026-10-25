@@ -82,7 +82,7 @@ export default function PostDetailPage() {
           <PostContentView content={post.content} />
         </div>
 
-        {(post.champions.length > 0 || post.augments.length > 0) && (
+        {(post.champions.length > 0 || post.augments.length > 0 || post.items.length > 0) && (
           <div className="flex flex-wrap gap-2 border-t border-line-soft pt-4 pb-6">
             {post.champions.map((c) => (
               <TagChip key={c.id} kind="champion" id={c.id} nameKo={c.nameKo} imageUrl={c.imageUrl} size="lg" link />
@@ -99,6 +99,9 @@ export default function PostDetailPage() {
                 size="lg"
                 link
               />
+            ))}
+            {post.items.map((i) => (
+              <TagChip key={i.id} kind="item" id={i.id} nameKo={i.nameKo} imageUrl={i.iconUrl} size="lg" link />
             ))}
           </div>
         )}

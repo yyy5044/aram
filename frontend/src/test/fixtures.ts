@@ -1,4 +1,4 @@
-import type { Augment, Champion, Me, Page, PostListItem, Profile } from '../api/types'
+import type { Augment, Champion, Item, Me, Page, PostListItem, Profile } from '../api/types'
 
 export function profile(overrides: Partial<Profile> = {}): Profile {
   return {
@@ -40,6 +40,18 @@ export const prismAugment: Augment = {
   active: true,
   rarity: 'PRISMATIC',
 }
+
+export const heartsteel: Item = {
+  id: '3084',
+  nameKo: '심장 강타',
+  tier: 'LEGENDARY',
+  priceTotal: 3000,
+  iconUrl: 'https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3084.png',
+  fromIds: [],
+  intoIds: [],
+  active: true,
+}
+export const oldItem: Item = { ...heartsteel, id: '9999', nameKo: '옛 아이템', iconUrl: null, active: false }
 
 export const meYangho: Me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호', profilePublic: true, profileImageId: null, discordAvatarUrl: null }
 export const meMinsu: Me = { id: 2, nickname: '민수', avatarUrl: null, admin: false, suggestedNickname: '민수', profilePublic: true, profileImageId: null, discordAvatarUrl: null }

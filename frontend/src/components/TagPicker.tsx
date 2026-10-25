@@ -20,6 +20,8 @@ type Props<T extends Item> = {
   /** 증강이면 등급(테두리 선)과 흰 아이콘인지. 챔피언은 비워요. */
   augmentOf?: (item: T) => { rarity: AugmentRarity; tinted?: boolean } | undefined
   round?: boolean
+  /** 아이템이면 true. 등급 없는 네모 아이콘 칩(아이템 태그)으로 그려요. */
+  square?: boolean
   placeholder?: string
 }
 
@@ -34,6 +36,7 @@ export default function TagPicker<T extends Item>({
   iconOf,
   augmentOf,
   round = false,
+  square = false,
   placeholder,
 }: Props<T>) {
   const [query, setQuery] = useState('')
@@ -96,7 +99,11 @@ export default function TagPicker<T extends Item>({
                   className="flex h-11 cursor-pointer items-center gap-2.5 px-3 text-[15px] text-ink hover:bg-ice"
                 >
                   {icon ? (
-                    <TagIcon src={icon} augment={augmentOf?.(o)} className={round ? iconShape : `${iconShape} bg-night`} />
+                    <TagIcon
+                      src={icon}
+                      augment={augmentOf?.(o)}
+                      className={round ? iconShape : `${iconShape} ${square ? 'bg-night-2' : 'bg-night'}`}
+                    />
                   ) : (
                     <span className={`${iconShape} bg-line`} />
                   )}
@@ -115,7 +122,7 @@ export default function TagPicker<T extends Item>({
             return (
               <TagChip
                 key={item.id}
-                kind={augment ? 'augment' : 'champion'}
+                kind={square ? 'item' : augment ? 'augment' : 'champion'}
                 id={item.id}
                 nameKo={item.nameKo}
                 imageUrl={iconOf(item)}
