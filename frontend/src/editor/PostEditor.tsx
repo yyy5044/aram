@@ -2,9 +2,12 @@ import type { Editor, JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import { ApiError } from '../api/client'
+import { useAugments, useChampions } from '../api/gamedata'
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_POST, uploadImage } from '../api/images'
+import { mentionCandidates, type MentionKind } from '../lib/mentionCandidates'
 import { EditorUploadsContext } from './editorUploads'
 import { editorExtensions } from './extensions'
+import type { MentionSource } from './MentionCommand'
 import { looksLikeVideo, videoFileProblem } from './uploadChecks'
 import { createUploadJobs } from './uploadJobs'
 
@@ -14,6 +17,8 @@ type Props = {
   onError: (message: string) => void
   /** 올리는 중·변환 중인 영상 칸 수(busy)와 실패한 칸 수(failed). 등록 버튼 잠금에 써요. */
   onPendingChange?: (pending: { busy: number; failed: number }) => void
+  /** @ 메뉴로 챔피언·증강 박스를 넣었을 때. 글쓰기 화면이 태그 칸에 더해요. */
+  onMention?: (kind: MentionKind, id: string) => void
   labelledBy?: string
 }
 
@@ -36,18 +41,31 @@ function countImages(editor: Editor) {
 /**
  * 본문 편집기. 이미지는 붙여넣기, 끌어다 놓기, 이미지 버튼으로 넣어요.
  * 영상은 영상 버튼이나 / 메뉴로 칸을 만들어 넣고, 편집기에 바로 끌어다 놓아도 그 자리에 칸이 생겨요.
+ * 챔피언·증강은 @ 메뉴로 박스를 넣어요.
  */
-export default function PostEditor({ initialContent, onChange, onError, onPendingChange, labelledBy }: Props) {
+export default function PostEditor({ initialContent, onChange, onError, onPendingChange, onMention, labelledBy }: Props) {
   const fileInput = useRef<HTMLInputElement>(null)
   const editorRef = useRef<Editor | null>(null)
   const [jobs] = useState(createUploadJobs)
   // 칸들은 편집기가 처음 만들어질 때의 처리기를 쥐고 있어서, 늘 최신 콜백을 부르도록 ref로 넘겨요.
   const onErrorRef = useRef(onError)
   const pendingRef = useRef(onPendingChange)
+  const mentionRef = useRef(onMention)
+  const champions = useChampions().data
+  const augments = useAugments().data
+  const listsRef = useRef({ champions, augments })
   useEffect(() => {
     onErrorRef.current = onError
     pendingRef.current = onPendingChange
+    mentionRef.current = onMention
+    listsRef.current = { champions, augments }
   })
+  // @ 메뉴도 편집기가 처음 만들어질 때 고정돼서, 목록과 콜백은 ref로 읽어요.
+  const [mentions] = useState<MentionSource>(() => ({
+    candidates: (query) => mentionCandidates(query, listsRef.current.champions ?? [], listsRef.current.augments ?? []),
+    onPicked: (kind, id) => mentionRef.current?.(kind, id),
+    onError: (message) => onErrorRef.current(message),
+  }))
 
   async function insertImages(files: File[]) {
     const editor = editorRef.current
@@ -91,7 +109,7 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
   }
 
   const editor = useEditor({
-    extensions: editorExtensions(),
+    extensions: editorExtensions(mentions),
     content: initialContent ?? undefined,
     immediatelyRender: true,
     editorProps: {
