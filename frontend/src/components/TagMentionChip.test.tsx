@@ -39,6 +39,18 @@ describe('TagMentionChip', () => {
     expect(name.closest('[data-mention-box]')?.className).toContain('border-gold-rarity')
   })
 
+  it('lets an augment box open its card but not a champion box', async () => {
+    withLists()
+    renderWithProviders(
+      <>
+        <TagMentionChip kind="augment" id="StoneGuts" label="거석상의 용기" />
+        <TagMentionChip kind="champion" id="XinZhao" label="신짜오" />
+      </>,
+    )
+    expect(screen.getByRole('button', { name: '거석상의 용기 증강 카드 보기' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /신짜오/ })).toBeNull()
+  })
+
   it('shows only the saved name when the tag is not in the lists', async () => {
     withLists()
     renderWithProviders(<TagMentionChip kind="augment" id="Gone" label="사라진 증강" />)
