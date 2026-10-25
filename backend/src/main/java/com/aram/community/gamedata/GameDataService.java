@@ -3,6 +3,7 @@ package com.aram.community.gamedata;
 import com.aram.community.common.ApiException;
 import com.aram.community.common.ErrorCode;
 import com.aram.community.gamedata.text.AugmentLocale;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -147,7 +148,16 @@ public class GameDataService {
 	}
 
 	public ItemDto toDto(Item item) {
-		return toDto(item, intoIdsByItem(items.findAll()));
+		return toDtos(List.of(item)).get(0);
+	}
+
+	/** 여러 아이템을 한 번에 바꿔요. 표를 한 번만 읽어서 intoIds를 만들고, 순서는 받은 그대로예요. */
+	public List<ItemDto> toDtos(Collection<Item> given) {
+		if (given.isEmpty()) {
+			return List.of();
+		}
+		Map<Integer, List<Integer>> into = intoIdsByItem(items.findAll());
+		return given.stream().map(item -> toDto(item, into)).toList();
 	}
 
 	public List<ItemDto> allItems() {
@@ -165,12 +175,8 @@ public class GameDataService {
 		catch (NumberFormatException e) {
 			throw new ApiException(ErrorCode.ITEM_NOT_FOUND);
 		}
-		List<Item> all = items.findAll();
-		Item item = all.stream()
-			.filter(i -> i.getId() == itemId)
-			.findFirst()
-			.orElseThrow(() -> new ApiException(ErrorCode.ITEM_NOT_FOUND));
-		ItemDto dto = toDto(item, intoIdsByItem(all));
+		Item item = items.findById(itemId).orElseThrow(() -> new ApiException(ErrorCode.ITEM_NOT_FOUND));
+		ItemDto dto = toDto(item);
 		Map<String, ItemText> byLocale = itemTexts.findByIdItemId(itemId)
 			.stream()
 			.collect(Collectors.toMap(t -> t.getId().locale(), Function.identity()));
