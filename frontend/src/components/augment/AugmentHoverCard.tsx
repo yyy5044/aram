@@ -118,7 +118,7 @@ export default function AugmentHoverCard({ augmentId, label, children }: Props) 
         createPortal(
           <div
             ref={cardRef}
-            className="absolute top-0 left-0 z-50 rounded-[14px] shadow-pop"
+            className="absolute top-0 left-0 z-50 overflow-hidden rounded-[14px] bg-night shadow-pop"
             {...hover}
             onPointerDown={() => {
               pressingCard.current = true
@@ -132,7 +132,7 @@ export default function AugmentHoverCard({ augmentId, label, children }: Props) 
   )
 }
 
-/** 선택 언어 카드 한 장. 번역이 없으면 원문을 보여줘요. */
+/** 선택 언어 카드 한 장. 번역이 없으면 원문을 보여줘요. 게임 카드 그림은 반쯤 비쳐서 밤하늘 바탕 위에 둬요. */
 function CardBody({ augmentId }: { augmentId: string }) {
   const { language } = useLanguage()
   const { data, isPending, isError } = useAugmentDetail(augmentId, language)
@@ -142,5 +142,5 @@ function CardBody({ augmentId }: { augmentId: string }) {
     return <AugmentCard text={text} rarity={data.rarity} iconUrl={data.iconUrl} iconTinted={data.iconTinted} />
   }
   const message = isPending ? '불러오는 중…' : isError ? '증강 정보를 불러오지 못했어요' : '아직 설명이 없어요'
-  return <p className="w-[280px] rounded-[14px] bg-night px-4 py-6 text-center text-[15px] text-nav">{message}</p>
+  return <p className="w-[280px] px-4 py-6 text-center text-[15px] text-nav">{message}</p>
 }

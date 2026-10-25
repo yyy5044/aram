@@ -58,6 +58,8 @@ describe('AugmentHoverCard', () => {
     expect(await screen.findByRole('article', { name: '거석상의 용기' })).toBeInTheDocument()
     expect(screen.getByText('방어력을 얻어요')).toBeInTheDocument()
     expect(box).toHaveAttribute('aria-expanded', 'true')
+    // 게임 카드 그림은 반쯤 비쳐서, 증강 탭처럼 밤하늘 바탕 위에 둬요.
+    expect(screen.getByRole('article').parentElement?.className).toContain('bg-night')
   })
 
   it('places the card below the box and keeps it on screen', async () => {
