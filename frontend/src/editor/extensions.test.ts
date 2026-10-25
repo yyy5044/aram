@@ -14,10 +14,25 @@ describe('postExtensions', () => {
       'listItem',
       'orderedList',
       'paragraph',
+      'tagMention',
       'text',
       'video',
     ])
     expect(Object.keys(editor.schema.marks).sort()).toEqual(['bold', 'italic'])
+    editor.destroy()
+  })
+
+  it('keeps a pasted mention box with its attributes', () => {
+    const editor = new Editor({
+      extensions: postExtensions(),
+      content:
+        '<p>a <span data-tag-mention data-kind="augment" data-id="X" data-label="거석상의 용기">거석상의 용기</span></p>',
+    })
+    const paragraph = editor.getJSON().content?.[0]
+    expect(paragraph?.content?.[1]).toEqual({
+      type: 'tagMention',
+      attrs: { kind: 'augment', id: 'X', label: '거석상의 용기' },
+    })
     editor.destroy()
   })
 })

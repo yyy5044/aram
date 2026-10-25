@@ -34,6 +34,11 @@ public class PostContentValidatorTest {
 		return videoSrc("/api/videos/" + id);
 	}
 
+	public static String mention(String kind, String id, String label) {
+		return "{\"type\":\"tagMention\",\"attrs\":{\"kind\":\"" + kind + "\",\"id\":\"" + id + "\",\"label\":\"" + label
+				+ "\"}}";
+	}
+
 	public static String videoSrc(String src) {
 		return "{\"type\":\"video\",\"attrs\":{\"src\":\"" + src + "\"}}";
 	}
@@ -166,6 +171,53 @@ public class PostContentValidatorTest {
 	void sameClipTwiceCountsOnceInIds() {
 		UUID id = UUID.randomUUID();
 		assertThat(validator.validate(doc(paragraph(text("a")), video(id), video(id))).videoIds()).containsExactly(id);
+	}
+
+	@Test
+	void acceptsMentionAndCountsItsLabelAsText() {
+		ValidatedContent result = validator
+			.validate(doc(paragraph(text("오늘은 ") + "," + mention("champion", "XinZhao", "신짜오"))));
+		assertThat(result.mentions()).containsExactly(new Mention("champion", "XinZhao"));
+		assertThat(result.plainText()).contains("신짜오");
+	}
+
+	@Test
+	void acceptsMentionOnlyBody() {
+		assertThat(validator.validate(doc(paragraph(mention("augment", "StoneGuts", "거석상의 용기")))).mentions())
+			.containsExactly(new Mention("augment", "StoneGuts"));
+	}
+
+	@Test
+	void acceptsMentionInsideBlockquote() {
+		String quote = "{\"type\":\"blockquote\",\"content\":[" + paragraph(mention("champion", "Jinx", "징크스")) + "]}";
+		assertThat(validator.validate(doc(quote)).mentions()).hasSize(1);
+	}
+
+	@Test
+	void rejectsBadMentionAttributes() {
+		assertRejected(doc(paragraph(mention("monster", "Jinx", "징크스"))), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(mention("champion", "a-b", "징크스"))), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(mention("champion", "A".repeat(41), "징크스"))), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(mention("champion", "Jinx", ""))), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(mention("champion", "Jinx", "가".repeat(51)))), "지원하지 않는 본문 형식이에요");
+	}
+
+	@Test
+	void rejectsMentionWithContent() {
+		assertRejected(doc(paragraph("{\"type\":\"tagMention\",\"attrs\":{\"kind\":\"champion\",\"id\":\"Jinx\",\"label\":\"징크스\"},\"content\":["
+				+ text("x") + "]}")), "지원하지 않는 본문 형식이에요");
+	}
+
+	@Test
+	void rejectsMoreThanThirtyMentions() {
+		String many = String.join(",", java.util.Collections.nCopies(31, mention("champion", "Jinx", "징크스")));
+		assertRejected(doc(paragraph(many)), "본문 태그는 한 글에 30개까지 넣을 수 있어요");
+	}
+
+	@Test
+	void sameMentionTwiceListedOnce() {
+		String two = mention("champion", "Jinx", "징크스") + "," + mention("champion", "Jinx", "징크스");
+		assertThat(validator.validate(doc(paragraph(two))).mentions()).containsExactly(new Mention("champion", "Jinx"));
 	}
 
 }

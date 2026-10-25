@@ -19,14 +19,19 @@ function sameChar(nameCh: string, queryCh: string): boolean {
   return nameCh === queryCh || (CHOSEONG.includes(queryCh) && initialOf(nameCh) === queryCh)
 }
 
-export function matchesName(name: string, query: string): boolean {
+/** 이름(띄어쓰기 뺀 것)에서 검색어가 맞기 시작하는 자리. 빈 검색어는 0, 안 맞으면 -1. */
+export function matchIndex(name: string, query: string): number {
   const q = [...normalizeName(query)]
-  if (q.length === 0) return true
+  if (q.length === 0) return 0
   const n = [...normalizeName(name)]
   for (let start = 0; start + q.length <= n.length; start++) {
-    if (q.every((ch, i) => sameChar(n[start + i], ch))) return true
+    if (q.every((ch, i) => sameChar(n[start + i], ch))) return start
   }
-  return false
+  return -1
+}
+
+export function matchesName(name: string, query: string): boolean {
+  return matchIndex(name, query) >= 0
 }
 
 export function sortTags<T>(items: T[], sort: TagSort, nameOf: (t: T) => string, countOf: (t: T) => number): T[] {

@@ -27,8 +27,10 @@ public class PostContentValidator {
 
 	static final int MAX_VIDEOS = 3;
 
+	static final int MAX_MENTIONS = 30;
+
 	private static final Set<String> NODES = Set.of("doc", "paragraph", "text", "hardBreak", "bulletList",
-			"orderedList", "listItem", "blockquote", "image", "video");
+			"orderedList", "listItem", "blockquote", "image", "video", "tagMention");
 
 	private static final Set<String> BLOCKS = Set.of("paragraph", "listItem", "blockquote");
 
@@ -37,6 +39,10 @@ public class PostContentValidator {
 	private static final Pattern IMAGE_SRC = Pattern.compile("^/api/images/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$");
 
 	private static final Pattern VIDEO_SRC = Pattern.compile("^/api/videos/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$");
+
+	private static final Set<String> MENTION_KINDS = Set.of("champion", "augment");
+
+	private static final Pattern MENTION_ID = Pattern.compile("^[A-Za-z0-9_]{1,40}$");
 
 	private static final String UNSUPPORTED = "지원하지 않는 본문 형식이에요";
 
@@ -60,7 +66,8 @@ public class PostContentValidator {
 		StringBuilder text = new StringBuilder();
 		List<UUID> images = new ArrayList<>();
 		List<UUID> videos = new ArrayList<>();
-		walk(root, text, images, videos);
+		List<Mention> mentions = new ArrayList<>();
+		walk(root, text, images, videos, mentions);
 
 		String plain = text.toString().strip();
 		// 제목과 클립(또는 사진)만 있는 글도 올릴 수 있어요. 글자·사진·영상이 모두 없을 때만 막아요.
@@ -77,11 +84,14 @@ public class PostContentValidator {
 		if (videos.size() > MAX_VIDEOS) {
 			throw invalid("영상은 한 글에 3개까지 넣을 수 있어요");
 		}
+		if (mentions.size() > MAX_MENTIONS) {
+			throw invalid("본문 태그는 한 글에 30개까지 넣을 수 있어요");
+		}
 		return new ValidatedContent(jsonMapper.writeValueAsString(root), plain, List.copyOf(images),
-				List.copyOf(new LinkedHashSet<>(videos)));
+				List.copyOf(new LinkedHashSet<>(videos)), List.copyOf(new LinkedHashSet<>(mentions)));
 	}
 
-	private void walk(JsonNode node, StringBuilder text, List<UUID> images, List<UUID> videos) {
+	private void walk(JsonNode node, StringBuilder text, List<UUID> images, List<UUID> videos, List<Mention> mentions) {
 		if (!node.isObject()) {
 			throw invalid(UNSUPPORTED);
 		}
@@ -117,6 +127,19 @@ public class PostContentValidator {
 				}
 				videos.add(UUID.fromString(m.group(1)));
 			}
+			case "tagMention" -> {
+				JsonNode attrs = node.path("attrs");
+				String kind = attrs.path("kind").asString("");
+				String id = attrs.path("id").asString("");
+				String label = attrs.path("label").asString("");
+				if (!MENTION_KINDS.contains(kind) || !MENTION_ID.matcher(id).matches() || label.isBlank()
+						|| label.length() > 50 || node.get("content") != null) {
+					throw invalid(UNSUPPORTED);
+				}
+				// 박스 이름도 본문 글자예요. 박스만 있는 글도 글자가 있는 글로 치고, 검색에도 걸려요.
+				text.append(label);
+				mentions.add(new Mention(kind, id));
+			}
 			default -> {
 			}
 		}
@@ -126,7 +149,7 @@ public class PostContentValidator {
 				throw invalid(UNSUPPORTED);
 			}
 			for (JsonNode child : children) {
-				walk(child, text, images, videos);
+				walk(child, text, images, videos, mentions);
 			}
 		}
 		if (BLOCKS.contains(type)) {

@@ -16,10 +16,14 @@ import { PAGE_NARROW } from '../components/ui/layout'
 import VersionChip from '../components/ui/VersionChip'
 import { cleanContent } from '../editor/cleanContent'
 import PostEditor from '../editor/PostEditor'
+import type { MentionKind } from '../lib/mentionCandidates'
 import { parseRouteId } from '../lib/routeId'
 import NotFoundPage from './NotFoundPage'
 
 const LEAVE_MESSAGE = '작성 중인 내용이 사라져요. 나갈까요?'
+/** 태그 칸 한도. 서버 검사와 같아요. */
+const MAX_CHAMPIONS = 5
+const MAX_AUGMENTS = 10
 
 /** 글쓰기(/write)와 글 수정(/posts/:postId/edit). */
 export default function WritePage() {
@@ -123,6 +127,18 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
     }
   }
 
+  /** @ 메뉴로 넣은 챔피언·증강을 태그 칸에도 더해요. 이미 있으면 그대로, 칸이 차 있으면 본문에만 둬요. */
+  function addMentionedTag(kind: MentionKind, id: string) {
+    const [ids, setIds, max] =
+      kind === 'champion' ? [championIds, setChampionIds, MAX_CHAMPIONS] : [augmentIds, setAugmentIds, MAX_AUGMENTS]
+    if (ids.includes(id)) return
+    if (ids.length >= max) {
+      toast.show('태그 칸이 가득 차서 본문에만 넣었어요')
+      return
+    }
+    change(setIds)([...ids, id])
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (clips.busy > 0) return
@@ -209,6 +225,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
             onChange={change(setContent)}
             onError={toast.show}
             onPendingChange={setClips}
+            onMention={addMentionedTag}
             labelledBy={bodyLabelId}
           />
           {fieldError('content')}
@@ -217,7 +234,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
         <div>
           <div className="flex items-baseline justify-between">
             <span className={label}>챔피언</span>
-            {counter(championIds.length, 5)}
+            {counter(championIds.length, MAX_CHAMPIONS)}
           </div>
           <TagPicker<Champion>
             label="챔피언"
@@ -225,7 +242,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
             options={champions}
             selected={championIds}
             onChange={change(setChampionIds)}
-            max={5}
+            max={MAX_CHAMPIONS}
             iconOf={(c) => c.imageUrl}
             round
             placeholder="이름 일부만 쳐도 찾아져요. 예: 아무"
@@ -236,7 +253,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
         <div>
           <div className="flex items-baseline justify-between">
             <span className={label}>증강</span>
-            {counter(augmentIds.length, 10)}
+            {counter(augmentIds.length, MAX_AUGMENTS)}
           </div>
           <TagPicker<Augment>
             label="증강"
@@ -244,7 +261,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
             options={augmentOptions}
             selected={augmentIds}
             onChange={change(setAugmentIds)}
-            max={10}
+            max={MAX_AUGMENTS}
             iconOf={(a) => a.iconUrl}
             augmentOf={(a) => ({ rarity: a.rarity, tinted: a.iconTinted })}
             placeholder="증강 검색…"
