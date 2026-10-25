@@ -30,6 +30,25 @@ public final class SampleVideos {
 		return out;
 	}
 
+	/** 화면 데이터 한가운데를 일부 망가뜨린 복사본. ffmpeg는 오류를 잔뜩 내면서도 끝까지 변환해요. */
+	public static Path corrupt(Path source, int bytes, long seed) {
+		try {
+			byte[] data = java.nio.file.Files.readAllBytes(source);
+			java.util.Random random = new java.util.Random(seed);
+			int from = data.length / 10;
+			int to = data.length * 7 / 10;
+			for (int i = 0; i < bytes; i++) {
+				data[from + random.nextInt(to - from)] = (byte) random.nextInt(256);
+			}
+			Path out = source.resolveSibling("corrupt-" + source.getFileName());
+			java.nio.file.Files.write(out, data);
+			return out;
+		}
+		catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
 	/** 길이 정보가 없는 영상(H.264 날 흐름, 소리 없음). ffprobe가 길이를 N/A로 알려줘요. */
 	public static Path makeWithoutDuration(Path dir, int seconds) {
 		Path out = dir.resolve("no-duration-%ds.h264".formatted(seconds));

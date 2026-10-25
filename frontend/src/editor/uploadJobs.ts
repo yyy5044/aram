@@ -15,12 +15,26 @@ export type VideoJob = {
   result: { src: string; truncated: boolean } | null
 }
 
-/** 변환 진행률을 몇 ms마다 물어볼지. 테스트는 짧게 바꿔요. */
-export const pollTiming = { ms: 1000 }
+/** 변환 진행률을 몇 ms마다 물어볼지, 몇 ms가 지나면 포기할지. 테스트는 짧게 바꿔요. */
+export const pollTiming = { ms: 1000, deadlineMs: 10 * 60 * 1000 }
 
 const FAILED_MESSAGE = '영상을 올리지 못했어요'
+const TOO_SLOW_MESSAGE = '변환이 너무 오래 걸려요. 다른 파일을 올려 주세요'
+/** 잠깐 끊긴 연결(와이파이, 업데이트 중 503)은 이만큼 다시 물어봐요. 서버는 그동안에도 변환을 계속해요. */
+const MAX_TRANSIENT_RETRIES = 5
 
-type Entry = VideoJob & { abort: AbortController; timer: ReturnType<typeof setTimeout> | null; cancelled: boolean }
+type Entry = VideoJob & {
+  abort: AbortController
+  timer: ReturnType<typeof setTimeout> | null
+  cancelled: boolean
+  /** 올리기가 끝난 시각. 여기서 deadlineMs가 지나면 포기해요. */
+  since: number
+  retries: number
+}
+
+function isTransient(e: unknown) {
+  return e instanceof ApiError && (e.status === 0 || e.status >= 500)
+}
 
 /**
  * 편집기 하나의 영상 올리기 작업들. 칸(NodeView)이 다시 그려져도 올리기가 끊기지 않게 칸 밖에 둬요.
@@ -37,8 +51,37 @@ export function createUploadJobs() {
   function set(id: string, state: BoxState, result: VideoJob['result'] = null) {
     const job = jobs.get(id)
     if (!job || job.cancelled) return
-    jobs.set(id, { ...job, state, result })
+    job.state = state
+    job.result = result
+    jobs.set(id, { ...job })
     emit()
+  }
+
+  function schedulePoll(id: string, serverId: string, delay: number) {
+    const entry = jobs.get(id)
+    if (!entry || entry.cancelled) return
+    if (Date.now() - entry.since > pollTiming.deadlineMs) {
+      set(id, { phase: 'failed', message: TOO_SLOW_MESSAGE })
+      return
+    }
+    entry.timer = setTimeout(() => {
+      fetchVideoStatus(serverId).then(
+        (next) => {
+          const current = jobs.get(id)
+          if (current) current.retries = 0
+          handle(id, next)
+        },
+        (e) => {
+          const current = jobs.get(id)
+          if (current && !current.cancelled && isTransient(e) && current.retries < MAX_TRANSIENT_RETRIES) {
+            current.retries++
+            schedulePoll(id, serverId, pollTiming.ms * 2 ** current.retries)
+            return
+          }
+          set(id, { phase: 'failed', message: e instanceof ApiError ? e.message : FAILED_MESSAGE })
+        },
+      )
+    }, delay)
   }
 
   function handle(id: string, status: VideoStatus) {
@@ -58,25 +101,29 @@ export function createUploadJobs() {
         set(id, { phase: 'processing', percent: status.progress })
         break
     }
-    const entry = jobs.get(id)
-    if (entry && !entry.cancelled) {
-      entry.timer = setTimeout(() => {
-        fetchVideoStatus(status.id).then(
-          (next) => handle(id, next),
-          (e) => set(id, { phase: 'failed', message: e instanceof ApiError ? e.message : FAILED_MESSAGE }),
-        )
-      }, pollTiming.ms)
-    }
+    schedulePoll(id, status.id, pollTiming.ms)
   }
 
   return {
     startVideo(file: File): string {
       const id = crypto.randomUUID()
       const abort = new AbortController()
-      jobs.set(id, { state: { phase: 'uploading', percent: 0 }, result: null, abort, timer: null, cancelled: false })
+      jobs.set(id, {
+        state: { phase: 'uploading', percent: 0 },
+        result: null,
+        abort,
+        timer: null,
+        cancelled: false,
+        since: Date.now(),
+        retries: 0,
+      })
       emit()
       uploadVideo(file, (percent) => set(id, { phase: 'uploading', percent }), abort.signal).then(
-        (status) => handle(id, status),
+        (status) => {
+          const entry = jobs.get(id)
+          if (entry) entry.since = Date.now()
+          handle(id, status)
+        },
         (e) => set(id, { phase: 'failed', message: e instanceof ApiError ? e.message : FAILED_MESSAGE }),
       )
       return id

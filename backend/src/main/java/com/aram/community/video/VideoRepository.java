@@ -13,7 +13,9 @@ public interface VideoRepository extends JpaRepository<Video, UUID> {
 
 	List<Video> findByPostId(Long postId);
 
-	List<Video> findByStatusIn(Collection<VideoStatus> statuses);
+	List<Video> findByStatusInAndCreatedAtBefore(Collection<VideoStatus> statuses, Instant before);
+
+	long countByUploaderIdAndStatusIn(Long uploaderId, Collection<VideoStatus> statuses);
 
 	@Query("select v from Video v where v.postId is null and v.createdAt < :cutoff")
 	List<Video> findUnlinkedBefore(Instant cutoff);

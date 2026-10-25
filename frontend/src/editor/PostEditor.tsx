@@ -5,7 +5,7 @@ import { ApiError } from '../api/client'
 import { IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_POST, uploadImage } from '../api/images'
 import { EditorUploadsContext } from './editorUploads'
 import { editorExtensions } from './extensions'
-import { videoFileProblem } from './uploadChecks'
+import { looksLikeVideo, videoFileProblem } from './uploadChecks'
 import { createUploadJobs } from './uploadJobs'
 
 type Props = {
@@ -15,10 +15,6 @@ type Props = {
   /** 올리는 중·변환 중인 영상 칸 수(busy)와 실패한 칸 수(failed). 등록 버튼 잠금에 써요. */
   onPendingChange?: (pending: { busy: number; failed: number }) => void
   labelledBy?: string
-}
-
-function isVideoFile(file: File) {
-  return file.type.startsWith('video/')
 }
 
 function uploadIdsInDoc(editor: Editor) {
@@ -107,7 +103,7 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
       },
       handlePaste: (_view, event) => {
         const pasted = Array.from(event.clipboardData?.files ?? [])
-        const video = pasted.find(isVideoFile)
+        const video = pasted.find(looksLikeVideo)
         if (video) {
           insertVideoFile(video)
           return true
@@ -119,7 +115,7 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
       },
       handleDrop: (view, event) => {
         const dropped = Array.from((event as DragEvent).dataTransfer?.files ?? [])
-        const video = dropped.find(isVideoFile)
+        const video = dropped.find(looksLikeVideo)
         if (video) {
           event.preventDefault()
           const at = view.posAtCoords({ left: (event as DragEvent).clientX, top: (event as DragEvent).clientY })
@@ -127,7 +123,13 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
           return true
         }
         const files = dropped.filter((f) => f.type.startsWith('image/'))
-        if (files.length === 0) return false
+        if (files.length === 0) {
+          if (dropped.length === 0) return false
+          // 다른 파일을 놓으면 브라우저가 그 파일을 열면서 쓰던 글을 떠나 버려요. 막고 알려줘요.
+          event.preventDefault()
+          onError('사진이나 영상만 넣을 수 있어요')
+          return true
+        }
         event.preventDefault()
         void insertImages(files)
         return true
@@ -181,6 +183,19 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
       editor.off('clipRemovalBlocked', onBlocked)
     }
   }, [editor])
+
+  // 편집기 바깥(제목, 여백)에 파일을 놓으면 브라우저가 그 파일을 열면서 쓰던 글을 떠나 버려요. 글쓰기 화면에서는 막아요.
+  useEffect(() => {
+    const keepPage = (e: DragEvent) => {
+      if (e.dataTransfer?.types?.includes('Files') || (e.dataTransfer?.files?.length ?? 0) > 0) e.preventDefault()
+    }
+    window.addEventListener('dragover', keepPage)
+    window.addEventListener('drop', keepPage)
+    return () => {
+      window.removeEventListener('dragover', keepPage)
+      window.removeEventListener('drop', keepPage)
+    }
+  }, [])
 
   // 편집기를 떠나면 남은 올리기와 상태 조회를 모두 멈춰요.
   useEffect(() => () => jobs.retainOnly(new Set()), [jobs])
