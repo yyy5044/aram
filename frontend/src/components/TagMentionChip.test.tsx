@@ -49,7 +49,7 @@ describe('TagMentionChip', () => {
         <TagMentionChip kind="champion" id="XinZhao" label="신짜오" />
       </>,
     )
-    expect(screen.getByRole('button', { name: '거석상의 용기 증강 카드 보기' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '거석상의 용기 증강 설명 보기' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /신짜오/ })).toBeNull()
   })
 
