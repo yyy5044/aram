@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { useSearchParams } from 'react-router'
 import { ApiError } from '../../api/client'
 import { useTagPosts, type PostSort } from '../../api/posts'
 import PostListItem from '../PostListItem'
@@ -19,9 +20,19 @@ type Props = {
   compact?: boolean
 }
 
-/** 칸 아래로 펼쳐지는 글 목록. 5개씩 보여주고 「더 보기」로 이어 붙여요. */
+/**
+ * 칸 아래로 펼쳐지는 글 목록. 5개씩 보여주고 「더 보기」로 이어 붙여요.
+ * 정렬은 주소의 ?order=에 남겨요. 창 크기가 바뀌어 펼침 영역이 다른 줄로 옮겨 다시 그려져도 그대로예요.
+ */
 export default function TagPostsPanel({ kind, id, title, subtitle, onClose, children, postsHeading, compact = false }: Props) {
-  const [sort, setSort] = useState<PostSort>('latest')
+  const [params, setParams] = useSearchParams()
+  const sort: PostSort = params.get('order') === 'likes' ? 'likes' : 'latest'
+  function setSort(next: PostSort) {
+    const p = new URLSearchParams(params)
+    if (next === 'latest') p.delete('order')
+    else p.set('order', next)
+    setParams(p, { replace: true })
+  }
   const { data, error, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useTagPosts({
     sort,
     champion: kind === 'champion' ? id : undefined,
@@ -29,6 +40,8 @@ export default function TagPostsPanel({ kind, id, title, subtitle, onClose, chil
   })
   const posts = data?.pages.flatMap((p) => p.items) ?? []
   const total = data?.pages[0]?.totalItems ?? 0
+  // 그 사이 글이 지워지거나 늘 수 있어서, 남은 개수는 마지막으로 받은 페이지의 전체 수로 세요.
+  const remaining = Math.max(0, (data?.pages.at(-1)?.totalItems ?? 0) - posts.length)
   const pills = total > 0 && <SortPills value={sort} onChange={setSort} />
 
   return (
@@ -82,7 +95,7 @@ export default function TagPostsPanel({ kind, id, title, subtitle, onClose, chil
           onClick={() => void fetchNextPage()}
           className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-900 py-2 text-sm text-slate-200 hover:border-amber-300 disabled:opacity-60"
         >
-          더 보기 ({total - posts.length}개 남음)
+          더 보기 ({remaining}개 남음)
         </button>
       )}
     </section>

@@ -88,14 +88,15 @@ function Item({
 }) {
   return (
     <>
-      <li className="contents">
+      {/* li 자체를 격자 칸으로 둬요. display: contents는 오래된 Safari에서 목록 의미를 지워요. */}
+      <li className="flex">
         <button
           type="button"
           data-id={item.id}
           aria-label={item.name}
           aria-expanded={open}
           onClick={() => onToggle(item.id)}
-          className={`relative flex flex-col items-center rounded-xl border px-1 py-2 text-center hover:bg-slate-900 ${
+          className={`relative flex w-full flex-col items-center rounded-xl border px-1 py-2 text-center hover:bg-slate-900 ${
             open ? 'border-amber-300 bg-slate-900' : 'border-transparent'
           }`}
         >

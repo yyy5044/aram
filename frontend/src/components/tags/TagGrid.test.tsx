@@ -78,7 +78,7 @@ describe('TagGrid', () => {
       let row = 0
       let col = 0
       for (const child of li.parentElement!.children) {
-        const isItem = child.classList.contains('contents')
+        const isItem = child.querySelector('[data-id]') !== null
         if (isItem && col === COLS) {
           row++
           col = 0

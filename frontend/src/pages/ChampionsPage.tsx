@@ -31,7 +31,9 @@ export default function ChampionsPage() {
   return (
     <section>
       <TagToolbar query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} placeholder="챔피언 이름 검색" />
-      {matches.length === 0 ? (
+      {champions.data.length === 0 ? (
+        <p className="py-16 text-center text-slate-400">아직 챔피언 정보를 받아오지 못했어요. 잠시 후 다시 확인해주세요</p>
+      ) : matches.length === 0 ? (
         <p className="py-16 text-center text-slate-400">검색 결과가 없어요</p>
       ) : (
         <TagGrid

@@ -28,10 +28,11 @@ function setup(
   kind: 'augment' | 'champion' = 'augment',
   extra: MockRoutes = {},
   props: Partial<ComponentProps<typeof TagPostsPanel>> = {},
+  route = '/',
 ) {
   const onClose = vi.fn()
   const api = mockApi({ 'GET /api/posts': postsOf(total), ...extra })
-  renderWithProviders(
+  const { router } = renderWithProviders(
     <TagPostsPanel
       kind={kind}
       id={kind === 'augment' ? 'ARAM_LegDay' : 'Amumu'}
@@ -40,8 +41,9 @@ function setup(
       onClose={onClose}
       {...props}
     />,
+    { route },
   )
-  return { api, onClose }
+  return { api, onClose, router }
 }
 
 describe('TagPostsPanel', () => {
@@ -71,6 +73,27 @@ describe('TagPostsPanel', () => {
     expect(last.get('page')).toBe('1')
     expect(screen.getAllByRole('listitem')).toHaveLength(5)
     expect(screen.queryByText('latest 글 7')).not.toBeInTheDocument()
+  })
+
+  it('remembers the chosen sort in the address so a redrawn panel keeps it', async () => {
+    const { router } = setup(7)
+    await userEvent.click(await screen.findByRole('button', { name: '추천순' }))
+    expect(router.state.location.search).toBe('?order=likes')
+  })
+
+  it('starts with the sort from the address', async () => {
+    const { api } = setup(7, 'augment', {}, {}, '/?order=likes')
+    expect(await screen.findByText('likes 글 1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '추천순' })).toHaveAttribute('aria-pressed', 'true')
+    expect(api.find('GET', '/api/posts').every((c) => c.query.get('sort') === 'likes')).toBe(true)
+  })
+
+  it('counts the remaining posts from the latest page', async () => {
+    // 첫 페이지 뒤에 글 하나가 지워져서 두 번째 페이지는 전체 11개라고 알려줘요.
+    const twelveThenEleven = (req: MockRequest) => postsOf(req.query.get('page') === '1' ? 12 : 11)(req)
+    setup(12, 'augment', { 'GET /api/posts': twelveThenEleven })
+    await userEvent.click(await screen.findByRole('button', { name: '더 보기 (7개 남음)' }))
+    expect(await screen.findByRole('button', { name: '더 보기 (1개 남음)' })).toBeInTheDocument()
   })
 
   it('keeps sort pills and posts while the new sort loads', async () => {
