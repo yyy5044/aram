@@ -22,6 +22,14 @@ export const DESCRIPTION_COLORS: Record<string, string> = {
   gold: '#f0c674',
   rules: '#8d99ae',
   rule: '#8d99ae',
+  // 아이템 설명의 능력치 줄과 효과
+  attention: '#f0e6d2',
+  scaleMana: '#49b6ff',
+  scaleHPRegen: '#2ecc71',
+  scaleArmor: '#f0c674',
+  scaleMR: '#9ad8ff',
+  unique: '#f1e2a8',
+  buffedStat: '#f1e2a8',
 }
 
 const ITALIC_TAGS = new Set(['rules', 'rule'])

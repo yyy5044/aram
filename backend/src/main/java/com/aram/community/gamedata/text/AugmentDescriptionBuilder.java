@@ -20,7 +20,9 @@ public final class AugmentDescriptionBuilder {
 	/** 화면이 색으로 바꾸는 표식. 이것과 br만 남겨요. */
 	static final Set<String> COLOR_TAGS = Set.of("magicDamage", "scaleAP", "physicalDamage", "scaleAD", "trueDamage",
 			"health", "scaleHealth", "healing", "shield", "speed", "omnivamp", "lifeSteal", "lifesteal", "status",
-			"keyword", "keywordMajor", "active", "passive", "attackSpeed", "gold", "rules", "rule");
+			"keyword", "keywordMajor", "active", "passive", "attackSpeed", "gold", "rules", "rule",
+			// 아이템 설명의 능력치 줄과 효과에 쓰여요.
+			"attention", "scaleMana", "scaleHPRegen", "scaleArmor", "scaleMR", "unique", "buffedStat");
 
 	private static final Pattern REFERENCE = Pattern.compile("\\{\\{\\s*([^}]+?)\\s*\\}\\}");
 
