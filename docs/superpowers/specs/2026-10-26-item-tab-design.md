@@ -106,13 +106,13 @@ create index post_items_item_idx on post_items (item_id);
 
 | 요청 | 응답 |
 |---|---|
-| `GET /api/items` | `[{ id, nameKo, tier, priceTotal, iconUrl, fromIds, intoIds, active }]` 전부(옛 아이템 포함, 화면이 `active`로 거른다) |
+| `GET /api/items` | `[{ id, nameKo, tier, priceTotal, iconUrl, fromIds, intoIds, active }]` 전부(옛 아이템 포함, 화면이 `active`로 거른다). `id`·`fromIds`·`intoIds`는 문자열(`"3084"`): 챔피언·증강처럼 화면 부품과 주소·본문 박스가 모두 문자열 번호를 쓴다 |
 | `GET /api/items/{id}?lang=` | `{ id, tier, priceTotal, iconUrl, fromIds, intoIds, original: {locale,name,description}, translation }` — 증강 상세와 같은 모양. 없는 번호는 404 `ITEM_NOT_FOUND`("없는 아이템이에요") |
 | `GET /api/tag-counts` | 기존 응답에 `items: { "3084": 4, … }` 추가 |
 | `GET /api/posts?item=3084` | 기존 `champion`·`augment`와 같은 거르기 |
-| `POST/PUT /api/posts` | 요청에 `itemIds: number[]` 추가(최대 10개). 글 응답(목록·상세)에 `items: [{ id, nameKo, iconUrl }]` 추가 |
+| `POST/PUT /api/posts` | 요청에 `itemIds: string[]` 추가(최대 10개). 글 응답(목록·상세)에 `items: [{ id, nameKo, iconUrl }]` 추가 |
 
-- 글 저장 검사: `itemIds`가 10개를 넘으면 400 "아이템은 10개까지 고를 수 있어요". 없는 번호면 "없는 아이템이 들어 있어요". 옛(비활성) 아이템은 통과한다(증강 태그 칸과 같은 규칙. 화면은 고르지 못하게 해서 새 글에는 들어가지 않는다).
+- 글 저장 검사: `itemIds`가 10개를 넘으면 400 "아이템은 10개까지 고를 수 있어요". 없거나 숫자가 아닌 번호면 "없는 아이템이 들어 있어요". 상점에서 빠진(비활성) 아이템은 **이미 그 글에 붙어 있던 것만** 둘 수 있고, 새로 붙이면 "현재 게임에 없는 아이템은 새로 붙일 수 없어요"(증강 태그 칸과 같은 규칙). 본문 박스는 있는 아이템이기만 하면 통과한다(증강 박스와 같은 규칙).
 - 본문 박스: `tagMention.kind`에 `item`을 더한다(서버 `PostContentValidator`·화면 `editor/extensions.ts`·`extensions.test.ts`를 같이 바꾼다). `id`는 기존 형식 `^[A-Za-z0-9_]{1,40}$`에 숫자가 맞는다. `PostService`가 박스의 아이템도 있는지 확인한다.
 
 ## 5. 화면
