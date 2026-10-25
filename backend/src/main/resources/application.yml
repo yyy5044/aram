@@ -72,3 +72,10 @@ app:
   images:
     # 로컬 개발용 이미지 저장 폴더 (git 제외)
     dir: data/images
+  videos:
+    # 영상 변환 프로그램. 없으면 영상 올리기만 "변환 프로그램이 없어요"로 끝나요.
+    ffmpeg-path: ffmpeg
+    ffprobe-path: ffprobe
+    # 변환 전 원본을 잠깐 두는 폴더 (git 제외)
+    tmp-dir: data/video-tmp
+    max-bytes: 209715200
