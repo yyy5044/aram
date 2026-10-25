@@ -53,6 +53,13 @@ describe('TagPicker', () => {
     expect(screen.getByRole('option', { name: /거석상의 용기/ })).toBeInTheDocument()
   })
 
+  it('finds by initial consonants', async () => {
+    render(<Harness />)
+    await userEvent.type(screen.getByLabelText('챔피언 검색'), 'ㅇㅁㅁ')
+    expect(screen.getByRole('option', { name: /아무무/ })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /징크스/ })).not.toBeInTheDocument()
+  })
+
   it('adds and removes chips', async () => {
     render(<Harness />)
     await userEvent.type(screen.getByLabelText('챔피언 검색'), '아무')

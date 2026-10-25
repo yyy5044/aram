@@ -8,6 +8,25 @@ describe('matchesName', () => {
     expect(matchesName('연쇄 번개', '학살')).toBe(false)
   })
 
+  it('matches initial consonants (초성)', () => {
+    expect(matchesName('거석상의 용기', 'ㄱㅅㅅ')).toBe(true)
+    expect(matchesName('거석상의 용기', 'ㄱㅅㅅㅇㅇㄱ')).toBe(true)
+    expect(matchesName('거석상의 용기', 'ㅅㅇ ㅇ')).toBe(true)
+    expect(matchesName('아무무', 'ㅇㅁㅁ')).toBe(true)
+    expect(matchesName('아무무', 'ㅈㅋㅅ')).toBe(false)
+  })
+
+  it('mixes full syllables and initial consonants', () => {
+    expect(matchesName('거석상의 용기', '거ㅅㅅ')).toBe(true)
+    expect(matchesName('거석상의 용기', '거석ㅅ')).toBe(true)
+    expect(matchesName('거석상의 용기', '고ㅅ')).toBe(false)
+  })
+
+  it('tells double consonants apart', () => {
+    expect(matchesName('쌍둥이', 'ㅆㄷ')).toBe(true)
+    expect(matchesName('상둥이', 'ㅆㄷ')).toBe(false)
+  })
+
   it('blank query matches everything', () => {
     expect(matchesName('아무무', '  ')).toBe(true)
   })
