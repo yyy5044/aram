@@ -28,6 +28,7 @@ function existing(overrides: Partial<PostDetail> = {}): PostDetail {
     author: { id: 1, nickname: '양호', avatarUrl: null },
     champions: [amumu],
     augments: [oldAugment],
+    items: [],
     likeCount: 0,
     commentCount: 0,
     likedByMe: false,

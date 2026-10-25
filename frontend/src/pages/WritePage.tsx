@@ -153,6 +153,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
       content: cleanContent(content ?? { type: 'doc', content: [] }),
       championIds,
       augmentIds,
+      itemIds: [] as string[],
       gamePatch,
     }
     try {

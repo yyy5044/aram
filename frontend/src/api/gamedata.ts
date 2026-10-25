@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from './client'
 import type { Language } from '../lib/language'
-import type { Augment, AugmentDetail, Champion, Patches, TagCounts, TopAugment } from './types'
+import type { Augment, AugmentDetail, Champion, Item, ItemDetail, Patches, TagCounts, TopAugment } from './types'
 
 /** 게임 데이터는 자주 바뀌지 않아서 한 번 받으면 세션 동안 다시 받지 않아요. */
 export function useChampions() {
@@ -25,6 +25,23 @@ export function useAugmentDetail(id: string, lang: Language) {
   return useQuery({
     queryKey: ['augments', id, lang],
     queryFn: () => apiFetch<AugmentDetail>(`/api/augments/${encodeURIComponent(id)}?lang=${lang}`),
+    staleTime: Infinity,
+  })
+}
+
+export function useItems() {
+  return useQuery({
+    queryKey: ['items'],
+    queryFn: () => apiFetch<Item[]>('/api/items'),
+    staleTime: Infinity,
+  })
+}
+
+/** 상자용 아이템 상세. 언어마다 따로 기억해요. */
+export function useItemDetail(id: string, lang: Language) {
+  return useQuery({
+    queryKey: ['items', id, lang],
+    queryFn: () => apiFetch<ItemDetail>(`/api/items/${encodeURIComponent(id)}?lang=${lang}`),
     staleTime: Infinity,
   })
 }

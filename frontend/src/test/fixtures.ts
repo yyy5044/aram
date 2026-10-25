@@ -53,6 +53,7 @@ export function listItem(overrides: Partial<PostListItem> = {}): PostListItem {
     author: { id: 1, nickname: '양호', avatarUrl: null },
     champions: [amumu],
     augments: [legDay],
+    items: [],
     likeCount: 24,
     commentCount: 8,
     createdAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
