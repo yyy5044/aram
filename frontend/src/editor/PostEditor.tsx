@@ -166,6 +166,22 @@ export default function PostEditor({ initialContent, onChange, onError, onPendin
     }
   }, [editor, jobs])
 
+  // 키보드로 클립을 지우려다 막히면 ✕ 버튼을 알려줘요. 꾹 누르고 있어도 3초에 한 번만.
+  useEffect(() => {
+    if (!editor) return
+    let last = 0
+    const onBlocked = () => {
+      const now = Date.now()
+      if (now - last < 3000) return
+      last = now
+      onErrorRef.current('영상은 오른쪽 위 ✕ 버튼으로 뺄 수 있어요')
+    }
+    editor.on('clipRemovalBlocked', onBlocked)
+    return () => {
+      editor.off('clipRemovalBlocked', onBlocked)
+    }
+  }, [editor])
+
   // 편집기를 떠나면 남은 올리기와 상태 조회를 모두 멈춰요.
   useEffect(() => () => jobs.retainOnly(new Set()), [jobs])
 
