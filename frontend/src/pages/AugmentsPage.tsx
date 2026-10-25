@@ -2,17 +2,20 @@ import { useState } from 'react'
 import { useAugments, useTagCounts } from '../api/gamedata'
 import type { Augment, AugmentRarity } from '../api/types'
 import AugmentCards from '../components/augment/AugmentCards'
+import AugmentIcon from '../components/augment/AugmentIcon'
 import TagGrid from '../components/tags/TagGrid'
 import TagPageStatus from '../components/tags/TagPageStatus'
 import TagPostsPanel from '../components/tags/TagPostsPanel'
 import TagToolbar from '../components/tags/TagToolbar'
 import { useOpenTag } from '../components/tags/useOpenTag'
+import { PAGE_WIDE } from '../components/ui/layout'
 import { matchesName, sortTags, type TagSort } from '../lib/tagSearch'
 
-const RARITY_GROUPS: { rarity: AugmentRarity; label: string; dot: string }[] = [
-  { rarity: 'PRISMATIC', label: '프리즘', dot: 'bg-gradient-to-br from-fuchsia-300 to-sky-300' },
-  { rarity: 'GOLD', label: '골드', dot: 'bg-amber-300' },
-  { rarity: 'SILVER', label: '실버', dot: 'bg-slate-400' },
+/** bar는 묶음 머리 왼쪽 4px 세로줄(등급 색). */
+const RARITY_GROUPS: { rarity: AugmentRarity; label: string; bar: string }[] = [
+  { rarity: 'PRISMATIC', label: '프리즘', bar: 'bg-linear-to-b from-[#e3a6ff] to-[#8f5bd8]' },
+  { rarity: 'GOLD', label: '골드', bar: 'bg-gold-rarity' },
+  { rarity: 'SILVER', label: '실버', bar: 'bg-silver' },
 ]
 
 /** 증강 목록. 프리즘·골드·실버 묶음으로 접혀 있고, 증강을 누르면 그 아래로 글 목록이 펼쳐져요. */
@@ -76,36 +79,45 @@ export default function AugmentsPage() {
     close()
   }
 
+  const totalPosts = active.reduce((sum, a) => sum + countOf(a), 0)
+
   return (
-    <section>
+    <section className={PAGE_WIDE}>
+      <div className="mb-4 flex items-baseline gap-3">
+        <h1 className="font-display text-[28px] leading-tight text-night">증강</h1>
+        <span className="text-[13px] text-ink-3">
+          증강 {active.length}개 · 글 {totalPosts}개
+        </span>
+      </div>
       <TagToolbar query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} placeholder="증강 이름 검색" />
-      {groups.length === 0 && <p className="py-16 text-center text-slate-400">검색 결과가 없어요</p>}
+      {groups.length === 0 && <p className="py-16 text-center text-ink-3">검색 결과가 없어요</p>}
       {groups.map((g) => (
-        <div key={g.rarity} className="mb-2.5 rounded-xl border border-slate-800 bg-slate-900">
+        <div key={g.rarity} className="mb-2 border border-line-soft bg-surface">
           <button
             type="button"
             aria-expanded={g.open}
             onClick={() => toggleGroup(g)}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-3 text-left hover:bg-slate-800"
+            className={`flex h-14 w-full items-center gap-3 pr-5 text-left hover:bg-[#f1f7fb] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal ${
+              g.open ? 'border-b border-line-soft' : ''
+            }`}
           >
-            <span aria-hidden="true" className={`h-3.5 w-3.5 rounded ${g.dot}`} />
-            <span className="font-bold">{g.label}</span>
-            <span className="text-xs text-slate-400">
+            <span aria-hidden="true" className={`w-1 self-stretch ${g.bar}`} />
+            <span className="text-[17px] font-bold text-ink">{g.label}</span>
+            <span className="text-[13px] text-ink-3">
               증강 {searching ? `${g.matches.length}/` : ''}
               {g.all.length}개 · 글 {g.posts}개
             </span>
-            <span aria-hidden="true" className={`ml-auto text-slate-500 transition-transform ${g.open ? 'rotate-90' : ''}`}>
+            <span aria-hidden="true" className={`ml-auto text-lg text-ink-3 transition-transform ${g.open ? '-rotate-90' : 'rotate-90'}`}>
               ›
             </span>
           </button>
           {g.open && (
-            <div className="border-t border-slate-800 px-3 pt-2 pb-3">
+            <div className="p-2 sm:p-4">
               <TagGrid
                 items={g.matches.map((a) => ({
                   id: a.id,
                   name: a.nameKo,
                   image: a.iconUrl,
-                  count: countOf(a),
                   rarity: a.rarity,
                   tinted: a.iconTinted,
                 }))}
@@ -120,10 +132,22 @@ export default function AugmentsPage() {
                       title={a.nameKo}
                       subtitle={`${g.label} 증강 · 게시글 ${countOf(a)}개`}
                       onClose={() => closePanel(g.rarity)}
+                      media={
+                        <AugmentIcon
+                          src={a.iconUrl}
+                          rarity={a.rarity}
+                          tinted={a.iconTinted}
+                          frame="image"
+                          className="h-12 w-12 rounded-mark bg-night"
+                        />
+                      }
+                      moreTo={`/augments/${encodeURIComponent(id)}`}
                       postsHeading={`이 증강 글 ${countOf(a)}개`}
                       compact
                     >
-                      <AugmentCards augmentId={id} />
+                      <div className="border border-night bg-[radial-gradient(70%_90%_at_50%_40%,#173a52,var(--color-night))] px-3 py-6">
+                        <AugmentCards augmentId={id} />
+                      </div>
                     </TagPostsPanel>
                   )
                 }}

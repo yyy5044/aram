@@ -7,8 +7,12 @@ import Avatar from '../components/Avatar'
 import CommentSection from '../components/CommentSection'
 import LikeButton from '../components/LikeButton'
 import ScrapButton from '../components/ScrapButton'
-import TagChip from '../components/TagChip'
 import { useToast } from '../components/toastContext'
+import { buttonClass } from '../components/ui/button'
+import CornerFrame from '../components/ui/CornerFrame'
+import { PAGE_NARROW } from '../components/ui/layout'
+import TagChip from '../components/ui/TagChip'
+import VersionChip from '../components/ui/VersionChip'
 import PostContentView from '../editor/PostContentView'
 import { relativeTime } from '../lib/relativeTime'
 import { parseRouteId } from '../lib/routeId'
@@ -24,7 +28,7 @@ export default function PostDetailPage() {
 
   if (Number.isNaN(postId) || (error instanceof ApiError && error.status === 404)) return <NotFoundPage message="없는 글이에요" />
   if (error) {
-    return <p className="py-10 text-center text-rose-400">{error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요'}</p>
+    return <p className="py-10 text-center text-danger">{error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요'}</p>
   }
   if (isPending || !post) return null
 
@@ -46,68 +50,66 @@ export default function PostDetailPage() {
   }
 
   return (
-    <article>
-      <Link to="/" className="mb-3 inline-block text-sm text-slate-400 hover:text-slate-200">
+    <div className={PAGE_NARROW}>
+      <Link to="/" className="mb-4 inline-block text-[13px] text-ink-3 hover:text-ink">
         ‹ 목록으로
       </Link>
-      <h1 className="mb-2 text-xl font-bold break-words">{post.title}</h1>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
-        <span className="rounded-md border border-emerald-900 bg-emerald-950 px-1.5 font-bold text-emerald-400">
-          {post.gamePatch}
-        </span>
-        <Link to={`/users/${post.author.id}`} className="flex items-center gap-1.5 hover:text-slate-100 hover:underline">
-          <Avatar src={post.author.avatarUrl} size={20} />
-          {post.author.nickname}
-        </Link>
-        <span>{relativeTime(post.createdAt)}</span>
-        {post.edited && <span>수정됨</span>}
-        <span className="ml-auto flex gap-1.5">
-          {isAuthor && (
-            <Link to={`/posts/${post.id}/edit`} className="rounded-md border border-slate-700 px-2 py-0.5 hover:text-slate-100">
-              수정
-            </Link>
-          )}
-          {canDelete && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="rounded-md border border-slate-700 px-2 py-0.5 hover:text-rose-300"
-            >
-              삭제
-            </button>
-          )}
-        </span>
-      </div>
-
-      <div className="my-5 leading-relaxed">
-        <PostContentView content={post.content} />
-      </div>
-
-      {(post.champions.length > 0 || post.augments.length > 0) && (
-        <div className="flex flex-wrap gap-1.5 border-t border-slate-800 py-3">
-          {post.champions.map((c) => (
-            <TagChip key={c.id} kind="champion" id={c.id} nameKo={c.nameKo} imageUrl={c.imageUrl} />
-          ))}
-          {post.augments.map((a) => (
-            <TagChip
-              key={a.id}
-              kind="augment"
-              id={a.id}
-              nameKo={a.nameKo}
-              imageUrl={a.iconUrl}
-              rarity={a.rarity}
-              tinted={a.iconTinted}
-            />
-          ))}
+      <CornerFrame as="article" size={16} className="border border-line-soft bg-surface p-5 sm:p-8">
+        <h1 className="mb-3 font-display text-xl leading-snug text-balance break-words text-night sm:text-[28px]">{post.title}</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line-soft pb-6 text-[13px] text-ink-3">
+          <Link to={`/users/${post.author.id}`} className="flex items-center gap-2 text-[15px] font-bold text-ink hover:text-teal-ink">
+            <Avatar src={post.author.avatarUrl} name={post.author.nickname} size={32} />
+            {post.author.nickname}
+          </Link>
+          <span>{relativeTime(post.createdAt)}</span>
+          {post.edited && <span>수정됨</span>}
+          <VersionChip patch={post.gamePatch} />
+          <span className="ml-auto flex gap-1">
+            {isAuthor && (
+              <Link to={`/posts/${post.id}/edit`} className={buttonClass('quiet')}>
+                수정
+              </Link>
+            )}
+            {canDelete && (
+              <button type="button" onClick={handleDelete} className={buttonClass('quietDanger')}>
+                삭제
+              </button>
+            )}
+          </span>
         </div>
-      )}
 
-      <div className="flex justify-center gap-2.5 border-y border-slate-800 py-4">
-        <LikeButton key={post.id} postId={post.id} likeCount={post.likeCount} likedByMe={post.likedByMe} />
-        <ScrapButton key={`scrap-${post.id}`} postId={post.id} scrappedByMe={post.scrappedByMe} />
-      </div>
+        <div className="max-w-[40em] py-6 text-[17px] leading-[1.75]">
+          <PostContentView content={post.content} />
+        </div>
+
+        {(post.champions.length > 0 || post.augments.length > 0) && (
+          <div className="flex flex-wrap gap-2 border-t border-line-soft pt-4 pb-6">
+            {post.champions.map((c) => (
+              <TagChip key={c.id} kind="champion" id={c.id} nameKo={c.nameKo} imageUrl={c.imageUrl} size="lg" link />
+            ))}
+            {post.augments.map((a) => (
+              <TagChip
+                key={a.id}
+                kind="augment"
+                id={a.id}
+                nameKo={a.nameKo}
+                imageUrl={a.iconUrl}
+                rarity={a.rarity}
+                tinted={a.iconTinted}
+                size="lg"
+                link
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-center gap-3 border-t border-line-soft pt-6">
+          <LikeButton key={post.id} postId={post.id} likeCount={post.likeCount} likedByMe={post.likedByMe} />
+          <ScrapButton key={`scrap-${post.id}`} postId={post.id} scrappedByMe={post.scrappedByMe} />
+        </div>
+      </CornerFrame>
 
       <CommentSection postId={post.id} />
-    </article>
+    </div>
   )
 }

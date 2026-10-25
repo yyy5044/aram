@@ -14,11 +14,12 @@ afterEach(() => {
 const me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호' }
 
 describe('Header', () => {
-  it('shows Discord login when logged out', async () => {
+  it('shows Discord login and 글쓰기 when logged out', async () => {
     mockApi({ 'GET /api/me': () => json(null) })
     renderWithProviders(<Header />)
     expect(await screen.findByRole('button', { name: '디스코드로 로그인' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: '글쓰기' })).not.toBeInTheDocument()
+    // 로그인 전에도 글쓰기는 같은 자리에 있어요. 누르면 로그인 안내 화면이 나와요.
+    expect(screen.getByRole('link', { name: '글쓰기' })).toHaveAttribute('href', '/write')
   })
 
   it('remembers the current page before going to Discord', async () => {
@@ -41,21 +42,23 @@ describe('Header', () => {
     expect(localStorage.getItem('lang')).toBe('en')
   })
 
-  it('shows nickname and 글쓰기 when logged in', async () => {
+  it('shows my menu button and 글쓰기 when logged in', async () => {
     mockApi({ 'GET /api/me': () => json(me) })
     renderWithProviders(<Header />)
-    expect(await screen.findByRole('button', { name: /양호/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '내 메뉴' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '글쓰기' })).toHaveAttribute('href', '/write')
     expect(screen.getByRole('link', { name: '증강 칼바람' })).toHaveAttribute('href', '/')
   })
 
-  it('has 내 프로필 in the menu linking to my profile, above 로그아웃', async () => {
+  it('has my nickname, 내 프로필 and 프로필 수정 in the menu, above 로그아웃', async () => {
     mockApi({ 'GET /api/me': () => json(me) })
     renderWithProviders(<Header />)
-    await userEvent.click(await screen.findByRole('button', { name: /양호/ }))
+    await userEvent.click(await screen.findByRole('button', { name: '내 메뉴' }))
+    expect(within(screen.getByRole('menu')).getByText('양호')).toBeInTheDocument()
     const items = screen.getAllByRole('menuitem')
-    expect(items.map((i) => i.textContent)).toEqual(['내 프로필', '로그아웃'])
+    expect(items.map((i) => i.textContent)).toEqual(['내 프로필', '프로필 수정', '로그아웃'])
     expect(items[0]).toHaveAttribute('href', '/users/1')
+    expect(items[1]).toHaveAttribute('href', '/settings/profile')
   })
 
   it.each([
@@ -93,7 +96,7 @@ describe('Header', () => {
       },
     })
     renderWithProviders(<Header />)
-    await userEvent.click(await screen.findByRole('button', { name: /양호/ }))
+    await userEvent.click(await screen.findByRole('button', { name: '내 메뉴' }))
     await userEvent.click(screen.getByRole('menuitem', { name: '로그아웃' }))
     expect(await screen.findByRole('button', { name: '디스코드로 로그인' })).toBeInTheDocument()
     expect(api.find('POST', '/api/logout')).toHaveLength(1)

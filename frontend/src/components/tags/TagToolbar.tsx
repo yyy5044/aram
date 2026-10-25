@@ -1,4 +1,6 @@
 import type { TagSort } from '../../lib/tagSearch'
+import SearchInput from '../ui/SearchInput'
+import Segmented from '../ui/Segmented'
 
 type Props = {
   query: string
@@ -13,33 +15,18 @@ const SORTS: { value: TagSort; label: string }[] = [
   { value: 'count', label: '글 많은 순' },
 ]
 
-/** 목록 위의 이름 검색칸과 정렬 버튼. */
+/** 목록 위의 이름 검색칸(대부분 이름으로 찾아서 가장 넓게)과 정렬. 휴대폰은 검색칸이 한 줄 전체예요. */
 export default function TagToolbar({ query, onQueryChange, sort, onSortChange, placeholder }: Props) {
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
-      <input
-        type="search"
-        aria-label="이름 검색"
+    <div className="mb-6 flex flex-wrap items-center gap-2 sm:gap-3">
+      <SearchInput
+        label="이름 검색"
         placeholder={placeholder}
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
-        className="min-w-44 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-amber-300 focus:outline-none"
+        wrapperClassName="min-w-0 basis-full sm:min-w-[220px] sm:basis-0 sm:flex-1"
       />
-      {SORTS.map((s) => (
-        <button
-          key={s.value}
-          type="button"
-          aria-pressed={sort === s.value}
-          onClick={() => onSortChange(s.value)}
-          className={
-            sort === s.value
-              ? 'rounded-full border border-amber-300 bg-slate-900 px-3 py-1 text-sm text-slate-100'
-              : 'rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-sm text-slate-400 hover:text-slate-100'
-          }
-        >
-          {s.label}
-        </button>
-      ))}
+      <Segmented options={SORTS} value={sort} onChange={onSortChange} label="목록 정렬" />
     </div>
   )
 }

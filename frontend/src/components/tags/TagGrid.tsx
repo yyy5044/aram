@@ -6,7 +6,6 @@ export type GridItem = {
   id: string
   name: string
   image: string | null
-  count: number
   /** 챔피언 초상화처럼 둥글게 보여줄지. */
   round?: boolean
   /** 증강 칸이면 등급. 게임 테두리를 두르고, tinted면 흰 아이콘에 등급 색을 입혀요. */
@@ -61,7 +60,7 @@ export default function TagGrid({ items, openId, onToggle, renderPanel }: Props)
   const anchor = openIndex < 0 ? null : (current?.after ?? items[items.length - 1].id)
 
   return (
-    <ul ref={listRef} className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2">
+    <ul ref={listRef} className="grid grid-cols-3 gap-1 sm:grid-cols-[repeat(auto-fill,minmax(104px,1fr))] sm:gap-2">
       {items.map((item) => {
         const open = item.id === openId
         return (
@@ -96,8 +95,10 @@ function Item({
           aria-label={item.name}
           aria-expanded={open}
           onClick={() => onToggle(item.id)}
-          className={`relative flex w-full flex-col items-center rounded-xl border px-1 py-2 text-center hover:bg-slate-900 ${
-            open ? 'border-amber-300 bg-slate-900' : 'border-transparent'
+          className={`relative flex w-full flex-col items-center gap-1.5 rounded-touch text-center focus-visible:outline-2 focus-visible:outline-teal ${
+            open
+              ? 'border-2 border-gold bg-surface px-[5px] pt-[11px] pb-[9px]'
+              : 'border border-transparent px-1.5 pt-3 pb-2.5 hover:border-line-soft hover:bg-ice'
           }`}
         >
           {item.image && item.rarity ? (
@@ -106,25 +107,22 @@ function Item({
               rarity={item.rarity}
               tinted={item.tinted}
               frame="image"
-              className="mb-1.5 h-13 w-13 rounded-lg bg-slate-800"
+              className="h-12 w-12 rounded-mark bg-night sm:h-14 sm:w-14"
             />
           ) : item.image ? (
             <img
               src={item.image}
               alt=""
-              className={`mb-1.5 h-13 w-13 bg-slate-800 ${item.round ? 'rounded-full' : 'rounded-lg'}`}
+              className={`h-12 w-12 bg-line-soft sm:h-14 sm:w-14 ${item.round ? 'rounded-full ring-1 ring-gold' : 'rounded-mark'}`}
             />
           ) : (
-            <span aria-hidden="true" className="mb-1.5 h-13 w-13 rounded-lg bg-slate-800" />
+            <span aria-hidden="true" className="h-12 w-12 rounded-mark bg-line-soft sm:h-14 sm:w-14" />
           )}
-          <span className="text-xs leading-tight text-slate-100">{item.name}</span>
-          <span className={`mt-0.5 text-[11px] ${item.count ? 'text-amber-300' : 'text-slate-500'}`}>
-            글 {item.count}개
-          </span>
+          <span className="line-clamp-2 text-[13px] leading-tight font-medium text-ink">{item.name}</span>
           {open && (
             <span
               aria-hidden="true"
-              className="absolute -bottom-2.5 left-1/2 -ml-2 border-8 border-transparent border-b-amber-300"
+              className="absolute -bottom-[13px] left-1/2 -ml-2 border-8 border-transparent border-t-gold"
             />
           )}
         </button>
@@ -135,5 +133,5 @@ function Item({
 }
 
 function Panel({ children }: { children: ReactNode }) {
-  return <li className="col-span-full mt-1">{children}</li>
+  return <li className="col-span-full mt-2 mb-1">{children}</li>
 }

@@ -39,9 +39,11 @@ export default function PostList({ champion, augment, empty, header }: Props) {
   return (
     <section>
       {header?.(data)}
-      <SortPills value={sort} onChange={(s) => update({ sort: s })} />
+      <div className="mb-4">
+        <SortPills value={sort} onChange={(s) => update({ sort: s })} />
+      </div>
       {error && (
-        <p className="py-10 text-center text-rose-400">
+        <p className="py-10 text-center text-danger">
           {error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요'}
         </p>
       )}
@@ -51,7 +53,7 @@ export default function PostList({ champion, augment, empty, header }: Props) {
         data.items.length === 0 &&
         (pastLastPage ? <PastLastPage onFirstPage={() => update({ page: 1 })} /> : empty)}
       {data && data.items.length > 0 && (
-        <ul>
+        <ul className="flex flex-col gap-2">
           {data.items.map((post) => (
             <PostListItem key={post.id} post={post} />
           ))}

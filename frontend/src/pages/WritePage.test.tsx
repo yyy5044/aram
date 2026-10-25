@@ -68,7 +68,18 @@ describe('WritePage', () => {
     setup(meYangho)
     const select = await screen.findByLabelText('패치')
     expect(select).toHaveValue('26.21')
-    expect(screen.getByRole('option', { name: '26.21 (현재 패치)' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: '26.21 버전 (최신)' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: '26.20 버전' })).toBeInTheDocument()
+  })
+
+  it('counts picked champions against the limit and offers 취소', async () => {
+    setup(meYangho)
+    await screen.findByLabelText('제목')
+    expect(screen.getByText('0 / 5')).toBeInTheDocument()
+    await pickChampion('아무무')
+    expect(screen.getByText('1 / 5')).toBeInTheDocument()
+    expect(screen.getByText('0 / 10')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '취소' })).toBeInTheDocument()
   })
 
   it('submits and navigates to the new post', async () => {
@@ -174,7 +185,7 @@ describe('WritePage', () => {
     setup(meYangho, '/posts/5/edit', { 'GET /api/posts/5': () => json(existing({ gamePatch: '26.10' })) })
     const select = await screen.findByLabelText('패치')
     await vi.waitFor(() => expect(select).toHaveValue('26.10'))
-    expect(screen.getByRole('option', { name: '26.10' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: '26.10 버전' })).toBeInTheDocument()
   })
 
   it('does not let another user edit', async () => {

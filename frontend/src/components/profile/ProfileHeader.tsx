@@ -2,33 +2,33 @@ import { Link } from 'react-router'
 import type { Profile } from '../../api/types'
 import { dottedDate } from '../../lib/date'
 import Avatar from '../Avatar'
+import HeroBand from '../ui/HeroBand'
 
-/** 프로필 위쪽: 사진, 닉네임, (내 프로필이면) 공개 표시와 수정 버튼. */
+/** 프로필 위쪽 밤하늘 띠: 사진 96, 닉네임, 가입일, (내 프로필이면) 공개 상태와 수정 버튼. */
 export default function ProfileHeader({ profile }: { profile: Profile }) {
   return (
-    <div className="mb-4 flex items-center gap-3.5">
-      <Avatar src={profile.avatarUrl} size={72} />
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold break-all">{profile.nickname}</h1>
-          {profile.mine && (
-            <span className="rounded-md border border-slate-700 px-1.5 py-0.5 text-[11px] text-slate-400">
-              {profile.profilePublic ? '공개' : '비공개'}
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-slate-400">
-          {profile.mine ? '내 프로필이에요' : `가입 ${dottedDate(profile.joinedAt)}`}
-        </p>
-      </div>
-      {profile.mine && (
-        <Link
-          to="/settings/profile"
-          className="ml-auto flex-none rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm hover:bg-slate-800"
-        >
-          프로필 수정
-        </Link>
-      )}
-    </div>
+    <HeroBand
+      media={
+        <Avatar
+          src={profile.avatarUrl}
+          name={profile.nickname}
+          size={96}
+          className="!ring-2 ring-offset-2 ring-offset-night max-sm:!h-[72px] max-sm:!w-[72px]"
+        />
+      }
+      eyebrow={profile.mine ? `내 프로필 · ${profile.profilePublic ? '공개' : '비공개'}` : undefined}
+      title={profile.nickname}
+      sub={`${dottedDate(profile.joinedAt)} 가입`}
+      action={
+        profile.mine && (
+          <Link
+            to="/settings/profile"
+            className="inline-flex h-10 items-center rounded-touch px-4 text-[15px] font-bold whitespace-nowrap text-gold-pale shadow-[inset_0_0_0_1px_var(--color-gold)] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-gold"
+          >
+            프로필 수정
+          </Link>
+        )
+      }
+    />
   )
 }

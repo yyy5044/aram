@@ -95,18 +95,21 @@ export default function PostEditor({ initialContent, onChange, onError, labelled
     }),
   })
 
+  // 서식 버튼 36px: 자주 쓰지만 주인공은 아니라 편집기 위 얇은 띠에 모아요. 켜진 서식은 남색.
   const tool = (on: boolean | undefined) =>
-    `rounded-md px-2 py-1 text-sm ${on ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-100'}`
+    `h-9 min-w-9 rounded-[6px] px-2.5 text-sm ${on ? 'bg-night text-gold-pale' : 'text-ink-2 hover:bg-ice hover:text-ink'}`
+  const divider = <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900">
-      <div className="flex flex-wrap gap-1 border-b border-slate-800 p-1.5">
+    <div className="overflow-hidden rounded-touch border border-line bg-white focus-within:border-teal focus-within:ring-3 focus-within:ring-teal-hi/20">
+      <div className="flex flex-wrap items-center gap-1 border-b border-line-soft bg-[#f6fafc] p-1">
         <button type="button" className={tool(active?.bold)} onClick={() => editor?.chain().focus().toggleBold().run()}>
           <b>굵게</b>
         </button>
         <button type="button" className={tool(active?.italic)} onClick={() => editor?.chain().focus().toggleItalic().run()}>
           <i>기울임</i>
         </button>
+        {divider}
         <button type="button" className={tool(active?.bullet)} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
           • 목록
         </button>
@@ -116,6 +119,7 @@ export default function PostEditor({ initialContent, onChange, onError, labelled
         <button type="button" className={tool(active?.quote)} onClick={() => editor?.chain().focus().toggleBlockquote().run()}>
           ❝ 인용
         </button>
+        {divider}
         <button type="button" className={tool(false)} onClick={() => fileInput.current?.click()}>
           🖼 이미지
         </button>
@@ -133,7 +137,7 @@ export default function PostEditor({ initialContent, onChange, onError, labelled
           }}
         />
       </div>
-      <div className="post-content">
+      <div className="post-content editor-area px-4 py-3 text-[17px] leading-[1.75] text-ink">
         <EditorContent editor={editor} />
       </div>
     </div>

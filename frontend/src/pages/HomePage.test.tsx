@@ -15,13 +15,15 @@ describe('HomePage', () => {
 
     const link = await screen.findByRole('link', { name: '아무무는 이 증강 두 개면 한타 지배합니다' })
     expect(link).toHaveAttribute('href', '/posts/1')
-    expect(screen.getByAltText('아무무')).toBeInTheDocument()
-    expect(screen.getByAltText('하체 운동의 날')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: '전체 글' })).toBeInTheDocument()
+    expect(screen.getByText('글 1개')).toBeInTheDocument()
+    expect(screen.getByText('아무무')).toBeInTheDocument()
+    expect(screen.getByText('하체 운동의 날')).toBeInTheDocument()
     expect(screen.getByText('26.21')).toBeInTheDocument()
     expect(screen.getByText('양호')).toBeInTheDocument()
     expect(screen.getByText('2시간 전')).toBeInTheDocument()
     expect(screen.getByText('24')).toBeInTheDocument()
-    expect(screen.getByLabelText('댓글 8개')).toBeInTheDocument()
+    expect(screen.getByText('댓글 8')).toBeInTheDocument()
   })
 
   it('offers the first page when the page number is past the end', async () => {

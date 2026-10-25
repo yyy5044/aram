@@ -32,17 +32,17 @@ function setup(p: Profile, extra: MockRoutes = {}, route = '/users/1') {
 describe('ProfilePage', () => {
   it('shows my profile with edit link and public badge', async () => {
     setup(profile({ mine: true }))
-    expect(await screen.findByRole('heading', { name: '하포' })).toBeInTheDocument()
-    expect(screen.getByText('내 프로필이에요')).toBeInTheDocument()
-    expect(screen.getByText('공개')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: '하포' })).toBeInTheDocument()
+    expect(screen.getByText('내 프로필 · 공개')).toBeInTheDocument()
+    expect(screen.getByText('2026.10.24 가입')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '프로필 수정' })).toHaveAttribute('href', '/settings/profile')
   })
 
   it('shows a friend profile without edit controls', async () => {
     setup(profile())
-    expect(await screen.findByText('가입 2026.10.24')).toBeInTheDocument()
+    expect(await screen.findByText('2026.10.24 가입')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: '프로필 수정' })).not.toBeInTheDocument()
-    expect(screen.queryByText('공개')).not.toBeInTheDocument()
+    expect(screen.queryByText(/내 프로필/)).not.toBeInTheDocument()
   })
 
   it('shows the lock for private profiles', async () => {
@@ -56,16 +56,18 @@ describe('ProfilePage', () => {
   it('shows the private notice to the owner', async () => {
     setup(profile({ mine: true, profilePublic: false }))
     expect(await screen.findByText('비공개 상태예요. 다른 친구에게는 자물쇠만 보여요')).toBeInTheDocument()
-    expect(screen.getByText('비공개')).toBeInTheDocument()
+    expect(screen.getByText('내 프로필 · 비공개')).toBeInTheDocument()
     expect(screen.getByText('활동')).toBeInTheDocument()
   })
 
   it('shows stats under the heatmap', async () => {
     setup(profile())
+    const stat = (label: string) => screen.getByText(label).parentElement!
     expect(await screen.findByText('작성한 글')).toBeInTheDocument()
-    expect(screen.getByText('12')).toBeInTheDocument()
-    expect(screen.getByText('37')).toBeInTheDocument()
-    expect(screen.getByText('2026.10.24')).toBeInTheDocument()
+    expect(stat('작성한 글')).toHaveTextContent('12')
+    expect(stat('작성한 댓글')).toHaveTextContent('37')
+    expect(stat('받은 추천')).toHaveTextContent('58')
+    expect(screen.queryByText('가입일')).not.toBeInTheDocument()
     expect(screen.getByText('최근 1년 동안 1일 활동')).toBeInTheDocument()
   })
 

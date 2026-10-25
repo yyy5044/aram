@@ -4,6 +4,7 @@ import { ApiError } from '../api/client'
 import { useMe } from '../api/me'
 import { scrapPost, unscrapPost } from '../api/posts'
 import { useToast } from './toastContext'
+import { buttonClass } from './ui/button'
 
 type Props = { postId: number; scrappedByMe: boolean }
 
@@ -46,11 +47,7 @@ export default function ScrapButton({ postId, scrappedByMe }: Props) {
       type="button"
       aria-pressed={scrapped}
       onClick={toggle}
-      className={
-        scrapped
-          ? 'rounded-full border border-sky-400 bg-sky-400 px-5 py-2 font-extrabold text-slate-900'
-          : 'rounded-full border border-sky-400 px-5 py-2 font-extrabold text-sky-400 hover:bg-sky-400/10'
-      }
+      className={`${buttonClass(scrapped ? 'primary' : 'tealLine', 48)} min-w-36`}
     >
       {scrapped ? '★ 스크랩됨' : '☆ 스크랩'}
     </button>

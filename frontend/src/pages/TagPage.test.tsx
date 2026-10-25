@@ -21,7 +21,8 @@ describe('TagPage', () => {
     expect(await screen.findByRole('heading', { name: '아무무' })).toBeInTheDocument()
     expect(await screen.findByText('이 태그가 붙은 글 3개')).toBeInTheDocument()
     expect(api.find('GET', '/api/posts')[0].query.get('champion')).toBe('Amumu')
-    expect(screen.getByRole('link', { name: '✕ 전체 글 보기' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('heading', { level: 1, name: '아무무' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '‹ 챔피언 목록' })).toHaveAttribute('href', '/champions')
   })
 
   it('shows augment header and filters by augment', async () => {
@@ -30,6 +31,8 @@ describe('TagPage', () => {
     expect(await screen.findByRole('heading', { name: '하체 운동의 날' })).toBeInTheDocument()
     await screen.findByText('이 태그가 붙은 글 3개')
     expect(api.find('GET', '/api/posts')[0].query.get('augment')).toBe('ARAM_LegDay')
+    expect(screen.getByText('실버 증강')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '‹ 증강 목록' })).toHaveAttribute('href', '/augments')
   })
 
   it('marks inactive augments', async () => {

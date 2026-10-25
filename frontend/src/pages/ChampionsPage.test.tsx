@@ -21,12 +21,11 @@ function setup(route = '/champions', champions = [jinx, amumu]) {
 const names = () => screen.getAllByRole('button', { name: /^(아무무|징크스)$/ }).map((b) => b.getAttribute('aria-label'))
 
 describe('ChampionsPage', () => {
-  it('lists champions with counts and sorts', async () => {
+  it('lists champions without counts and sorts by post count', async () => {
     setup()
     await screen.findByRole('button', { name: '아무무' })
     expect(names()).toEqual(['아무무', '징크스'])
-    expect(within(screen.getByRole('button', { name: '아무무' })).getByText('글 0개')).toBeInTheDocument()
-    expect(within(screen.getByRole('button', { name: '징크스' })).getByText('글 5개')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '징크스' })).not.toHaveTextContent('글 5개')
     await userEvent.click(screen.getByRole('button', { name: '글 많은 순' }))
     expect(names()).toEqual(['징크스', '아무무'])
   })
@@ -37,6 +36,7 @@ describe('ChampionsPage', () => {
     expect(router.state.location.search).toBe('?open=Amumu')
     const region = await screen.findByRole('region', { name: '아무무 게시글' })
     expect(within(region).getByText('게시글 0개')).toBeInTheDocument()
+    expect(within(region).getByRole('link', { name: '모아보기 ›' })).toHaveAttribute('href', '/champions/Amumu')
   })
 
   it('opening another champion starts its posts from the latest', async () => {

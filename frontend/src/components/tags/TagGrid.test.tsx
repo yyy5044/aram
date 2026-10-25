@@ -1,12 +1,12 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import TagGrid, { type GridItem } from './TagGrid'
 
 const items: GridItem[] = [
-  { id: 'a', name: '가', image: null, count: 1 },
-  { id: 'b', name: '나', image: null, count: 0 },
-  { id: 'c', name: '다', image: null, count: 2 },
+  { id: 'a', name: '가', image: null },
+  { id: 'b', name: '나', image: null },
+  { id: 'c', name: '다', image: null },
 ]
 
 afterEach(() => vi.restoreAllMocks())
@@ -26,8 +26,8 @@ describe('TagGrid', () => {
     render(
       <TagGrid
         items={[
-          { id: 'x', name: '색칠', image: 'small.png', count: 0, rarity: 'GOLD', tinted: true },
-          { id: 'y', name: '그대로', image: 'large.png', count: 0 },
+          { id: 'x', name: '색칠', image: 'small.png', rarity: 'GOLD', tinted: true },
+          { id: 'y', name: '그대로', image: 'large.png' },
         ]}
         openId={null}
         onToggle={() => {}}
@@ -42,7 +42,7 @@ describe('TagGrid', () => {
   it('frames augment icons by rarity', () => {
     render(
       <TagGrid
-        items={[{ id: 'g', name: '금', image: 'large.png', count: 0, rarity: 'GOLD' }]}
+        items={[{ id: 'g', name: '금', image: 'large.png', rarity: 'GOLD' }]}
         openId={null}
         onToggle={() => {}}
         renderPanel={() => null}
@@ -51,9 +51,10 @@ describe('TagGrid', () => {
     expect(screen.getByRole('button', { name: '금' }).querySelector('img[src$="abilityframe_gold.png"]')).toBeInTheDocument()
   })
 
-  it('shows the post count on each item', () => {
+  it('shows only the icon and name on each item (no post count)', () => {
     render(<TagGrid items={items} openId={null} onToggle={() => {}} renderPanel={() => null} />)
-    expect(within(screen.getByRole('button', { name: '다' })).getByText('글 2개')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '다' })).toHaveTextContent(/^다$/)
+    expect(screen.queryByText(/글 \d/)).not.toBeInTheDocument()
   })
 
   it('calls onToggle with the id', async () => {
@@ -93,7 +94,7 @@ describe('TagGrid', () => {
       }
       return 0
     })
-    const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, name: id, image: null, count: 0 }))
+    const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, name: id, image: null }))
     const { rerender } = render(<TagGrid items={six} openId="e" onToggle={() => {}} renderPanel={() => <p>패널</p>} />)
     const order = () => [...screen.getByRole('list').children].map((el) => el.textContent?.replace(/글 0개/, ''))
     expect(order()).toEqual(['a', 'b', 'c', 'd', 'e', 'f', '패널'])

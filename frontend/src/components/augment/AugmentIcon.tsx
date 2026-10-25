@@ -17,11 +17,11 @@ const FRAMES: Record<AugmentRarity, string> = {
   SILVER: SELECTION + 'abilityframe_silver.png',
 }
 
-/** 작은 아이콘(24px 안팎)에는 그림 테두리가 뭉개져서 등급 색 선만 둘러요. */
+/** 작은 아이콘(24px 안팎)에는 그림 테두리가 뭉개져서 등급 색 선만 둘러요(설계 3.1 등급 색). */
 const RINGS: Record<AugmentRarity, string> = {
-  PRISMATIC: '#c4b5fd',
-  GOLD: '#d4b07a',
-  SILVER: '#94a3b8',
+  PRISMATIC: '#b56be0',
+  GOLD: '#d2a03a',
+  SILVER: '#a5b3c0',
 }
 
 type Props = {

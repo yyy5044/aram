@@ -134,18 +134,18 @@ describe('TagPostsPanel', () => {
     const heading = within(region).getByRole('heading', { name: '이 증강 글 7개' })
     expect(await within(heading.parentElement!).findByRole('button', { name: '추천순' })).toBeInTheDocument()
     // 제목 줄(h2가 있는 줄)에는 정렬 버튼이 없어요.
-    const titleRow = within(region).getByRole('heading', { name: '하체 운동의 날' }).parentElement!
+    const titleRow = within(region).getByRole('heading', { name: '하체 운동의 날' }).closest<HTMLElement>('[data-panel-head]')!
     expect(within(titleRow).queryByRole('button', { name: '추천순' })).not.toBeInTheDocument()
     // 한 줄 목록이라 태그 아이콘이 없어요.
     await within(region).findAllByRole('listitem')
     expect(within(region).queryByRole('img')).not.toBeInTheDocument()
   })
 
-  it('without postsHeading the sort pills stay in the title row (champion panel unchanged)', async () => {
+  it('without postsHeading the sort pills stay in the title row', async () => {
     setup(1, 'champion', { 'GET /api/champions/Amumu/top-augments': () => json([]) })
     const region = await screen.findByRole('region', { name: '아무무 게시글' })
     await within(region).findByText('latest 글 1')
-    const titleRow = within(region).getByRole('heading', { name: '아무무' }).parentElement!
+    const titleRow = within(region).getByRole('heading', { name: '아무무' }).closest<HTMLElement>('[data-panel-head]')!
     expect(within(titleRow).getByRole('button', { name: '추천순' })).toBeInTheDocument()
     expect(within(region).queryByRole('heading', { name: /이 증강 글/ })).not.toBeInTheDocument()
   })

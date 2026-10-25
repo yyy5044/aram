@@ -6,6 +6,7 @@ import TagPageStatus from '../components/tags/TagPageStatus'
 import TagPostsPanel from '../components/tags/TagPostsPanel'
 import TagToolbar from '../components/tags/TagToolbar'
 import { useOpenTag } from '../components/tags/useOpenTag'
+import { PAGE_WIDE } from '../components/ui/layout'
 import { matchesName, sortTags, type TagSort } from '../lib/tagSearch'
 
 /** 챔피언 목록. 챔피언을 누르면 그 아래로 글 목록과 자주 함께 쓰는 증강이 펼쳐져요. */
@@ -29,21 +30,37 @@ export default function ChampionsPage() {
   )
 
   return (
-    <section>
+    <section className={PAGE_WIDE}>
+      <div className="mb-4 flex items-baseline gap-3">
+        <h1 className="font-display text-[28px] leading-tight text-night">챔피언</h1>
+        <span className="text-[13px] text-ink-3">챔피언 {champions.data.length}명</span>
+      </div>
       <TagToolbar query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} placeholder="챔피언 이름 검색" />
       {champions.data.length === 0 ? (
-        <p className="py-16 text-center text-slate-400">아직 챔피언 정보를 받아오지 못했어요. 잠시 후 다시 확인해주세요</p>
+        <p className="py-16 text-center text-ink-3">아직 챔피언 정보를 받아오지 못했어요. 잠시 후 다시 확인해주세요</p>
       ) : matches.length === 0 ? (
-        <p className="py-16 text-center text-slate-400">검색 결과가 없어요</p>
+        <p className="py-16 text-center text-ink-3">검색 결과가 없어요</p>
       ) : (
         <TagGrid
-          items={matches.map((c) => ({ id: c.id, name: c.nameKo, image: c.imageUrl, count: countOf(c), round: true }))}
+          items={matches.map((c) => ({ id: c.id, name: c.nameKo, image: c.imageUrl, round: true }))}
           openId={openId}
           onToggle={toggle}
           renderPanel={(id) => {
             const c = champions.data.find((x) => x.id === id)!
             return (
-              <TagPostsPanel kind="champion" id={id} title={c.nameKo} subtitle={`게시글 ${countOf(c)}개`} onClose={close} />
+              <TagPostsPanel
+                kind="champion"
+                id={id}
+                title={c.nameKo}
+                subtitle={`게시글 ${countOf(c)}개`}
+                onClose={close}
+                media={
+                  c.imageUrl ? <img src={c.imageUrl} alt="" className="h-12 w-12 rounded-full ring-1 ring-gold" /> : undefined
+                }
+                moreTo={`/champions/${encodeURIComponent(id)}`}
+                postsHeading={`${c.nameKo} 글 ${countOf(c)}개`}
+                compact
+              />
             )
           }}
         />

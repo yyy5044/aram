@@ -4,6 +4,7 @@ import { ApiError } from '../api/client'
 import { useMe } from '../api/me'
 import { likePost, unlikePost } from '../api/posts'
 import { useToast } from './toastContext'
+import { buttonClass } from './ui/button'
 
 type Props = { postId: number; likeCount: number; likedByMe: boolean }
 
@@ -49,13 +50,10 @@ export default function LikeButton({ postId, likeCount, likedByMe }: Props) {
       type="button"
       aria-pressed={state.likedByMe}
       onClick={toggle}
-      className={
-        state.likedByMe
-          ? 'rounded-full border border-amber-300 bg-amber-300 px-6 py-2 font-extrabold text-slate-900'
-          : 'rounded-full border border-amber-300 px-6 py-2 font-extrabold text-amber-300 hover:bg-amber-300/10'
-      }
+      className={`${buttonClass(state.likedByMe ? 'gold' : 'goldLine', 48)} min-w-36`}
     >
-      ▲ 추천 {state.likeCount}
+      <span aria-hidden="true" className="h-[9px] w-3 bg-current [clip-path:polygon(50%_0,100%_100%,0_100%)]" />
+      추천 <span className="tabular-nums">{state.likeCount}</span>
     </button>
   )
 }

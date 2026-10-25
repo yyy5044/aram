@@ -41,7 +41,7 @@ describe('AugmentsPage', () => {
     setup()
     await userEvent.click(await screen.findByRole('button', { name: /^실버/ }))
     const item = screen.getByRole('button', { name: '하체 운동의 날' })
-    expect(within(item).getByText('글 3개')).toBeInTheDocument()
+    expect(item).not.toHaveTextContent('글 3개')
     await userEvent.click(group('실버'))
     expect(screen.queryByRole('button', { name: '하체 운동의 날' })).not.toBeInTheDocument()
   })
@@ -89,6 +89,7 @@ describe('AugmentsPage', () => {
     expect(router.state.location.search).toBe('?open=ARAM_LegDay')
     const region = await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
     expect(within(region).getByText('실버 증강 · 게시글 3개')).toBeInTheDocument()
+    expect(within(region).getByRole('link', { name: '모아보기 ›' })).toHaveAttribute('href', '/augments/ARAM_LegDay')
 
     await userEvent.click(screen.getByRole('button', { name: '하체 운동의 날' }))
     expect(router.state.location.search).toBe('')

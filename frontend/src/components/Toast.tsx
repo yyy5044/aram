@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ToastContext } from './toastContext'
 
-/** 화면 위쪽에 잠깐 뜨는 알림. */
+/** 화면 아래 가운데에 잠깐 뜨는 알림(휴대폰에서 엄지 근처, 머리말을 가리지 않아요). */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -20,7 +20,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {message && (
         <div
           role="status"
-          className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-100 shadow-lg"
+          className="pointer-events-none fixed bottom-[max(24px,env(safe-area-inset-bottom))] left-1/2 z-50 max-w-[calc(100%-32px)] -translate-x-1/2 border border-gold bg-night px-5 py-3 text-[15px] text-gold-pale shadow-pop"
         >
           {message}
         </div>

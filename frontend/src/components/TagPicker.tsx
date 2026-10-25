@@ -1,6 +1,8 @@
 import { useId, useState } from 'react'
 import type { AugmentRarity } from '../api/types'
 import AugmentIcon from './augment/AugmentIcon'
+import SearchInput from './ui/SearchInput'
+import TagChip from './ui/TagChip'
 
 type Item = { id: string; nameKo: string }
 
@@ -20,7 +22,7 @@ type Props<T extends Item> = {
   placeholder?: string
 }
 
-/** 이름 일부로 검색해서 고르는 태그 칸. 고른 것은 칩으로 보이고 ✕로 빼요. */
+/** 이름 일부로 검색해서 고르는 태그 칸. 위에 검색칸(44px), 아래에 고른 태그(36px, ✕로 빼기). */
 export default function TagPicker<T extends Item>({
   label,
   items,
@@ -50,37 +52,14 @@ export default function TagPicker<T extends Item>({
     setOpen(false)
   }
 
-  const iconClass = round ? 'h-6 w-6 rounded-full' : 'h-6 w-6 rounded-md bg-slate-800'
+  // 그림 칸 모양. 바탕색은 그림이 있을 때(남색)와 없을 때(회색)를 따로 붙여요(같은 속성 클래스를 겹치지 않게).
+  const iconShape = round ? 'h-7 w-7 rounded-full ring-1 ring-gold' : 'h-7 w-7 rounded-mark'
 
   return (
-    <div className="relative">
-      <div className="flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 p-1.5">
-        {selectedItems.map((item) => {
-          const icon = iconOf(item)
-          return (
-            <span
-              key={item.id}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 py-0.5 pr-2 pl-0.5 text-sm"
-            >
-              {icon ? (
-                <TagIcon src={icon} augment={augmentOf?.(item)} className={iconClass} />
-              ) : (
-                <span className={`${iconClass} bg-slate-700`} />
-              )}
-              {item.nameKo}
-              <button
-                type="button"
-                aria-label={`${item.nameKo} 빼기`}
-                onClick={() => onChange(selected.filter((s) => s !== item.id))}
-                className="text-slate-400 hover:text-slate-100"
-              >
-                ✕
-              </button>
-            </span>
-          )
-        })}
-        <input
-          aria-label={`${label} 검색`}
+    <div>
+      <div className="relative">
+        <SearchInput
+          label={`${label} 검색`}
           role="combobox"
           aria-expanded={open && !full}
           aria-controls={listId}
@@ -94,39 +73,59 @@ export default function TagPicker<T extends Item>({
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
           onBlur={() => setOpen(false)}
-          className="min-w-32 flex-1 bg-transparent px-1 py-1 text-slate-100 outline-none disabled:cursor-not-allowed"
+          wrapperClassName={full ? 'opacity-60' : ''}
         />
+        {open && !full && matches.length > 0 && (
+          <ul
+            id={listId}
+            role="listbox"
+            className="absolute inset-x-0 top-full z-20 mt-1 max-h-60 overflow-auto border border-line bg-surface py-1 shadow-pop"
+          >
+            {matches.map((o) => {
+              const icon = iconOf(o)
+              return (
+                <li
+                  key={o.id}
+                  role="option"
+                  aria-selected={false}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    add(o.id)
+                  }}
+                  className="flex h-11 cursor-pointer items-center gap-2.5 px-3 text-[15px] text-ink hover:bg-ice"
+                >
+                  {icon ? (
+                    <TagIcon src={icon} augment={augmentOf?.(o)} className={round ? iconShape : `${iconShape} bg-night`} />
+                  ) : (
+                    <span className={`${iconShape} bg-line`} />
+                  )}
+                  <span>{o.nameKo}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
-      {full && <p className="mt-1 text-xs text-slate-400">최대 {max}개까지 고를 수 있어요</p>}
-      {open && !full && matches.length > 0 && (
-        <ul
-          id={listId}
-          role="listbox"
-          className="absolute right-0 left-0 z-10 mt-1 max-h-60 overflow-auto rounded-lg border border-slate-700 bg-slate-800 shadow-xl"
-        >
-          {matches.map((o) => {
-            const icon = iconOf(o)
+      {full && <p className="mt-1 text-[13px] text-ink-3">최대 {max}개까지 고를 수 있어요</p>}
+      {selectedItems.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {selectedItems.map((item) => {
+            const augment = augmentOf?.(item)
             return (
-              <li
-                key={o.id}
-                role="option"
-                aria-selected={false}
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  add(o.id)
-                }}
-                className="flex cursor-pointer items-center gap-2.5 px-2.5 py-2 hover:bg-slate-700"
-              >
-                {icon ? (
-                <TagIcon src={icon} augment={augmentOf?.(o)} className={iconClass} />
-              ) : (
-                <span className={`${iconClass} bg-slate-700`} />
-              )}
-                <span>{o.nameKo}</span>
-              </li>
+              <TagChip
+                key={item.id}
+                kind={augment ? 'augment' : 'champion'}
+                id={item.id}
+                nameKo={item.nameKo}
+                imageUrl={iconOf(item)}
+                rarity={augment?.rarity}
+                tinted={augment?.tinted}
+                size="md"
+                onRemove={() => onChange(selected.filter((s) => s !== item.id))}
+              />
             )
           })}
-        </ul>
+        </div>
       )}
     </div>
   )

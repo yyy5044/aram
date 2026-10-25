@@ -4,6 +4,7 @@ import { useUserComments, useUserPosts, useUserScraps } from '../../api/profile'
 import type { Profile } from '../../api/types'
 import Pagination from '../Pagination'
 import PastLastPage from '../PastLastPage'
+import EmptyState from '../ui/EmptyState'
 import PostListItem from '../PostListItem'
 import MyCommentItem from './MyCommentItem'
 
@@ -38,15 +39,15 @@ export default function ProfileTabs({ userId, stats }: { userId: number; stats: 
     setParams(p)
   }
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'posts', label: `쓴 글 ${stats.postCount}` },
-    { key: 'comments', label: `쓴 댓글 ${stats.commentCount}` },
-    { key: 'scraps', label: `스크랩 ${stats.scrapCount}` },
+  const tabs: { key: Tab; label: string; count: number }[] = [
+    { key: 'posts', label: '쓴 글', count: stats.postCount },
+    { key: 'comments', label: '쓴 댓글', count: stats.commentCount },
+    { key: 'scraps', label: '스크랩', count: stats.scrapCount },
   ]
 
   return (
     <section>
-      <div role="tablist" className="mb-1 flex gap-1 border-b border-slate-800">
+      <div role="tablist" className="mb-4 flex border-b border-line">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -54,19 +55,18 @@ export default function ProfileTabs({ userId, stats }: { userId: number; stats: 
             role="tab"
             aria-selected={tab === t.key}
             onClick={() => go({ tab: t.key })}
-            className={
-              tab === t.key
-                ? '-mb-px border-b-2 border-amber-300 px-3.5 py-2 text-sm font-bold text-slate-100'
-                : '-mb-px border-b-2 border-transparent px-3.5 py-2 text-sm text-slate-400 hover:text-slate-200'
-            }
+            className={`-mb-px flex h-12 items-center gap-1.5 border-b-[3px] px-4 text-[15px] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal sm:px-5 ${
+              tab === t.key ? 'border-gold font-bold text-night' : 'border-transparent text-ink-2 hover:text-ink'
+            }`}
           >
-            {t.label}
+            {t.label}{' '}
+            <span className="text-[13px] font-normal text-ink-3 tabular-nums">{t.count}</span>
           </button>
         ))}
       </div>
 
       {active.error && (
-        <p className="py-10 text-center text-rose-400">
+        <p className="py-10 text-center text-danger">
           {active.error instanceof ApiError ? active.error.message : '잠시 후 다시 시도해주세요'}
         </p>
       )}
@@ -75,12 +75,12 @@ export default function ProfileTabs({ userId, stats }: { userId: number; stats: 
         (active.data.totalItems > 0 ? (
           <PastLastPage onFirstPage={() => go({ page: 1 })} />
         ) : (
-          <p className="py-12 text-center text-slate-400">{EMPTY[tab]}</p>
+          <EmptyState title={EMPTY[tab]} />
         ))}
       {tab === 'comments'
         ? comments.data &&
           comments.data.items.length > 0 && (
-            <ul>
+            <ul className="flex flex-col gap-2">
               {comments.data.items.map((c) => (
                 <MyCommentItem key={c.id} comment={c} />
               ))}
@@ -88,7 +88,7 @@ export default function ProfileTabs({ userId, stats }: { userId: number; stats: 
           )
         : (tab === 'posts' ? posts.data : scraps.data) &&
           (tab === 'posts' ? posts.data! : scraps.data!).items.length > 0 && (
-            <ul>
+            <ul className="flex flex-col gap-2">
               {(tab === 'posts' ? posts.data! : scraps.data!).items.map((p) => (
                 <PostListItem key={p.id} post={p} />
               ))}

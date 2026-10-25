@@ -1,8 +1,62 @@
 @import "tailwindcss";
 
+/*
+ * 칼바람 나락의 밤 디자인 규칙(설계 docs/superpowers/specs/2026-10-25-design-polish-design.md 3장).
+ * 화면 코드는 여기 이름만 써요: bg-night, text-gold-deep, rounded-touch …
+ */
+@theme {
+  --color-night: #0c1f2e;
+  --color-night-2: #163a52;
+  --color-ice: #e7f1f7;
+  --color-surface: #fbfdfe;
+  --color-line: #c5d6e1;
+  --color-line-soft: #dde8ef;
+  --color-gold: #c8aa6e;
+  --color-gold-deep: #8f6f2e;
+  --color-gold-pale: #f0e6d2;
+  /* 흰 글자 대비 4.5:1 이상(위 4.88, 아래 5.34) */
+  --color-teal: #087683;
+  --color-teal-hi: #0a7d89;
+  --color-teal-ink: #0a6874;
+  --color-ink: #10202e;
+  --color-ink-2: #44586a;
+  --color-ink-3: #5a6d80; /* 바탕(ice) 위 4.66:1 */
+  --color-nav: #a9c1d1;
+  --color-vote-off: #a3b3c0;
+  --color-discord: #5865f2;
+  --color-danger: #b42318;
+  --color-prismatic: #b56be0;
+  --color-gold-rarity: #d2a03a;
+  --color-silver: #a5b3c0;
+
+  /* 담는 것은 각지게(0), 작은 표시는 4, 누르는 것은 8 */
+  --radius-mark: 4px;
+  --radius-touch: 8px;
+
+  --font-sans: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font-display: 'Hahmlet', 'Nanum Myeongjo', serif;
+
+  --shadow-pop: 0 12px 28px #0c1f2e29;
+}
+
 body {
   margin: 0;
-  font-family: 'Pretendard', system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  background: var(--color-ice);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* 머리말·머리 띠의 밤하늘 */
+.bg-nightsky {
+  background: linear-gradient(180deg, var(--color-night-2) -40%, var(--color-night) 70%);
+}
+.bg-nightsky-wide {
+  background: radial-gradient(120% 160% at 0% 0%, #1d4a63, var(--color-night) 70%);
+}
+
+/* 글쓰기 편집기의 글 영역: 비어 있어도 누를 자리가 넉넉하게 */
+.editor-area .tiptap {
+  min-height: 220px;
 }
 
 /* 본문 표시: 편집기 결과물에 기본 서식을 입혀요. */
@@ -23,13 +77,13 @@ body {
   padding-left: 1.4em;
 }
 .post-content .tiptap blockquote {
-  border-left: 3px solid #475569;
+  border-left: 3px solid var(--color-gold);
   padding-left: 0.8em;
-  color: #cbd5e1;
+  color: var(--color-ink-2);
 }
 .post-content .tiptap img {
   max-width: 100%;
-  border-radius: 0.6rem;
+  border-radius: 0;
   margin: 0.5em 0;
 }
 

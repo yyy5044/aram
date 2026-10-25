@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { meKey, setNickname, useMe } from '../api/me'
 import type { Me } from '../api/types'
+import { buttonClass } from '../components/ui/button'
 import { consumeReturnTo } from '../lib/returnTo'
 
 export default function WelcomePage() {
@@ -36,11 +37,11 @@ function NicknameForm({ me }: { me: Me }) {
   }
 
   return (
-    <section className="mx-auto max-w-sm py-10">
-      <h1 className="mb-2 text-2xl font-bold">닉네임 정하기</h1>
-      <p className="mb-6 text-sm text-slate-400">사이트에서 쓸 이름이에요. 2~12자 한글, 영문, 숫자, 밑줄을 쓸 수 있어요.</p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label htmlFor="nickname" className="text-sm text-slate-300">
+    <section className="mx-auto w-full max-w-[384px] px-4 py-6">
+      <h1 className="mb-2 font-display text-[28px] leading-tight text-night">닉네임 정하기</h1>
+      <p className="mb-6 text-[15px] text-ink-2">사이트에서 쓸 이름이에요. 2~12자 한글, 영문, 숫자, 밑줄을 쓸 수 있어요.</p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 border border-line-soft bg-surface p-5">
+        <label htmlFor="nickname" className="text-[15px] font-bold text-ink">
           닉네임
         </label>
         <input
@@ -48,14 +49,10 @@ function NicknameForm({ me }: { me: Me }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           maxLength={20}
-          className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+          className="h-12 rounded-touch border border-line bg-white px-3.5 text-[15px] text-ink focus:border-teal focus:ring-3 focus:ring-teal-hi/20 focus:outline-none"
         />
-        {error && <p className="text-sm text-rose-400">{error}</p>}
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-amber-300 px-4 py-2 font-bold text-slate-900 disabled:opacity-60"
-        >
+        {error && <p className="text-sm text-danger">{error}</p>}
+        <button type="submit" disabled={saving} className={`${buttonClass('primary', 44)} mt-2 w-full`}>
           시작하기
         </button>
       </form>

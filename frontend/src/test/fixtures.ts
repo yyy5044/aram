@@ -9,7 +9,7 @@ export function profile(overrides: Partial<Profile> = {}): Profile {
     profilePublic: true,
     mine: false,
     locked: false,
-    stats: { postCount: 12, commentCount: 37, scrapCount: 5 },
+    stats: { postCount: 12, commentCount: 37, scrapCount: 5, receivedLikeCount: 58 },
     activity: { from: '2025-10-19', to: '2026-10-24', days: [{ date: '2026-10-24', posts: 1, comments: 2 }] },
     ...overrides,
   }

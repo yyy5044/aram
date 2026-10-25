@@ -135,7 +135,8 @@ export type Profile = {
   profilePublic: boolean
   mine: boolean
   locked: boolean
-  stats: { postCount: number; commentCount: number; scrapCount: number } | null
+  /** receivedLikeCount: 이 사람이 쓴 글들이 받은 추천 수의 합 */
+  stats: { postCount: number; commentCount: number; scrapCount: number; receivedLikeCount: number } | null
   activity: Activity | null
 }
 
