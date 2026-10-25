@@ -55,7 +55,7 @@ function setup(me: Me | null, route = '/write', extra: MockRoutes = {}) {
 
 async function pickChampion(name: string) {
   await userEvent.type(screen.getByLabelText('챔피언 검색'), name.slice(0, 2))
-  await userEvent.click(screen.getByRole('option', { name: new RegExp(name) }))
+  await userEvent.click(await screen.findByRole('option', { name: new RegExp(name) }))
 }
 
 describe('WritePage', () => {
@@ -70,7 +70,7 @@ describe('WritePage', () => {
     setup(meYangho)
     const select = await screen.findByLabelText('패치')
     expect(select).toHaveValue('26.21')
-    expect(screen.getByRole('option', { name: '26.21 버전 (최신)' })).toBeInTheDocument()
+    expect(await screen.findByRole('option', { name: '26.21 버전 (최신)' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: '26.20 버전' })).toBeInTheDocument()
   })
 
@@ -192,8 +192,9 @@ describe('WritePage', () => {
     })
     expect(await screen.findByRole('button', { name: '옛 아이템 빼기' })).toBeInTheDocument()
     await userEvent.click(screen.getByLabelText('아이템 검색'))
+    // 아이템 목록을 받은 뒤에 옛 아이템이 후보에 없는지 봐요.
+    expect(await screen.findByRole('option', { name: /심장 강타/ })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /옛 아이템/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /심장 강타/ })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: '수정 완료' }))
     await screen.findByTestId('location')
     expect((api.find('PUT', '/api/posts/5')[0].body as Record<string, unknown>).itemIds).toEqual(['9999'])
@@ -203,8 +204,9 @@ describe('WritePage', () => {
     setup(meYangho, '/posts/5/edit', { 'GET /api/posts/5': () => json(existing()) })
     expect(await screen.findByRole('button', { name: '옛 증강 빼기' })).toBeInTheDocument()
     await userEvent.click(screen.getByLabelText('증강 검색'))
+    // 증강 목록을 받은 뒤에 옛 증강이 후보에 없는지 봐요.
+    expect(await screen.findByRole('option', { name: /하체 운동의 날/ })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /옛 증강/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /하체 운동의 날/ })).toBeInTheDocument()
   })
 
   it('loads existing values and saves edits', async () => {

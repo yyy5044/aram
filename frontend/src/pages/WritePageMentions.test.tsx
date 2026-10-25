@@ -75,7 +75,8 @@ describe('WritePage with @ mentions', () => {
   it('adds a mentioned champion to the tags once', async () => {
     setup()
     await press('흉내: C0')
-    expect(screen.getByRole('button', { name: '챔피언0 빼기' })).toBeInTheDocument()
+    // 칩 이름은 챔피언 목록을 받은 뒤에 보여요.
+    expect(await screen.findByRole('button', { name: '챔피언0 빼기' })).toBeInTheDocument()
     await press('흉내: C0')
     expect(screen.getAllByRole('button', { name: '챔피언0 빼기' })).toHaveLength(1)
   })
@@ -83,6 +84,7 @@ describe('WritePage with @ mentions', () => {
   it('keeps the box only in the body when the champion tags are full', async () => {
     setup()
     for (let i = 0; i < 5; i++) await press(`흉내: C${i}`)
+    expect(await screen.findByRole('button', { name: '챔피언4 빼기' })).toBeInTheDocument()
     await press('흉내: C5')
     expect(screen.queryByRole('button', { name: '챔피언5 빼기' })).not.toBeInTheDocument()
     expect(await screen.findByText('태그 칸이 가득 차서 본문에만 넣었어요')).toBeInTheDocument()
@@ -91,8 +93,9 @@ describe('WritePage with @ mentions', () => {
   it('applies the same rule to augments (ten)', async () => {
     setup()
     await press('흉내: A0')
-    expect(screen.getByRole('button', { name: '증강0 빼기' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '증강0 빼기' })).toBeInTheDocument()
     for (let i = 1; i < 10; i++) await press(`흉내: A${i}`)
+    expect(await screen.findByRole('button', { name: '증강9 빼기' })).toBeInTheDocument()
     await press('흉내: A10')
     expect(screen.queryByRole('button', { name: '증강10 빼기' })).not.toBeInTheDocument()
     expect(await screen.findByText('태그 칸이 가득 차서 본문에만 넣었어요')).toBeInTheDocument()
@@ -101,10 +104,11 @@ describe('WritePage with @ mentions', () => {
   it('mentionAddsItemTag: adds a mentioned item to the item tags once, ten at most', async () => {
     setup()
     await press('흉내: I0')
-    expect(screen.getByRole('button', { name: '아이템0 빼기' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '아이템0 빼기' })).toBeInTheDocument()
     await press('흉내: I0')
     expect(screen.getAllByRole('button', { name: '아이템0 빼기' })).toHaveLength(1)
     for (let i = 1; i < 10; i++) await press(`흉내: I${i}`)
+    expect(await screen.findByRole('button', { name: '아이템9 빼기' })).toBeInTheDocument()
     await press('흉내: I10')
     expect(screen.queryByRole('button', { name: '아이템10 빼기' })).not.toBeInTheDocument()
     expect(await screen.findByText('태그 칸이 가득 차서 본문에만 넣었어요')).toBeInTheDocument()
