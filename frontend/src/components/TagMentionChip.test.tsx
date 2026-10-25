@@ -21,7 +21,7 @@ function withLists() {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('TagMentionChip', () => {
-  it('draws a champion as a round portrait and a bold name', async () => {
+  it('draws a champion as a round portrait and a name the size of the body text', async () => {
     withLists()
     renderWithProviders(<TagMentionChip kind="champion" id="XinZhao" label="신짜오" />)
     await vi.waitFor(() => expect(document.querySelector('img')).not.toBeNull())
@@ -29,16 +29,22 @@ describe('TagMentionChip', () => {
     expect(img).toHaveAttribute('src', 'https://x/XinZhao.png')
     expect(img.className).toContain('rounded-full')
     const name = screen.getByText('신짜오')
-    expect(name.className).toContain('font-bold')
+    // 박스 없이 본문 글자 크기 그대로(em) 색만 입혀요. 챔피언은 띄울 설명이 없어서 밑줄도 없어요.
+    expect(name.className).toContain('text-teal-ink')
+    expect(name.className).not.toMatch(/text-\[\d+px\]|underline/)
+    expect(img.className).toContain('h-[1.15em]')
+    expect(name.closest('[data-mention-box]')?.className).not.toMatch(/border|bg-/)
   })
 
-  it('draws an augment with its rarity border and a bold name', async () => {
+  it('draws an augment name in its rarity colour with a dotted underline', async () => {
     withLists()
     renderWithProviders(<TagMentionChip kind="augment" id="StoneGuts" label="거석상의 용기" />)
     await vi.waitFor(() => expect(document.querySelector('img[src="https://x/sg.png"]')).not.toBeNull())
     const name = screen.getByText('거석상의 용기')
-    expect(name.className).toContain('font-bold')
-    expect(name.closest('[data-mention-box]')?.className).toContain('border-gold-rarity')
+    expect(name.className).toContain('text-gold-deep')
+    // 점선 밑줄은 마우스를 올리면 설명이 뜬다는 표시예요.
+    expect(name.className).toContain('decoration-dotted')
+    expect(name.closest('[data-mention-box]')?.className).not.toMatch(/border|bg-/)
   })
 
   it('lets an augment box open its card but not a champion box', async () => {
@@ -53,12 +59,12 @@ describe('TagMentionChip', () => {
     expect(screen.queryByRole('button', { name: /신짜오/ })).toBeNull()
   })
 
-  it('shrinks a long name instead of overflowing a narrow screen', () => {
+  it('lets a long name wrap instead of overflowing a narrow screen', () => {
     withLists()
     renderWithProviders(<TagMentionChip kind="augment" id="Gone" label="능력치 더하기 능력치 더하기 능력치!" />)
     const name = screen.getByText('능력치 더하기 능력치 더하기 능력치!')
-    expect(name.className).toContain('truncate')
-    expect(name.closest('[data-mention-box]')?.className).toContain('max-w-full')
+    expect(name.className).toContain('whitespace-normal')
+    expect(name.className).not.toContain('truncate')
   })
 
   it('keeps the round portrait from the post image style', () => {
