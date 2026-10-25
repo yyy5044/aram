@@ -65,20 +65,29 @@ public final class ItemDescriptionBuilder {
 	private static String joinSections(String template) {
 		String text = FLAVOR.matcher(template).replaceAll("");
 		text = ICON.matcher(text).replaceAll("");
-		// 목록 항목이 한 줄로 붙지 않게("…회복합니다.불굴의 의지:") 줄을 나눠요. 앞뒤 빈 줄은 증강 설명 다듬기가 지워요.
-		text = LIST_ITEM.matcher(text).replaceAll("<br>");
 		Matcher m = SECTION.matcher(text);
 		List<String> sections = new ArrayList<>();
 		boolean found = false;
 		while (m.find()) {
 			found = true;
 			String body = m.group(1).strip();
+			// section 맨 앞 목록 항목은 section 사이 <br>로 이미 줄이 나뉘어서, 빈 줄이 생기지 않게 그냥 지워요.
+			Matcher first = LIST_ITEM.matcher(body);
+			if (first.lookingAt()) {
+				body = body.substring(first.end()).strip();
+			}
+			body = breakListItems(body);
 			if (!body.isEmpty()) {
 				sections.add(body);
 			}
 		}
-		// section이 없는 틀은 그대로 써요.
-		return found ? String.join("<br>", sections) : text;
+		// section이 없는 틀은 그대로 써요(앞 빈 줄은 증강 설명 다듬기가 지워요).
+		return found ? String.join("<br>", sections) : breakListItems(text);
+	}
+
+	/** 목록 항목이 한 줄로 붙지 않게("…회복합니다.불굴의 의지:") 항목마다 줄을 나눠요. */
+	private static String breakListItems(String text) {
+		return LIST_ITEM.matcher(text).replaceAll("<br>");
 	}
 
 }

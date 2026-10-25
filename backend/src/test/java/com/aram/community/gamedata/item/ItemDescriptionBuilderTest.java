@@ -112,6 +112,16 @@ class ItemDescriptionBuilderTest {
 	}
 
 	@Test
+	void listAfterStatsHasNoBlankLine() {
+		// 수호자의 뿔피리처럼 능력치 section 다음 section이 목록으로 시작해도 사이에 빈 줄이 생기지 않아요.
+		ItemDescriptionBuilder.Result r = new ItemDescriptionBuilder(AugmentLocale.KO, key -> Optional.empty()).build(
+				"<section>체력 150</section><section><li>회복: 20</li><li>불굴의 의지: 15</li></section>",
+				SpellValues.of(Map.of(), Map.of()));
+
+		assertThat(r.description()).isEqualTo("체력 150<br>회복: 20<br>불굴의 의지: 15");
+	}
+
+	@Test
 	void nullTemplateIsEmpty() {
 		ItemDescriptionBuilder.Result r = new ItemDescriptionBuilder(AugmentLocale.KO, key -> Optional.empty())
 			.build(null, SpellValues.of(Map.of(), Map.of()));
