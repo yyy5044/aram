@@ -30,6 +30,14 @@ public class PostContentValidatorTest {
 		return "{\"type\":\"image\",\"attrs\":{\"src\":\"/api/images/" + id + "\"}}";
 	}
 
+	public static String video(UUID id) {
+		return videoSrc("/api/videos/" + id);
+	}
+
+	public static String videoSrc(String src) {
+		return "{\"type\":\"video\",\"attrs\":{\"src\":\"" + src + "\"}}";
+	}
+
 	private void assertRejected(String json, String message) {
 		ThrowingCallable call = () -> validator.validate(json);
 		assertThatThrownBy(call).isInstanceOf(ApiException.class).satisfies(e -> {
@@ -109,6 +117,36 @@ public class PostContentValidatorTest {
 	@Test
 	void acceptsBodyOfExactlyTenThousandChars() {
 		assertThat(validator.validate(doc(paragraph(text("가".repeat(10_000))))).plainText()).hasSize(10_000);
+	}
+
+	@Test
+	void acceptsVideoNode() {
+		UUID id = UUID.randomUUID();
+		assertThat(validator.validate(doc(paragraph(text("펜타킬")), video(id))).videoIds()).containsExactly(id);
+	}
+
+	@Test
+	void rejectsForeignVideoSrc() {
+		assertRejected(doc(paragraph(text("a")), videoSrc("https://x.com/a.mp4")), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(text("a")), videoSrc("/api/images/" + UUID.randomUUID())), "지원하지 않는 본문 형식이에요");
+	}
+
+	@Test
+	void rejectsVideoWithoutSrc() {
+		assertRejected(doc(paragraph(text("a")), "{\"type\":\"video\",\"attrs\":{\"src\":null}}"), "지원하지 않는 본문 형식이에요");
+	}
+
+	@Test
+	void rejectsMoreThanThreeVideoNodesEvenIfSameClip() {
+		UUID id = UUID.randomUUID();
+		assertRejected(doc(paragraph(text("a")), video(id), video(id), video(id), video(id)),
+				"영상은 한 글에 3개까지 넣을 수 있어요");
+	}
+
+	@Test
+	void sameClipTwiceCountsOnceInIds() {
+		UUID id = UUID.randomUUID();
+		assertThat(validator.validate(doc(paragraph(text("a")), video(id), video(id))).videoIds()).containsExactly(id);
 	}
 
 }
