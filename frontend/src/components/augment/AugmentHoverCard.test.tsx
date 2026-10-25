@@ -44,7 +44,7 @@ function draw() {
       <p>바깥</p>
     </div>,
   )
-  return screen.getByRole('button', { name: '거석상의 용기 증강 카드 보기' })
+  return screen.getByRole('button', { name: '거석상의 용기 증강 설명 보기' })
 }
 
 const wait = (ms: number) => act(() => new Promise((r) => setTimeout(r, ms)))
@@ -59,8 +59,9 @@ describe('AugmentHoverCard', () => {
     expect(await screen.findByRole('article', { name: '거석상의 용기' })).toBeInTheDocument()
     expect(screen.getByText('방어력을 얻어요')).toBeInTheDocument()
     expect(box).toHaveAttribute('aria-expanded', 'true')
-    // 게임 카드 그림은 반쯤 비쳐서, 증강 탭처럼 밤하늘 바탕 위에 둬요.
-    expect(screen.getByRole('article').parentElement?.className).toContain('bg-night')
+    // 큰 게임 카드가 아니라 작은 설명 상자예요.
+    expect(screen.getByText('골드 증강')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '복사' })).toBeNull()
   })
 
   it('places the card below the box and keeps it on screen', async () => {
@@ -90,7 +91,7 @@ describe('AugmentHoverCard', () => {
         <span>박스</span>
       </AugmentHoverCard>,
     )
-    expect(screen.getByRole('button', { name: '거석상의 용기 증강 카드 보기' })).not.toHaveAttribute('tabindex')
+    expect(screen.getByRole('button', { name: '거석상의 용기 증강 설명 보기' })).not.toHaveAttribute('tabindex')
   })
 
   it('closes when the mouse leaves the box and the card', async () => {
@@ -150,8 +151,8 @@ describe('AugmentHoverCard', () => {
     mockApi({ 'GET /api/augments/StoneGuts': () => new Promise<Response>((resolve) => (fail = resolve)) })
     const box = draw()
     act(() => box.focus())
-    // 받는 동안에도 카드와 같은 크기라서, 다 받은 뒤 카드가 커지며 화면 밖으로 밀려나지 않아요.
-    expect((await screen.findByText('불러오는 중…')).className).toContain('h-[492px]')
+    // 받는 동안에도 같은 너비의 작은 상자예요.
+    expect((await screen.findByText('불러오는 중…')).className).toContain('w-[300px]')
     fail(json({ code: 'INTERNAL', message: '서버 오류' }, 500))
     expect(await screen.findByText('증강 정보를 불러오지 못했어요')).toBeInTheDocument()
   })
