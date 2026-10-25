@@ -249,6 +249,7 @@ public class GameDataClient {
 		}
 
 		List<ItemData> result = new ArrayList<>();
+		List<String> unresolvedItems = new ArrayList<>();
 		for (ItemCatalog.Entry e : entries) {
 			String nameKey = itemNameKey(e);
 			String nameKo = itemName(strings.get(AugmentLocale.KO), nameKey);
@@ -286,9 +287,13 @@ public class GameDataClient {
 				unresolved = 0;
 			}
 			if (unresolved > 0) {
-				log.debug("Item {} has {} unresolved placeholders", e.id(), unresolved);
+				unresolvedItems.add(e.id() + "(" + unresolved + ")");
 			}
 			result.add(new ItemData(e.id(), nameKo, e.tier(), e.priceTotal(), e.fromIds(), texts, unresolved));
+		}
+		if (!unresolvedItems.isEmpty()) {
+			// 어느 아이템 설명에 ?가 남는지 동기화 로그 한 줄로 남겨요: 아이템 번호(못 채운 수).
+			log.info("Items with unresolved placeholders: {}", String.join(", ", unresolvedItems));
 		}
 		return result;
 	}
