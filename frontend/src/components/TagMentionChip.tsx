@@ -11,13 +11,19 @@ const AUGMENT_BOX: Record<AugmentRarity, string> = {
   PRISMATIC: 'border-prismatic bg-[#f3e8fb]',
 }
 
-type Props = { kind: MentionKind; id: string; label: string }
+type Props = {
+  kind: MentionKind
+  id: string
+  label: string
+  /** 글쓰기 편집기 안이면 true. 증강 박스가 초점을 받지 않아요. */
+  inEditor?: boolean
+}
 
 /**
  * 본문 속 챔피언·증강 박스. 아이콘과 등급은 받아 둔 목록에서 찾고, 목록에 없으면 저장된 이름만 보여줘요.
  * 박스는 눌러도 아무 데도 가지 않아요. 증강 박스는 마우스를 올리거나 누르면 증강 카드가 떠요.
  */
-export default function TagMentionChip({ kind, id, label }: Props) {
+export default function TagMentionChip({ kind, id, label, inEditor = false }: Props) {
   const champions = useChampions()
   const augments = useAugments()
   const champion = kind === 'champion' ? champions.data?.find((c) => c.id === id) : undefined
@@ -27,7 +33,7 @@ export default function TagMentionChip({ kind, id, label }: Props) {
   const box = (
     <span
       data-mention-box=""
-      className={`mx-px inline-flex h-[26px] items-center gap-[5px] rounded-mark border pr-2 pl-0.5 align-middle whitespace-nowrap ${look}`}
+      className={`mx-px inline-flex h-[26px] max-w-full items-center gap-[5px] rounded-mark border pr-2 pl-0.5 align-middle whitespace-nowrap ${look}`}
     >
       {champion?.imageUrl && <img src={champion.imageUrl} alt="" className="h-5 w-5 flex-none rounded-full" />}
       {augment?.iconUrl && (
@@ -38,12 +44,12 @@ export default function TagMentionChip({ kind, id, label }: Props) {
           className="h-5 w-5 flex-none rounded-mark bg-night"
         />
       )}
-      <span className="text-[15px] leading-none font-bold text-ink">{label}</span>
+      <span className="min-w-0 truncate text-[15px] leading-none font-bold text-ink">{label}</span>
     </span>
   )
   if (kind !== 'augment') return box
   return (
-    <AugmentHoverCard augmentId={id} label={label}>
+    <AugmentHoverCard augmentId={id} label={label} focusable={!inEditor}>
       {box}
     </AugmentHoverCard>
   )

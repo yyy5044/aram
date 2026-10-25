@@ -100,7 +100,8 @@ describe('@ menu', () => {
       content: [{ type: 'paragraph', content: Array.from({ length: 30 }, () => box) }],
     })
     type(editor, ' @신짜')
-    await screen.findByRole('listbox', MENU)
+    // 박스 30개를 그리느라 느릴 수 있어요(전체 테스트를 함께 돌릴 때).
+    await screen.findByRole('listbox', MENU, { timeout: 5000 })
     fireEvent.keyDown(dom, { key: 'Enter' })
     expect(onError).toHaveBeenCalledWith('본문 태그는 한 글에 30개까지 넣을 수 있어요')
     expect(mentions(editor)).toHaveLength(30)

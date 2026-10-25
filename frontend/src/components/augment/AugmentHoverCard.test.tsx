@@ -5,7 +5,7 @@ import { json, mockApi } from '../../test/mockApi'
 import { renderWithProviders } from '../../test/render'
 import AugmentHoverCard from './AugmentHoverCard'
 
-const floating = vi.hoisted(() => ({ calls: [] as { placement?: string; middleware: string[] }[] }))
+const floating = vi.hoisted(() => ({ calls: [] as { placement?: string; middleware: string[]; shift?: unknown }[] }))
 vi.mock('@floating-ui/dom', async (importOriginal) => {
   const real = await importOriginal<typeof import('@floating-ui/dom')>()
   return {
@@ -14,6 +14,7 @@ vi.mock('@floating-ui/dom', async (importOriginal) => {
       floating.calls.push({
         placement: options?.placement,
         middleware: (options?.middleware ?? []).flatMap((m) => (m ? [m.name] : [])),
+        shift: (options?.middleware ?? []).flatMap((m) => (m && m.name === 'shift' ? [m.options] : []))[0],
       })
       return real.computePosition(reference, el, options)
     },
@@ -70,6 +71,26 @@ describe('AugmentHoverCard', () => {
     await vi.waitFor(() => expect(floating.calls.length).toBeGreaterThan(0))
     expect(floating.calls[0].placement).toBe('bottom-start')
     expect(floating.calls[0].middleware).toEqual(expect.arrayContaining(['offset', 'flip', 'shift']))
+    // 위아래 어느 쪽에도 카드 높이만큼 자리가 없으면 위아래로도 밀어 넣어요.
+    expect(floating.calls[0].shift).toMatchObject({ crossAxis: true })
+  })
+
+  it('stays hidden until it has been placed', async () => {
+    mockApi({ 'GET /api/augments/StoneGuts': () => json(detail) })
+    const box = draw()
+    act(() => box.focus())
+    const card = document.querySelector('body > div.z-50') as HTMLElement
+    expect(card.style.visibility).toBe('hidden')
+    await vi.waitFor(() => expect(card.style.visibility).toBe('visible'))
+  })
+
+  it('cannot be focused inside the editor', () => {
+    renderWithProviders(
+      <AugmentHoverCard augmentId="StoneGuts" label="거석상의 용기" focusable={false}>
+        <span>박스</span>
+      </AugmentHoverCard>,
+    )
+    expect(screen.getByRole('button', { name: '거석상의 용기 증강 카드 보기' })).not.toHaveAttribute('tabindex')
   })
 
   it('closes when the mouse leaves the box and the card', async () => {
@@ -129,7 +150,8 @@ describe('AugmentHoverCard', () => {
     mockApi({ 'GET /api/augments/StoneGuts': () => new Promise<Response>((resolve) => (fail = resolve)) })
     const box = draw()
     act(() => box.focus())
-    expect(await screen.findByText('불러오는 중…')).toBeInTheDocument()
+    // 받는 동안에도 카드와 같은 크기라서, 다 받은 뒤 카드가 커지며 화면 밖으로 밀려나지 않아요.
+    expect((await screen.findByText('불러오는 중…')).className).toContain('h-[492px]')
     fail(json({ code: 'INTERNAL', message: '서버 오류' }, 500))
     expect(await screen.findByText('증강 정보를 불러오지 못했어요')).toBeInTheDocument()
   })

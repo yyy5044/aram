@@ -89,7 +89,8 @@ body {
   padding-left: 0.8em;
   color: var(--color-ink-2);
 }
-.post-content .tiptap img {
+/* 본문 사진만. 본문 태그 박스 속 초상화·아이콘은 박스 모양(둥근 초상화)을 그대로 써요. */
+.post-content .tiptap img:not([data-mention-box] img) {
   max-width: 100%;
   border-radius: 0;
   margin: 0.5em 0;

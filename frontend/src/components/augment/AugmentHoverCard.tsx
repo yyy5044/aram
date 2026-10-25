@@ -10,14 +10,20 @@ const OPEN_DELAY = 200
 /** 박스에서 카드로 마우스를 옮기는 동안(사이 6px) 닫히지 않게 조금 기다려요. */
 const CLOSE_DELAY = 120
 
-type Props = { augmentId: string; label: string; children: ReactNode }
+type Props = {
+  augmentId: string
+  label: string
+  children: ReactNode
+  /** 글쓰기 편집기 안에서는 false: Tab·누르기로 박스에 초점이 가면 글 쓰던 자리(커서)를 잃어요. */
+  focusable?: boolean
+}
 
 /**
  * 본문 증강 박스를 감싸서 그 증강의 카드를 띄워요. PC는 마우스를 올리면, 휴대폰은 누르면 열리고,
  * 박스·카드 밖으로 나가거나 바깥을 누르거나 Esc를 누르면 닫혀요. 키보드로 박스에 오면 열려요.
  * 박스는 눌러도 다른 화면으로 가지 않아요.
  */
-export default function AugmentHoverCard({ augmentId, label, children }: Props) {
+export default function AugmentHoverCard({ augmentId, label, children, focusable = true }: Props) {
   const [open, setOpen] = useState(false)
   const boxRef = useRef<HTMLSpanElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -64,10 +70,12 @@ export default function AugmentHoverCard({ augmentId, label, children }: Props) 
     return autoUpdate(box, card, () => {
       void computePosition(box, card, {
         placement: 'bottom-start',
-        middleware: [offset(6), flip(), shift({ padding: 8 })],
+        // 카드가 높아서(492px) 위아래 어디에도 자리가 없을 때가 많아요. 그때는 위아래로도 밀어서 화면 안에 둬요.
+        middleware: [offset(6), flip(), shift({ padding: 8, crossAxis: true })],
       }).then(({ x, y }) => {
         card.style.left = `${x}px`
         card.style.top = `${y}px`
+        card.style.visibility = 'visible'
       })
     })
   }, [open])
@@ -86,7 +94,7 @@ export default function AugmentHoverCard({ augmentId, label, children }: Props) 
       <span
         ref={boxRef}
         role="button"
-        tabIndex={0}
+        tabIndex={focusable ? 0 : undefined}
         aria-label={`${label} 증강 카드 보기`}
         aria-expanded={open}
         className="cursor-default rounded-mark focus-visible:outline-2 focus-visible:outline-teal"
@@ -119,6 +127,8 @@ export default function AugmentHoverCard({ augmentId, label, children }: Props) 
           <div
             ref={cardRef}
             className="absolute top-0 left-0 z-50 overflow-hidden rounded-[14px] bg-night shadow-pop"
+            // 자리를 잡기 전에는 숨겨요. 안 그러면 한 순간 화면 왼쪽 위에 카드가 보여요.
+            style={{ visibility: 'hidden' }}
             {...hover}
             onPointerDown={() => {
               pressingCard.current = true
@@ -142,5 +152,6 @@ function CardBody({ augmentId }: { augmentId: string }) {
     return <AugmentCard text={text} rarity={data.rarity} iconUrl={data.iconUrl} iconTinted={data.iconTinted} />
   }
   const message = isPending ? '불러오는 중…' : isError ? '증강 정보를 불러오지 못했어요' : '아직 설명이 없어요'
-  return <p className="w-[280px] px-4 py-6 text-center text-[15px] text-nav">{message}</p>
+  // 카드와 같은 크기로 둬요. 다 받은 뒤 커지면 이미 잡은 자리에서 화면 밖으로 밀려날 수 있어요.
+  return <p className="grid h-[492px] w-[300px] place-items-center px-4 text-center text-[15px] text-nav">{message}</p>
 }
