@@ -110,6 +110,25 @@ public class PostContentValidatorTest {
 	}
 
 	@Test
+	void acceptsClipWithoutText() {
+		UUID id = UUID.randomUUID();
+		ValidatedContent result = validator.validate(doc(video(id)));
+		assertThat(result.plainText()).isEmpty();
+		assertThat(result.videoIds()).containsExactly(id);
+	}
+
+	@Test
+	void acceptsPhotoWithoutText() {
+		UUID id = UUID.randomUUID();
+		assertThat(validator.validate(doc(paragraph(text("  ")), image(id))).imageIds()).containsExactly(id);
+	}
+
+	@Test
+	void rejectsEmptyParagraphsOnly() {
+		assertRejected(doc("{\"type\":\"paragraph\"}"), "본문을 입력해주세요");
+	}
+
+	@Test
 	void rejectsTooLongBody() {
 		assertRejected(doc(paragraph(text("가".repeat(10_001)))), "본문은 10,000자 이하로 써주세요");
 	}
