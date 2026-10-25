@@ -30,6 +30,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 	long countByAuthor_Id(Long authorId);
 
+	/** 이 사람이 쓴 글들이 받은 추천 수의 합(글이 없으면 0). */
+	@Query("select coalesce(sum(p.likeCount), 0) from Post p where p.author.id = :authorId")
+	long sumLikeCountByAuthorId(long authorId);
+
 	/** 스크랩한 시간의 최신순. Scrap 엔티티는 scrap 패키지에 있어요. */
 	@EntityGraph(attributePaths = "author")
 	@Query(value = "select p from Post p, Scrap s where s.postId = p.id and s.userId = :userId order by s.createdAt desc, p.id desc",

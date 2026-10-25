@@ -71,7 +71,7 @@ public class ProfileService {
 		boolean locked = !user.isProfilePublic() && !mine;
 		ProfileResponse.Stats stats = locked ? null
 				: new ProfileResponse.Stats(posts.countByAuthor_Id(userId), comments.countByAuthor_Id(userId),
-						scraps.countByUserId(userId));
+						scraps.countByUserId(userId), posts.sumLikeCountByAuthorId(userId));
 		ProfileResponse.Activity activity = locked ? null
 				: activityQuery.load(userId, LocalDate.now(ActivityQuery.KST));
 		return new ProfileResponse(user.getId(), user.getNickname(), user.effectiveAvatarUrl(), user.getCreatedAt(),

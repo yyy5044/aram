@@ -57,6 +57,23 @@ class ProfileApiTest extends IntegrationTest {
 	}
 
 	@Test
+	void receivedLikesSumOnlyThisUsersPosts() throws Exception {
+		jdbc.update("update posts set like_count = 2 where title = '글 하나'");
+		jdbc.update("update posts set like_count = 3 where title = '글 둘'");
+		User other = testUsers.create("민수");
+		long otherPost = data.post(other.getId(), "남의 글", kst(LocalDate.now(KST), 9, 0));
+		jdbc.update("update posts set like_count = 7 where id = ?", otherPost);
+		mockMvc.perform(profileOf(me)).andExpect(jsonPath("$.stats.receivedLikeCount").value(5));
+		mockMvc.perform(profileOf(other)).andExpect(jsonPath("$.stats.receivedLikeCount").value(7));
+	}
+
+	@Test
+	void receivedLikesAreZeroWithoutPosts() throws Exception {
+		User fresh = testUsers.create("새친구");
+		mockMvc.perform(profileOf(fresh)).andExpect(jsonPath("$.stats.receivedLikeCount").value(0));
+	}
+
+	@Test
 	void privateProfileIsLockedForOthersAndAdmin() throws Exception {
 		data.makePrivate(me.getId());
 		for (MockHttpServletRequestBuilder req : new MockHttpServletRequestBuilder[] { profileOf(me),

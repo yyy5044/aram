@@ -8,7 +8,8 @@ import java.util.List;
 public record ProfileResponse(long id, String nickname, String avatarUrl, Instant joinedAt, boolean profilePublic,
 		boolean mine, boolean locked, Stats stats, Activity activity) {
 
-	public record Stats(long postCount, long commentCount, long scrapCount) {
+	/** receivedLikeCount: 이 사람이 쓴 글들이 받은 추천 수의 합. */
+	public record Stats(long postCount, long commentCount, long scrapCount, long receivedLikeCount) {
 	}
 
 	/** from: 53주 전 일요일, to: 오늘(한국 시간). days에는 활동이 있는 날만 날짜순으로 들어가요. */
