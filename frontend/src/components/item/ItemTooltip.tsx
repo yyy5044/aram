@@ -27,7 +27,7 @@ function RecipeRow({ title, ids, byId, onPick }: { title: string; ids: string[];
       <div className="mt-1 flex flex-wrap gap-1">
         {shown.map((it, i) =>
           onPick ? (
-            <button key={i} type="button" aria-label={it.nameKo} onClick={() => onPick(it.id)} className="rounded-mark">
+            <button key={i} type="button" aria-label={it.nameKo} onClick={() => onPick(it.id)} className="rounded-mark focus-visible:outline-2 focus-visible:outline-teal">
               <ItemIcon src={it.iconUrl} className="block h-6 w-6" />
             </button>
           ) : it.iconUrl ? (

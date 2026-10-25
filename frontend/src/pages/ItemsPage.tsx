@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useItems, useTagCounts } from '../api/gamedata'
 import type { Item, ItemTier } from '../api/types'
 import ItemTooltipBody from '../components/item/ItemTooltipBody'
@@ -29,6 +29,18 @@ export default function ItemsPage() {
   const [sort, setSort] = useState<TagSort>('name')
   const [openGroups, setOpenGroups] = useState<Set<ItemTier>>(() => new Set())
   const [openId, toggle, close, openTo] = useOpenTag()
+  // 재료·상위 아이템 아이콘으로 넘어간 칸. 그 펼침 영역이 그려지면 화면 맨 위로 데려와요.
+  const [scrollTo, setScrollTo] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (scrollTo === null || scrollTo !== openId) return
+    // 칸 격자가 펼침 영역 자리를 재고 옮긴 다음(레이아웃 뒤)에 찾아요.
+    const frame = requestAnimationFrame(() => {
+      document.querySelector(`[data-item-panel="${CSS.escape(scrollTo)}"]`)?.scrollIntoView({ block: 'start' })
+      setScrollTo(null)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [scrollTo, openId])
 
   if (items.isPending || counts.isPending || items.error || counts.error) {
     return <TagPageStatus pending={items.isPending || counts.isPending} error={items.error ?? counts.error} />
@@ -84,6 +96,19 @@ export default function ItemsPage() {
     close()
   }
 
+  /**
+   * 재료·상위 아이템 아이콘을 누르면 그 아이템을 펼쳐요. 지금 묶음과 넘어간 아이템의 묶음을 모두 펼쳐 두고,
+   * 검색어가 그 아이템을 가리지 않게 지우고, 새 펼침 영역으로 화면을 옮겨요.
+   */
+  function pick(from: ItemTier, id: string) {
+    const target = active.find((it) => it.id === id)
+    setGroupOpen(from, true)
+    if (target) setGroupOpen(target.tier, true)
+    setQuery('')
+    openTo(id)
+    setScrollTo(id)
+  }
+
   const totalPosts = active.reduce((sum, it) => sum + countOf(it), 0)
 
   return (
@@ -129,27 +154,30 @@ export default function ItemsPage() {
                 renderPanel={(id) => {
                   const it = g.all.find((x) => x.id === id)!
                   return (
-                    <TagPostsPanel
-                      kind="item"
-                      id={id}
-                      title={it.nameKo}
-                      subtitle={`${g.label} 아이템 · 게시글 ${countOf(it)}개`}
-                      onClose={() => closePanel(g.tier)}
-                      media={
-                        it.iconUrl ? (
-                          <img src={it.iconUrl} alt="" className="h-12 w-12 rounded-mark bg-night-2" />
-                        ) : (
-                          <span aria-hidden="true" className="block h-12 w-12 rounded-mark bg-night-2" />
-                        )
-                      }
-                      moreTo={`/items/${encodeURIComponent(id)}`}
-                      postsHeading={`이 아이템 글 ${countOf(it)}개`}
-                      compact
-                    >
-                      <div className="[&>*]:max-w-full">
-                        <ItemTooltipBody itemId={id} onPick={openTo} />
-                      </div>
-                    </TagPostsPanel>
+                    <div data-item-panel={id}>
+                      <TagPostsPanel
+                        kind="item"
+                        id={id}
+                        title={it.nameKo}
+                        subtitle={`${g.label} 아이템 · 게시글 ${countOf(it)}개`}
+                        onClose={() => closePanel(g.tier)}
+                        media={
+                          it.iconUrl ? (
+                            <img src={it.iconUrl} alt="" className="h-12 w-12 rounded-mark bg-night-2" />
+                          ) : (
+                            <span aria-hidden="true" className="block h-12 w-12 rounded-mark bg-night-2" />
+                          )
+                        }
+                        moreTo={`/items/${encodeURIComponent(id)}`}
+                        postsHeading={`이 아이템 글 ${countOf(it)}개`}
+                        compact
+                        aside={
+                          <div className="[&>*]:max-w-full">
+                            <ItemTooltipBody itemId={id} onPick={(next) => pick(g.tier, next)} />
+                          </div>
+                        }
+                      />
+                    </div>
                   )
                 }}
               />

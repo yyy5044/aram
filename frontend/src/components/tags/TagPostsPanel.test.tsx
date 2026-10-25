@@ -47,6 +47,24 @@ function setup(
 }
 
 describe('TagPostsPanel', () => {
+  it('puts the aside beside the posts on wide screens', async () => {
+    setup(2, 'augment', {}, { aside: <p>설명 상자</p>, postsHeading: '이 증강 글 2개' })
+    const region = await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
+    const list = (await within(region).findAllByRole('listitem'))[0].closest('ul')!
+    const side = region.querySelector('[class~="lg:grid"]')!
+    expect(side).toHaveClass('lg:grid-cols-[300px_minmax(0,1fr)]', 'lg:gap-6')
+    expect(side).toContainElement(screen.getByText('설명 상자'))
+    expect(side).toContainElement(list)
+    expect(side).toContainElement(screen.getByRole('heading', { name: '이 증강 글 2개' }))
+  })
+
+  it('keeps the stacked layout without an aside', async () => {
+    setup(2, 'augment', {}, { children: <p>카드</p> })
+    const region = await screen.findByRole('region', { name: '하체 운동의 날 게시글' })
+    await within(region).findAllByRole('listitem')
+    expect(region.querySelector('[class~="lg:grid"]')).toBeNull()
+  })
+
   it('shows five posts and loads more', async () => {
     const { api } = setup(7)
     const region = await screen.findByRole('region', { name: '하체 운동의 날 게시글' })

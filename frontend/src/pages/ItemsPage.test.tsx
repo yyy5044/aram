@@ -1,12 +1,16 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Item, ItemDetail } from '../api/types'
 import { listItem, page } from '../test/fixtures'
 import { json, mockApi, type MockRoutes } from '../test/mockApi'
 import { renderWithProviders } from '../test/render'
 import ItemsPage from './ItemsPage'
 
+beforeEach(() => {
+  // jsdom에는 scrollIntoView가 없어요.
+  HTMLElement.prototype.scrollIntoView = vi.fn()
+})
 afterEach(() => vi.unstubAllGlobals())
 
 function item(id: string, nameKo: string, extra: Partial<Item> = {}): Item {
@@ -117,6 +121,68 @@ describe('ItemsPage', () => {
     expect(router.state.location.search).toBe('?open=1011')
     expect(await screen.findByRole('region', { name: '거인의 허리띠 게시글' })).toBeInTheDocument()
     expect(group('기본')).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('picking a recipe item keeps its group open and clears the search', async () => {
+    const { router } = setup('/items?open=3084', {
+      'GET /api/items/1011': () => json({ ...detail, id: '1011', tier: 'BASIC', priceTotal: 900, fromIds: [], intoIds: ['3084'] }),
+    })
+    const search = await screen.findByLabelText('이름 검색')
+    await userEvent.type(search, '강철')
+    // 검색 중에는 거인의 허리띠가 목록에 없어요.
+    expect(screen.queryByRole('button', { name: /^기본/ })).not.toBeInTheDocument()
+
+    const region = await screen.findByRole('region', { name: '강철심장 게시글' })
+    await userEvent.click(await within(region).findByRole('button', { name: '거인의 허리띠' }))
+
+    expect(search).toHaveValue('')
+    expect(router.state.location.search).toBe('?open=1011')
+    expect(await screen.findByRole('region', { name: '거인의 허리띠 게시글' })).toBeInTheDocument()
+    // ?open=으로만 열렸던 처음 묶음도 접히지 않아요.
+    expect(group('전설')).toHaveAttribute('aria-expanded', 'true')
+    expect(group('기본')).toHaveAttribute('aria-expanded', 'true')
+    // 새 펼침 영역이 화면 맨 위로 와요.
+    const scroll = vi.mocked(HTMLElement.prototype.scrollIntoView)
+    await waitFor(() => expect(scroll).toHaveBeenCalledWith({ block: 'start' }))
+    expect(scroll.mock.contexts.at(-1)).toContainElement(screen.getByRole('region', { name: '거인의 허리띠 게시글' }))
+
+    // 펼침 영역을 닫아도 넘어간 묶음은 계속 펼쳐져 있어요.
+    await userEvent.click(screen.getByRole('button', { name: '닫기' }))
+    expect(group('기본')).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('picking an item in another group opens that group', async () => {
+    setup('/items?open=1011', {
+      'GET /api/items/1011': () => json({ ...detail, id: '1011', tier: 'BASIC', priceTotal: 900, fromIds: [], intoIds: ['3084'] }),
+    })
+    const region = await screen.findByRole('region', { name: '거인의 허리띠 게시글' })
+    expect(group('전설')).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(await within(region).findByRole('button', { name: '강철심장' }))
+
+    expect(await screen.findByRole('region', { name: '강철심장 게시글' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '닫기' }))
+    expect(group('전설')).toHaveAttribute('aria-expanded', 'true')
+    expect(group('기본')).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('does not scroll when an item is opened from the grid', async () => {
+    setup()
+    await userEvent.click(await screen.findByRole('button', { name: /^전설/ }))
+    await userEvent.click(screen.getByRole('button', { name: '강철심장' }))
+    expect(await screen.findByRole('region', { name: '강철심장 게시글' })).toBeInTheDocument()
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it('puts the tooltip beside the posts', async () => {
+    setup('/items?open=3084')
+    const region = await screen.findByRole('region', { name: '강철심장 게시글' })
+    const tooltip = await within(region).findByRole('article', { name: '강철심장' })
+    const list = (await within(region).findAllByRole('listitem'))[0].closest('ul')!
+    const side = region.querySelector('[class~="lg:grid"]')!
+    expect(side).toContainElement(tooltip)
+    expect(side).toContainElement(list)
+    expect(tooltip.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('shows an item without an icon as an empty square and keeps it openable', async () => {
