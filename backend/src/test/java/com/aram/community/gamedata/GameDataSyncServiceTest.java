@@ -517,7 +517,10 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		server.reset();
 		jdbc.update("delete from item_texts");
 		jdbc.update("delete from items");
-		// 패치도 자료 버전도 그대로지만 아이템이 하나도 없으면 다시 받아요.
+		// 아이템 기능을 처음 켠 서버처럼: 패치도 자료 버전도 최신 그대로(버전을 비우지 않아요)지만 아이템이 하나도 없으면
+		// 전체를 다시 받아요. 그동안 챔피언 그림 주소는 그대로예요.
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.21.1");
+		assertThat(state().getCurrentCdragonVersion()).isNotNull();
 		expectVersions("content-metadata.json");
 		expectHeavyDownloads("kiwi.bin.json");
 
@@ -525,6 +528,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 
 		server.verify();
 		assertThat(items.findById(3084)).isPresent();
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.21.1");
 	}
 
 	@Test

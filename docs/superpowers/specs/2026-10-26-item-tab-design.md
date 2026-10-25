@@ -95,7 +95,7 @@ create index post_items_item_idx on post_items (item_id);
 
 - 상위 아이템(`into`)은 저장하지 않고 API에서 `from_ids`를 뒤집어 만든다.
 - 이번 동기화 목록에 없는 아이템은 지우지 않고 `active = false`(옛 글 태그가 깨지지 않게, 증강과 같은 규칙).
-- 마이그레이션에서 `game_data_state.current_ddragon_version`을 비워 첫 시작 때 전체 재동기화를 일으킨다(V7과 같은 방법).
+- 마이그레이션은 `game_data_state`를 건드리지 않는다. 첫 시작 때 `items`가 비어 있으면(`items.count() == 0`) `GameDataSyncService`가 패치·자료 버전이 그대로여도 전체 재동기화를 한다. 버전을 비우면 그동안(아이템 단계가 계속 실패하면 계속) 챔피언 그림·아이템 아이콘 주소가 비기 때문에 V7 방법은 쓰지 않는다.
 
 ### 3.5 실패
 

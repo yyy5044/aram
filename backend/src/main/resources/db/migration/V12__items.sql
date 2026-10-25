@@ -23,6 +23,3 @@ create table post_items (
     primary key (post_id, item_id)
 );
 create index post_items_item_idx on post_items (item_id);
-
--- 다음 동기화가 패치가 바뀐 것처럼 전체를 다시 받아서 아이템을 채우게 해요.
-update game_data_state set current_ddragon_version = null;
