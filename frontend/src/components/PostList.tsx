@@ -4,6 +4,7 @@ import { ApiError } from '../api/client'
 import { usePostList, type PostSort } from '../api/posts'
 import type { Page, PostListItem as Item } from '../api/types'
 import Pagination from './Pagination'
+import PastLastPage from './PastLastPage'
 import PostListItem from './PostListItem'
 import SortPills from './SortPills'
 
@@ -21,13 +22,16 @@ export default function PostList({ champion, augment, empty, header }: Props) {
   const page = Math.max(1, Number(params.get('page')) || 1)
   const { data, error, isPending } = usePostList({ sort, page, champion, augment })
 
+  const pastLastPage = !!data && data.items.length === 0 && data.totalItems > 0
+
   function update(next: { sort?: PostSort; page?: number }) {
     const p = new URLSearchParams(params)
     if (next.sort) {
       p.set('sort', next.sort)
       p.delete('page')
     }
-    if (next.page) p.set('page', String(next.page))
+    if (next.page === 1) p.delete('page')
+    else if (next.page) p.set('page', String(next.page))
     setParams(p)
     window.scrollTo?.({ top: 0 })
   }
@@ -41,7 +45,11 @@ export default function PostList({ champion, augment, empty, header }: Props) {
           {error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요'}
         </p>
       )}
-      {!error && !isPending && data && data.items.length === 0 && empty}
+      {!error &&
+        !isPending &&
+        data &&
+        data.items.length === 0 &&
+        (pastLastPage ? <PastLastPage onFirstPage={() => update({ page: 1 })} /> : empty)}
       {data && data.items.length > 0 && (
         <ul>
           {data.items.map((post) => (

@@ -24,6 +24,20 @@ describe('HomePage', () => {
     expect(screen.getByLabelText('댓글 8개')).toBeInTheDocument()
   })
 
+  it('offers the first page when the page number is past the end', async () => {
+    const api = mockApi({
+      'GET /api/posts': (req) =>
+        json(req.query.get('page') === '1' ? page([listItem()]) : page([], { page: 9, totalItems: 1, totalPages: 1 })),
+    })
+    const { router } = renderWithProviders(<HomePage />, { route: '/?page=9' })
+    expect(await screen.findByText('이 페이지는 비어 있어요')).toBeInTheDocument()
+    expect(screen.queryByText(/아직 글이 없어요/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '첫 페이지로' }))
+    expect(await screen.findByText('26.21')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('')
+    expect(api.find('GET', '/api/posts').at(-1)!.query.get('page')).toBe('1')
+  })
+
   it('requests latest first by default', async () => {
     const api = mockApi({ 'GET /api/posts': () => json(page([listItem()])) })
     renderWithProviders(<HomePage />)

@@ -89,6 +89,16 @@ describe('ProfilePage', () => {
     expect(text).toHaveClass('whitespace-pre-wrap', 'line-clamp-3')
   })
 
+  it('offers the first page when the tab page is past the end', async () => {
+    setup(profile(), { 'GET /api/users/1/posts': (req) =>
+      json(req.query.get('page') === '1' ? page([listItem({ title: '내가 쓴 글' })]) : page([], { page: 9, totalItems: 1, totalPages: 1 })),
+    }, '/users/1?page=9')
+    expect(await screen.findByText('이 페이지는 비어 있어요')).toBeInTheDocument()
+    expect(screen.queryByText('아직 쓴 글이 없어요')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '첫 페이지로' }))
+    expect(await screen.findByText('내가 쓴 글')).toBeInTheDocument()
+  })
+
   it('shows empty messages per tab', async () => {
     setup(profile(), {}, '/users/1?tab=scraps')
     expect(await screen.findByText('아직 스크랩한 글이 없어요')).toBeInTheDocument()

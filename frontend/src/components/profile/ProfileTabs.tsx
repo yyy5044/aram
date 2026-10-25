@@ -3,6 +3,7 @@ import { ApiError } from '../../api/client'
 import { useUserComments, useUserPosts, useUserScraps } from '../../api/profile'
 import type { Profile } from '../../api/types'
 import Pagination from '../Pagination'
+import PastLastPage from '../PastLastPage'
 import PostListItem from '../PostListItem'
 import MyCommentItem from './MyCommentItem'
 
@@ -32,7 +33,8 @@ export default function ProfileTabs({ userId, stats }: { userId: number; stats: 
       p.set('tab', next.tab)
       p.delete('page')
     }
-    if (next.page) p.set('page', String(next.page))
+    if (next.page === 1) p.delete('page')
+    else if (next.page) p.set('page', String(next.page))
     setParams(p)
   }
 
@@ -68,9 +70,13 @@ export default function ProfileTabs({ userId, stats }: { userId: number; stats: 
           {active.error instanceof ApiError ? active.error.message : '잠시 후 다시 시도해주세요'}
         </p>
       )}
-      {active.data && active.data.items.length === 0 && (
-        <p className="py-12 text-center text-slate-400">{EMPTY[tab]}</p>
-      )}
+      {active.data &&
+        active.data.items.length === 0 &&
+        (active.data.totalItems > 0 ? (
+          <PastLastPage onFirstPage={() => go({ page: 1 })} />
+        ) : (
+          <p className="py-12 text-center text-slate-400">{EMPTY[tab]}</p>
+        ))}
       {tab === 'comments'
         ? comments.data &&
           comments.data.items.length > 0 && (
