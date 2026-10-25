@@ -84,7 +84,7 @@ AWS 콘솔 → **Billing and Cost Management** → **Budgets** → **예산 생�
 
 ### 1-8. GitHub 비밀 값 등록
 
-Claude가 확인을 받은 뒤 `gh secret set`으로 네 가지를 넣어요: `DEPLOY_HOST`(고정 IP), `DEPLOY_USER`(`ubuntu`), `DEPLOY_SSH_KEY`(배포 전용 개인 키), `DEPLOY_KNOWN_HOSTS`(서버 지문). 개인 키 파일은 넣은 뒤 지워요.
+Claude가 확인을 받은 뒤 `gh secret set`으로 네 가지를 넣어요: `DEPLOY_HOST`(고정 IP), `DEPLOY_USER`(`ubuntu`), `DEPLOY_SSH_KEY`(배포 전용 개인 키), `DEPLOY_KNOWN_HOSTS`(Claude가 `ssh-keyscan`으로 받은 서버 키 줄. 1-4의 지문과 같은지 확인한 것). 개인 키 파일은 넣은 뒤 지워요.
 
 ### 1-9. 첫 배포
 
@@ -112,7 +112,7 @@ Claude가 확인을 받은 뒤 `gh secret set`으로 네 가지를 넣어요: `D
 
 ## 4. 예전 버전으로 돌리고 싶을 때
 
-GitHub **Actions** 탭에서 돌아가고 싶은 커밋의 실행을 열고 **Re-run all jobs**를 눌러요. 그 커밋의 코드로 다시 배포돼요. DB 구조는 되돌리지 않아요.
+GitHub **Actions** 탭에서 돌아가고 싶은 커밋의 실행을 열고 **Re-run all jobs**를 눌러요. 그 커밋의 코드로 다시 배포돼요. DB 구조는 되돌리지 않아요. GitHub은 30일이 지난 실행은 다시 돌리지 못하게 해서, 그보다 오래된 버전은 Claude에게 부탁해요.
 
 ## 5. 서버를 하루 전으로 복원
 
@@ -121,7 +121,7 @@ GitHub **Actions** 탭에서 돌아가고 싶은 커밋의 실행을 열고 **Re
 1. Lightsail → 서버 → **스냅샷** 탭에서 원하는 날짜의 자동 스냅샷 → **새 인스턴스 생성**(같은 서울, 같은 요금제).
 2. **네트워킹** 탭에서 고정 IP를 옛 서버에서 떼어 새 서버에 붙여요. 새 서버 방화벽에 HTTPS(443)가 있는지 확인해요.
 3. `https://내도메인`이 열리고 로그인되는지 확인해요(서버가 켜지면 사이트도 자동으로 켜져요).
-4. 서버 지문이 바뀌었으니 Claude에게 GitHub 비밀 값 `DEPLOY_KNOWN_HOSTS` 갱신을 부탁해요.
+4. 서버 키가 바뀌었으니 Claude에게 GitHub 비밀 값 `DEPLOY_KNOWN_HOSTS` 갱신을 부탁해요(새 서버에서 `ssh-keyscan`으로 다시 받아요).
 5. 확인이 끝나면 옛 서버를 지워요(요금이 두 배로 나가지 않게).
 
 ## 6. 비용 (한 달, 1달러 ≈ 1,400원)

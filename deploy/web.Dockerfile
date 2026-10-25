@@ -11,3 +11,5 @@ FROM caddy:2
 COPY --from=build /src/dist /srv
 COPY deploy/maintenance.html /srv/maintenance.html
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
+# 설정에 오타가 있으면 이미지를 만들 때 실패해서 서버까지 가지 않아요.
+RUN DOMAIN=localhost caddy validate --config /etc/caddy/Caddyfile
