@@ -36,6 +36,10 @@ class GameDataSyncServiceTest extends IntegrationTest {
 
 	private static final String CLIENT_EN = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json";
 
+	private static final String MAP12 = "https://raw.communitydragon.org/latest/game/data/maps/shipping/map12/map12.bin.json";
+
+	private static final String ITEMS = "https://raw.communitydragon.org/latest/game/items.cdtb.bin.json";
+
 	@Autowired
 	GameDataSyncService sync;
 
@@ -50,6 +54,12 @@ class GameDataSyncServiceTest extends IntegrationTest {
 
 	@Autowired
 	AugmentTextRepository texts;
+
+	@Autowired
+	ItemRepository items;
+
+	@Autowired
+	ItemTextRepository itemTexts;
 
 	@Autowired
 	PatchRepository patchRepo;
@@ -83,6 +93,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture(kiwiFixture), MediaType.APPLICATION_JSON));
 		expectStrings();
+		expectItems();
 	}
 
 	private void expectFullSync(String kiwiFixture) throws IOException {
@@ -91,6 +102,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture(kiwiFixture), MediaType.APPLICATION_JSON));
 		expectStrings();
+		expectItems();
 	}
 
 	/**
@@ -110,6 +122,25 @@ class GameDataSyncServiceTest extends IntegrationTest {
 			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(CLIENT_KO))
 			.andRespond(withSuccess(fixture("client-augments.json"), MediaType.APPLICATION_JSON));
+	}
+
+	/**
+	 * 증강 다음에 아이템: 칼바람 맵, 아이템 자료, 그리고 언어마다 문자열 표를 두 번(이름·설명 키, 설명 안 {{참조}} 키) 받아요.
+	 * 영어 먼저, 한국어 다음.
+	 */
+	private void expectItems() throws IOException {
+		server.expect(requestTo(MAP12))
+			.andRespond(withSuccess(fixture("map12-small.bin.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(ITEMS))
+			.andRespond(withSuccess(fixture("items-small.cdtb.bin.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_EN))
+			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_EN))
+			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_KO))
+			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_KO))
+			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
 	}
 
 	private GameDataState state() {
@@ -408,6 +439,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		server.expect(requestTo(STRINGS_KO))
 			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
 		server.expect(requestTo(CLIENT_KO)).andRespond(withServerError());
+		expectItems();
 
 		// 클라이언트 목록은 보조 자료라 실패해도 동기화는 성공하고, 그 이름만 있는 증강은 빠져요.
 		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
@@ -425,6 +457,132 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		sync.sync();
 
 		assertThat(state().getLastError()).isNull();
+	}
+
+	@Test
+	void savesItemsWithTexts() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
+
+		server.verify();
+		Item heartsteel = items.findById(3084).orElseThrow();
+		assertThat(heartsteel.getNameKo()).isEqualTo("강철심장");
+		assertThat(heartsteel.getTier()).isEqualTo(ItemTier.LEGENDARY);
+		assertThat(heartsteel.getPriceTotal()).isEqualTo(3000);
+		assertThat(heartsteel.getIconFile()).isEqualTo("3084.png");
+		assertThat(heartsteel.getFromIds()).containsExactly(1011, 3801, 1011);
+		assertThat(heartsteel.isActive()).isTrue();
+		ItemText ko = itemTexts.findById(new ItemTextId(3084, "ko")).orElseThrow();
+		assertThat(ko.getName()).isEqualTo("강철심장");
+		// 증강 칼바람(ARAM 덮어쓰기) 값 5%가 들어가고, {{ Item_Cooldown }} 참조도 채워져요.
+		assertThat(ko.getDescription()).contains("5%").contains("(30초)").doesNotContain("{{");
+		assertThat(itemTexts.findById(new ItemTextId(3084, "en")).orElseThrow().getName()).isEqualTo("Heartsteel");
+		// 살 수 없는 아이템(상점 밖)은 받지 않아요.
+		assertThat(items.findById(220008)).isEmpty();
+	}
+
+	@Test
+	void itemWithoutKoreanNameUsesEnglish() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		// 한국어 이름이 표에 없으면 영어 이름으로라도 저장하고, 설명이 없으면 글 행은 없어요.
+		assertThat(items.findById(1001).orElseThrow().getNameKo()).isEqualTo("Boots");
+		assertThat(itemTexts.findByIdItemId(1001)).isEmpty();
+		// 이름이 어느 언어에도 없으면 받지 않아요.
+		assertThat(items.findById(2003)).isEmpty();
+		assertThat(items.count()).isEqualTo(13);
+	}
+
+	@Test
+	void missingItemDeactivated() throws IOException {
+		jdbc.update("insert into items (id, name_ko, tier, price_total, icon_file, from_ids, active, updated_at) "
+				+ "values (9999, '사라진 아이템', 'BASIC', 100, '9999.png', '{}', true, now())");
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		Item gone = items.findById(9999).orElseThrow();
+		assertThat(gone.isActive()).isFalse();
+		assertThat(gone.getNameKo()).isEqualTo("사라진 아이템");
+	}
+
+	@Test
+	void emptyItemsForceFullSync() throws IOException {
+		expectFullSync("kiwi.bin.json");
+		sync.sync();
+		server.verify();
+		server.reset();
+		jdbc.update("delete from item_texts");
+		jdbc.update("delete from items");
+		// 아이템 기능을 처음 켠 서버처럼: 패치도 자료 버전도 최신 그대로(버전을 비우지 않아요)지만 아이템이 하나도 없으면
+		// 전체를 다시 받아요. 그동안 챔피언 그림 주소는 그대로예요.
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.21.1");
+		assertThat(state().getCurrentCdragonVersion()).isNotNull();
+		expectVersions("content-metadata.json");
+		expectHeavyDownloads("kiwi.bin.json");
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.UPDATED);
+
+		server.verify();
+		assertThat(items.findById(3084)).isPresent();
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.21.1");
+	}
+
+	@Test
+	void itemStageFailureKeepsAugmentsAndReturnsFailed() throws IOException {
+		jdbc.update("update game_data_state set current_ddragon_version = '16.20.1', current_game_patch = '26.20' where id = 1");
+		jdbc.update("insert into items (id, name_ko, tier, price_total, icon_file, from_ids, active, updated_at) "
+				+ "values (3084, '옛 강철심장', 'LEGENDARY', 2900, '3084.png', '{1011}', true, now())");
+		expectVersions("content-metadata.json");
+		server.expect(requestTo(CHAMPIONS))
+			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi.bin.json"), MediaType.APPLICATION_JSON));
+		expectStrings();
+		server.expect(requestTo(MAP12)).andRespond(withServerError());
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.FAILED);
+
+		server.verify();
+		// 챔피언·증강은 저장되고, 아이템은 예전 그대로예요. 버전을 올리지 않아서 다음 확인 때 전체를 다시 받아요.
+		assertThat(champions.count()).isEqualTo(3);
+		assertThat(augments.count()).isEqualTo(24);
+		Item old = items.findById(3084).orElseThrow();
+		assertThat(old.getNameKo()).isEqualTo("옛 강철심장");
+		assertThat(old.getPriceTotal()).isEqualTo(2900);
+		assertThat(old.isActive()).isTrue();
+		assertThat(items.count()).isEqualTo(1);
+		assertThat(state().getCurrentDdragonVersion()).isEqualTo("16.20.1");
+		assertThat(state().getLastError()).isNotBlank();
+	}
+
+	@Test
+	void tooFewItemsFailsItemStage() throws IOException {
+		jdbc.update("insert into items (id, name_ko, tier, price_total, icon_file, from_ids, active, updated_at) "
+				+ "values (3084, '강철심장', 'LEGENDARY', 3000, '3084.png', '{}', true, now())");
+		expectVersions("content-metadata.json");
+		server.expect(requestTo(CHAMPIONS))
+			.andRespond(withSuccess(fixture("champion.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(KIWI)).andRespond(withSuccess(fixture("kiwi.bin.json"), MediaType.APPLICATION_JSON));
+		expectStrings();
+		// 맵의 상점 목록이 비면(자료 형식이 바뀐 경우) 아이템을 하나도 못 찾아요. 찾을 키가 없으니 문자열 표는 언어마다 한 번이에요.
+		server.expect(requestTo(MAP12)).andRespond(withSuccess(
+				"{\"Maps/Shipping/Map12/Modes/KIWI\": {\"__type\": \"GameModeMapData\", \"itemLists\": []}}",
+				MediaType.APPLICATION_JSON));
+		server.expect(requestTo(ITEMS))
+			.andRespond(withSuccess(fixture("items-small.cdtb.bin.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_EN))
+			.andRespond(withSuccess(fixture("stringtable-en.json"), MediaType.APPLICATION_JSON));
+		server.expect(requestTo(STRINGS_KO))
+			.andRespond(withSuccess(fixture("stringtable.json"), MediaType.APPLICATION_JSON));
+
+		assertThat(sync.sync()).isEqualTo(GameDataSyncService.SyncResult.FAILED);
+
+		server.verify();
+		assertThat(items.findById(3084).orElseThrow().isActive()).isTrue();
+		assertThat(state().getLastError()).contains("items found");
 	}
 
 }

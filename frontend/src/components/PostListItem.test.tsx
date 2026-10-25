@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { amumu, jinx, legDay, listItem, oldAugment } from '../test/fixtures'
+import { amumu, heartsteel, jinx, legDay, listItem, oldAugment } from '../test/fixtures'
 import { renderWithProviders } from '../test/render'
 import PostListItem from './PostListItem'
 
@@ -26,6 +26,16 @@ describe('PostListItem', () => {
     expect(screen.getByText('댓글 8')).toBeInTheDocument()
     // "추천"은 화면 읽기 프로그램용 숨김 글자예요. 화면에는 삼각형과 숫자만 보여요.
     expect(container.querySelector('[data-likes]')).toHaveTextContent('추천 24')
+  })
+
+  it('shows item chips as plain icon + name, even without champions or augments', () => {
+    renderWithProviders(
+      <ul>
+        <PostListItem post={listItem({ champions: [], augments: [], items: [heartsteel] })} />
+      </ul>,
+    )
+    expect(screen.getByText('심장 강타')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /심장 강타/ })).not.toBeInTheDocument()
   })
 
   it('puts the gold corner frame only on liked posts', () => {

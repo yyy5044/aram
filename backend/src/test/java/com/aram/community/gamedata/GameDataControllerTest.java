@@ -146,6 +146,85 @@ class GameDataControllerTest extends IntegrationTest {
 			.andExpect(jsonPath("$.message").value("없는 증강이에요"));
 	}
 
+	private void seedItems() {
+		jdbc.update("insert into game_data_state (id, current_ddragon_version, current_game_patch) values (1, '16.21.1', '26.21')");
+		jdbc.update("insert into items (id, name_ko, tier, price_total, icon_file, from_ids, active, updated_at) values "
+				+ "(1011, '거인의 허리띠', 'BASIC', 900, '1011.png', '{}', true, now()), "
+				+ "(3084, '굳건한 심장', 'LEGENDARY', 3000, '3084.png', '{1011,1011}', true, now()), "
+				+ "(3083, '워모그의 갑옷', 'LEGENDARY', 3000, '3083.png', '{1011}', true, now()), "
+				+ "(9999, '옛 아이템', 'EPIC', 2000, '9999.png', '{1011}', false, now())");
+		jdbc.update("insert into item_texts (item_id, locale, name, description) values "
+				+ "(3084, 'en', 'Heartsteel', 'Gain <attention>health</attention>'), "
+				+ "(3084, 'ko', '굳건한 심장', '<attention>체력</attention>을 얻어요')");
+	}
+
+	@Test
+	void listsItemsWithIntoIds() throws Exception {
+		seedItems();
+		// 이름순: 거인의 허리띠, 굳건한 심장, 옛 아이템, 워모그의 갑옷
+		mockMvc.perform(get("/api/items"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(4))
+			.andExpect(jsonPath("$[0].id").value("1011"))
+			.andExpect(jsonPath("$[0].nameKo").value("거인의 허리띠"))
+			.andExpect(jsonPath("$[0].tier").value("BASIC"))
+			.andExpect(jsonPath("$[0].priceTotal").value(900))
+			.andExpect(jsonPath("$[0].iconUrl")
+				.value("https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1011.png"))
+			.andExpect(jsonPath("$[0].active").value(true))
+			// 활성 아이템의 재료만 뒤집고, 중복 없이, 꺼진 아이템(9999)은 빼요.
+			.andExpect(jsonPath("$[0].intoIds").value(org.hamcrest.Matchers.containsInAnyOrder("3083", "3084")))
+			.andExpect(jsonPath("$[1].id").value("3084"))
+			.andExpect(jsonPath("$[1].fromIds").value(org.hamcrest.Matchers.contains("1011", "1011")))
+			.andExpect(jsonPath("$[1].intoIds").value(org.hamcrest.Matchers.empty()))
+			.andExpect(jsonPath("$[2].id").value("9999"))
+			.andExpect(jsonPath("$[2].active").value(false))
+			.andExpect(jsonPath("$[3].id").value("3083"));
+	}
+
+	@Test
+	void itemDetailUsesLanguage() throws Exception {
+		seedItems();
+		mockMvc.perform(get("/api/items/3084").param("lang", "ko"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.id").value("3084"))
+			.andExpect(jsonPath("$.tier").value("LEGENDARY"))
+			.andExpect(jsonPath("$.priceTotal").value(3000))
+			.andExpect(jsonPath("$.iconUrl").value("https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3084.png"))
+			.andExpect(jsonPath("$.fromIds[0]").value("1011"))
+			.andExpect(jsonPath("$.original.locale").value("en"))
+			.andExpect(jsonPath("$.original.name").value("Heartsteel"))
+			.andExpect(jsonPath("$.translation.locale").value("ko"))
+			.andExpect(jsonPath("$.translation.description").value("<attention>체력</attention>을 얻어요"));
+		mockMvc.perform(get("/api/items/1011").param("lang", "en"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.original").value(org.hamcrest.Matchers.nullValue()))
+			.andExpect(jsonPath("$.translation").value(org.hamcrest.Matchers.nullValue()))
+			.andExpect(jsonPath("$.intoIds.length()").value(2));
+		mockMvc.perform(get("/api/items/3084").param("lang", "en"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.translation").value(org.hamcrest.Matchers.nullValue()));
+	}
+
+	@Test
+	void unknownItem404() throws Exception {
+		seedItems();
+		mockMvc.perform(get("/api/items/1234").param("lang", "ko"))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value("ITEM_NOT_FOUND"))
+			.andExpect(jsonPath("$.message").value("없는 아이템이에요"));
+	}
+
+	@Test
+	void nonNumericItem404() throws Exception {
+		mockMvc.perform(get("/api/items/abc"))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value("ITEM_NOT_FOUND"));
+		mockMvc.perform(get("/api/items/99999999999"))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value("ITEM_NOT_FOUND"));
+	}
+
 	@Test
 	void emptyStateIsSafe() throws Exception {
 		mockMvc.perform(get("/api/champions")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));

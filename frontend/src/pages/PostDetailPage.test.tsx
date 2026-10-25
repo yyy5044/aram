@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Me, PostDetail } from '../api/types'
-import { amumu, legDay, meAdmin, meMinsu, meYangho } from '../test/fixtures'
+import { amumu, heartsteel, legDay, meAdmin, meMinsu, meYangho } from '../test/fixtures'
 import { json, mockApi, noContent, type MockRoutes } from '../test/mockApi'
 import { renderWithProviders } from '../test/render'
 import PostDetailPage from './PostDetailPage'
@@ -23,6 +23,7 @@ function detail(overrides: Partial<PostDetail> = {}): PostDetail {
     author: { id: 1, nickname: '양호', avatarUrl: null },
     champions: [amumu],
     augments: [legDay],
+    items: [],
     likeCount: 24,
     commentCount: 0,
     likedByMe: false,
@@ -64,6 +65,11 @@ describe('PostDetailPage', () => {
     expect(screen.getByRole('link', { name: /아무무$/ })).toHaveAttribute('href', '/champions/Amumu')
     expect(screen.getByRole('link', { name: /하체 운동의 날/ })).toHaveAttribute('href', '/augments/ARAM_LegDay')
     expect(screen.getByRole('link', { name: '‹ 목록으로' })).toHaveAttribute('href', '/')
+  })
+
+  it('shows item chips after the augments, linking to the item page', async () => {
+    setup(null, detail({ champions: [], augments: [], items: [heartsteel] }))
+    expect(await screen.findByRole('link', { name: /심장 강타/ })).toHaveAttribute('href', '/items/3084')
   })
 
   it('links the author nickname to the profile', async () => {

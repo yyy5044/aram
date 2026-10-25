@@ -182,6 +182,19 @@ public class PostContentValidatorTest {
 	}
 
 	@Test
+	void acceptsItemMention() {
+		assertThat(validator.validate(doc(paragraph(mention("item", "3084", "굳건한 심장")))).mentions())
+			.containsExactly(new Mention("item", "3084"));
+	}
+
+	@Test
+	void rejectsNonNumericItemMention() {
+		assertRejected(doc(paragraph(mention("item", "abc", "굳건한 심장"))), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(mention("item", "1234567890", "굳건한 심장"))), "지원하지 않는 본문 형식이에요");
+		assertRejected(doc(paragraph(mention("item", "", "굳건한 심장"))), "지원하지 않는 본문 형식이에요");
+	}
+
+	@Test
 	void acceptsMentionOnlyBody() {
 		assertThat(validator.validate(doc(paragraph(mention("augment", "StoneGuts", "거석상의 용기")))).mentions())
 			.containsExactly(new Mention("augment", "StoneGuts"));

@@ -17,6 +17,27 @@ const RARITY_TEXT: Record<AugmentRarity, string> = {
 /** 설명 상자 바깥 모양. 받는 중·오류 안내도 같은 상자에 담아요. */
 export const TOOLTIP_BOX = 'w-[300px] rounded-mark border border-gold bg-night px-4 py-3 shadow-pop'
 
+/** 색 표식이 입혀진 설명 글. 증강·아이템 설명 상자가 함께 써요. */
+export function DescriptionText({ description }: { description: string }) {
+  return (
+    <p className="text-[15px] leading-relaxed break-keep text-ice">
+      {parseDescription(description).map((seg, i) =>
+        seg.kind === 'break' ? (
+          <br key={i} />
+        ) : (
+          <span
+            key={i}
+            style={seg.color ? { color: seg.color } : undefined}
+            className={seg.italic ? 'italic' : seg.color ? 'font-semibold' : undefined}
+          >
+            {seg.text}
+          </span>
+        ),
+      )}
+    </p>
+  )
+}
+
 type Props = { text: AugmentText; rarity: AugmentRarity; iconUrl: string; iconTinted?: boolean }
 
 /** 본문 증강 박스에 마우스를 올리면 뜨는 작은 설명 상자. 게임의 툴팁처럼 아이콘·이름·등급과 설명만 보여요. */
@@ -39,21 +60,7 @@ export default function AugmentTooltip({ text, rarity, iconUrl, iconTinted = fal
         </div>
       </div>
       <div className="my-3 h-px bg-gold/40" />
-      <p className="text-[15px] leading-relaxed break-keep text-ice">
-        {parseDescription(text.description).map((seg, i) =>
-          seg.kind === 'break' ? (
-            <br key={i} />
-          ) : (
-            <span
-              key={i}
-              style={seg.color ? { color: seg.color } : undefined}
-              className={seg.italic ? 'italic' : seg.color ? 'font-semibold' : undefined}
-            >
-              {seg.text}
-            </span>
-          ),
-        )}
-      </p>
+      <DescriptionText description={text.description} />
     </article>
   )
 }

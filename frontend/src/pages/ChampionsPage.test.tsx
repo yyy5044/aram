@@ -11,7 +11,7 @@ afterEach(() => vi.unstubAllGlobals())
 function setup(route = '/champions', champions = [jinx, amumu]) {
   mockApi({
     'GET /api/champions': () => json(champions),
-    'GET /api/tag-counts': () => json({ champions: { Jinx: 5 }, augments: {} }),
+    'GET /api/tag-counts': () => json({ champions: { Jinx: 5 }, augments: {}, items: {} }),
     'GET /api/posts': () => json(page([])),
     'GET /api/champions/Amumu/top-augments': () => json([]),
   })

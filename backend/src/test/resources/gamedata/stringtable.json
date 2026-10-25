@@ -28,6 +28,14 @@
   "kiwi_surgefield_tooltip": "@Damage@의 피해",
   "kiwi_sonata_tooltip": "연주한 횟수: @f1@",
   "{045c3c0e79}": "장갑 충격",
-  "{166854c780}": "스킬 사용 후 다음 기본 공격 시 주변 적에게 <physicalDamage>@ArmorDamage@의 추가 물리 피해</physicalDamage>를 입힙니다."
+  "{166854c780}": "스킬 사용 후 다음 기본 공격 시 주변 적에게 <physicalDamage>@ArmorDamage@의 추가 물리 피해</physicalDamage>를 입힙니다.",
+  "item_3084_name": "강철심장",
+  "item_3004_name": "마나무네",
+  "cherry_woogletswitchcap_itemname": "우글렛의 마녀 모자",
+  "generatedtip_item_3084_description": "<section></section><section>체력 <attention>%i:scaleHealth% @FlatHPPoolMod@</attention><br>기본 체력 재생 <attention>%i:scaleHPRegen% @PercentBaseHPRegenMod*100@%</attention></section><section><passive>거인의 흡수</passive> 대상별 {{ Item_Cooldown }}<br>적 챔피언이 @TotalDemolishTime@초 동안 근처에 있으면 해당 대상에게 다음 기본 공격 시 <physicalDamage>@BaseDamage@+최대 체력의 @MaxHPRatio*100@%</physicalDamage>에 해당하는 <physicalDamage>추가 물리 피해</physicalDamage>를 입히고 피해의 <scaleHealth>@DamageToMaxHealthRatio*100@%</scaleHealth>만큼 <scaleHealth>최대 체력</scaleHealth>이 증가합니다.<br><br><passive>거인</passive><br><scaleHealth>최대 체력 @HealthSizeThreshold@</scaleHealth>당 크기가 @SizeAmount*100@% 증가합니다. (최대 @SizeCap*100@%)</section><section></section><section><flavorText></flavorText></section>",
+  "generatedtip_item_3004_description": "<section></section><section>공격력 <attention>%i:scaleAD% @FlatPhysicalDamageMod@</attention><br>마나 <attention>%i:scaleMana% @FlatMPPoolMod@</attention><br>스킬 가속 <attention>%i:scaleCooldown% @AbilityHasteMod@</attention></section><section><passive>경탄</passive><br><scaleAD>@BonusADFromMana@의 추가 공격력</scaleAD>을 얻습니다.<br><br><passive>마나순환</passive> %i:cooldown% (@ManaChargeAmmoCD@초, 최대 충전량 @ManaChargeMaxAmmo@회)<br>기본 공격과 스킬 적중 시 <scaleMana>@ManaPerCharge@의 최대 마나</scaleMana>(챔피언 상대 시 두 배)를 얻습니다.<br><scaleMana>@MaxMana@의 최대 마나</scaleMana>에 도달하면 <rarityLegendary>무라마나</rarityLegendary>로 변합니다.</section><section></section><section><flavorText></flavorText></section>",
+  "generatedtip_item_228002_description": "<section></section><section>주문력 <ornnBonus>%i:scaleAP% @FlatMagicDamageMod@</ornnBonus><br>방어력 <ornnBonus>%i:scaleArmor% @FlatArmorMod@</ornnBonus><br>스킬 가속 <ornnBonus>%i:scaleCooldown% @AbilityHasteMod@</ornnBonus></section><section><passive>신비한 작품:</passive><br>총 <scaleAP>주문력이 @APAmp*100@%(@f1@)</scaleAP> 증가합니다.</section><section>{{ Item_OnActivation }} {{ Item_Cooldown }}<br><active>경직</active> <br>@Effect2Amount@초 동안 <status>무적</status> 및 <status>대상으로 지정할 수 없는 상태</status>가 되지만, 그동안 아무런 행동도 할 수 없습니다.</section><section><flavorText></flavorText></section>",
+  "item_cooldown": "%i:cooldown% (@Cooldown@초)",
+  "item_onactivation": "<br><br>%i:activeEffect% <active>활성화</active>"
  }
 }

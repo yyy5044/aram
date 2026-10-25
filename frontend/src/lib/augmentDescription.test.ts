@@ -20,6 +20,16 @@ describe('parseDescription', () => {
     ])
   })
 
+  it('colors item stat tags', () => {
+    expect(parseDescription('<attention>900</attention>')).toEqual([
+      { kind: 'text', text: '900', color: '#f0e6d2', italic: false },
+    ])
+    expect(parseDescription('<scaleMana>a</scaleMana><scaleHPRegen>b</scaleHPRegen>')).toEqual([
+      { kind: 'text', text: 'a', color: '#49b6ff', italic: false },
+      { kind: 'text', text: 'b', color: '#2ecc71', italic: false },
+    ])
+  })
+
   it('lets the innermost tag win when nested', () => {
     expect(parseDescription('<status>a <shield>b</shield> c</status>')).toEqual([
       { kind: 'text', text: 'a ', color: '#f1e2a8', italic: false },

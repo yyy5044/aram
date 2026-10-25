@@ -36,7 +36,7 @@ export default function PostListItem({ post, compact = false }: { post: Item; co
         >
           {post.title}
         </Link>
-        {(post.champions.length > 0 || post.augments.length > 0) && (
+        {(post.champions.length > 0 || post.augments.length > 0 || post.items.length > 0) && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {post.champions.map((c) => (
               <TagChip key={c.id} kind="champion" id={c.id} nameKo={c.nameKo} imageUrl={c.imageUrl} size="sm" />
@@ -52,6 +52,9 @@ export default function PostListItem({ post, compact = false }: { post: Item; co
                 tinted={a.iconTinted}
                 size="sm"
               />
+            ))}
+            {post.items.map((i) => (
+              <TagChip key={i.id} kind="item" id={i.id} nameKo={i.nameKo} imageUrl={i.iconUrl} size="sm" />
             ))}
           </div>
         )}

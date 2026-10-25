@@ -9,12 +9,14 @@ export type PostListParams = {
   page: number
   champion?: string
   augment?: string
+  item?: string
 }
 
 export function usePostList(params: PostListParams) {
   const query = new URLSearchParams({ sort: params.sort, page: String(params.page) })
   if (params.champion) query.set('champion', params.champion)
   if (params.augment) query.set('augment', params.augment)
+  if (params.item) query.set('item', params.item)
   return useQuery({
     queryKey: ['posts', 'list', params],
     queryFn: () => apiFetch<Page<PostListItem>>(`/api/posts?${query}`),
@@ -24,7 +26,7 @@ export function usePostList(params: PostListParams) {
 
 export const TAG_POSTS_SIZE = 5
 
-export type TagPostsParams = { champion?: string; augment?: string; sort: PostSort }
+export type TagPostsParams = { champion?: string; augment?: string; item?: string; sort: PostSort }
 
 /** 태그 하나의 글을 5개씩 이어서 불러와요(펼침 영역용). */
 export function useTagPosts(params: TagPostsParams) {
@@ -34,6 +36,7 @@ export function useTagPosts(params: TagPostsParams) {
       const query = new URLSearchParams({ sort: params.sort, page: String(pageParam), size: String(TAG_POSTS_SIZE) })
       if (params.champion) query.set('champion', params.champion)
       if (params.augment) query.set('augment', params.augment)
+      if (params.item) query.set('item', params.item)
       return apiFetch<Page<PostListItem>>(`/api/posts?${query}`)
     },
     initialPageParam: 1,

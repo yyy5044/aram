@@ -12,8 +12,8 @@ function dataAttribute(name: string) {
 }
 
 /**
- * 본문 속 챔피언·증강 박스(@로 넣어요). 한 덩어리라 백스페이스 한 번에 통째로 지워져요.
- * 저장되는 속성은 kind(champion·augment), id, label(넣을 때의 이름)이고, 서버 PostContentValidator와 같은 규칙이에요.
+ * 본문 속 챔피언·증강·아이템 박스(@로 넣어요). 한 덩어리라 백스페이스 한 번에 통째로 지워져요.
+ * 저장되는 속성은 kind(champion·augment·item), id(아이템은 숫자 번호의 문자열), label(넣을 때의 이름)이고, 서버 PostContentValidator와 같은 규칙이에요.
  */
 export const TagMentionNode = Node.create({
   name: 'tagMention',

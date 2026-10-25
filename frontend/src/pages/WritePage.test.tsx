@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Me, PostDetail } from '../api/types'
-import { amumu, jinx, legDay, meMinsu, meYangho, oldAugment } from '../test/fixtures'
+import { amumu, heartsteel, jinx, legDay, meMinsu, meYangho, oldAugment, oldItem } from '../test/fixtures'
 import { json, mockApi, type MockRoutes } from '../test/mockApi'
 import { renderRoutes } from '../test/render'
 import LocationProbe from '../test/LocationProbe'
@@ -28,6 +28,7 @@ function existing(overrides: Partial<PostDetail> = {}): PostDetail {
     author: { id: 1, nickname: '양호', avatarUrl: null },
     champions: [amumu],
     augments: [oldAugment],
+    items: [],
     likeCount: 0,
     commentCount: 0,
     likedByMe: false,
@@ -44,6 +45,7 @@ function setup(me: Me | null, route = '/write', extra: MockRoutes = {}) {
     'GET /api/me': () => json(me),
     'GET /api/champions': () => json([amumu, jinx]),
     'GET /api/augments': () => json([legDay, oldAugment]),
+    'GET /api/items': () => json([heartsteel, oldItem]),
     'GET /api/patches': () => json({ current: '26.21', patches: ['26.21', '26.20', '26.19'] }),
     ...extra,
   })
@@ -53,22 +55,22 @@ function setup(me: Me | null, route = '/write', extra: MockRoutes = {}) {
 
 async function pickChampion(name: string) {
   await userEvent.type(screen.getByLabelText('챔피언 검색'), name.slice(0, 2))
-  await userEvent.click(screen.getByRole('option', { name: new RegExp(name) }))
+  await userEvent.click(await screen.findByRole('option', { name: new RegExp(name) }))
 }
 
 describe('WritePage', () => {
-  it('orders fields title, body, champions, augments, patch', async () => {
+  it('orders fields title, body, champions, augments, items, patch', async () => {
     setup(meYangho)
     await screen.findByLabelText('제목')
-    const labels = screen.getAllByText(/^(제목|본문|챔피언|증강|패치)$/).map((el) => el.textContent)
-    expect(labels).toEqual(['제목', '본문', '챔피언', '증강', '패치'])
+    const labels = screen.getAllByText(/^(제목|본문|챔피언|증강|아이템|패치)$/).map((el) => el.textContent)
+    expect(labels).toEqual(['제목', '본문', '챔피언', '증강', '아이템', '패치'])
   })
 
   it('defaults patch to current and labels it', async () => {
     setup(meYangho)
     const select = await screen.findByLabelText('패치')
     expect(select).toHaveValue('26.21')
-    expect(screen.getByRole('option', { name: '26.21 버전 (최신)' })).toBeInTheDocument()
+    expect(await screen.findByRole('option', { name: '26.21 버전 (최신)' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: '26.20 버전' })).toBeInTheDocument()
   })
 
@@ -78,7 +80,7 @@ describe('WritePage', () => {
     expect(screen.getByText('0 / 5')).toBeInTheDocument()
     await pickChampion('아무무')
     expect(screen.getByText('1 / 5')).toBeInTheDocument()
-    expect(screen.getByText('0 / 10')).toBeInTheDocument()
+    expect(screen.getAllByText('0 / 10')).toHaveLength(2) // 증강, 아이템
     expect(screen.getByRole('button', { name: '취소' })).toBeInTheDocument()
   })
 
@@ -155,12 +157,56 @@ describe('WritePage', () => {
     expect(screen.getByLabelText('제목')).toHaveValue('초안')
   })
 
+  it('sendsItemIds: picks an item in the item field and sends itemIds', async () => {
+    const { api } = setup(meYangho, '/write', { 'POST /api/posts': () => json({ id: 9 }, 201) })
+    await userEvent.type(await screen.findByLabelText('제목'), '심장 강타 템트리')
+    await vi.waitFor(() => expect(api.find('GET', '/api/items')).toHaveLength(1))
+    await userEvent.type(screen.getByLabelText('아이템 검색'), '심장')
+    await userEvent.click(await screen.findByRole('option', { name: /심장 강타/ }))
+    expect(screen.getByRole('button', { name: '심장 강타 빼기' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /옛 아이템/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '등록' }))
+
+    expect(await screen.findByTestId('location')).toHaveTextContent('/posts/9')
+    const body = api.find('POST', '/api/posts')[0].body as Record<string, unknown>
+    expect(body.itemIds).toEqual(['3084'])
+  })
+
+  it('itemFieldLimitTen: stops picking after ten items', async () => {
+    const many = Array.from({ length: 11 }, (_, i) => ({ ...heartsteel, id: `${4000 + i}`, nameKo: `아이템${i}` }))
+    setup(meYangho, '/write', { 'GET /api/items': () => json(many) })
+    const search = await screen.findByLabelText('아이템 검색')
+    expect(screen.getByPlaceholderText('아이템 검색…')).toBe(search)
+    for (let i = 0; i < 10; i++) {
+      await userEvent.type(search, `아이템${i}`)
+      await userEvent.click(await screen.findByRole('option', { name: new RegExp(`^아이템${i}$`) }))
+    }
+    expect(screen.getByText('최대 10개까지 고를 수 있어요')).toBeInTheDocument()
+    expect(search).toBeDisabled()
+  })
+
+  it('keepsInactiveItemWhenEditing: shows the old attached item as a chip', async () => {
+    const { api } = setup(meYangho, '/posts/5/edit', {
+      'GET /api/posts/5': () => json(existing({ items: [oldItem] })),
+      'PUT /api/posts/5': () => new Response(null, { status: 204 }),
+    })
+    expect(await screen.findByRole('button', { name: '옛 아이템 빼기' })).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('아이템 검색'))
+    // 아이템 목록을 받은 뒤에 옛 아이템이 후보에 없는지 봐요.
+    expect(await screen.findByRole('option', { name: /심장 강타/ })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /옛 아이템/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '수정 완료' }))
+    await screen.findByTestId('location')
+    expect((api.find('PUT', '/api/posts/5')[0].body as Record<string, unknown>).itemIds).toEqual(['9999'])
+  })
+
   it('hides inactive augments except ones already attached', async () => {
     setup(meYangho, '/posts/5/edit', { 'GET /api/posts/5': () => json(existing()) })
     expect(await screen.findByRole('button', { name: '옛 증강 빼기' })).toBeInTheDocument()
     await userEvent.click(screen.getByLabelText('증강 검색'))
+    // 증강 목록을 받은 뒤에 옛 증강이 후보에 없는지 봐요.
+    expect(await screen.findByRole('option', { name: /하체 운동의 날/ })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /옛 증강/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /하체 운동의 날/ })).toBeInTheDocument()
   })
 
   it('loads existing values and saves edits', async () => {

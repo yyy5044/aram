@@ -15,7 +15,7 @@ const giant: Augment = { id: 'KingMe', nameKo: '왕관', iconUrl: 'https://examp
 function setup(route = '/augments', extra: MockRoutes = {}) {
   const api = mockApi({
     'GET /api/augments': () => json([prismAugment, legDay, oldAugment, sonata, giant]),
-    'GET /api/tag-counts': () => json({ champions: {}, augments: { ARAM_LegDay: 3, OLD: 2, KingMe: 1 } }),
+    'GET /api/tag-counts': () => json({ champions: {}, augments: { ARAM_LegDay: 3, OLD: 2, KingMe: 1 }, items: {} }),
     'GET /api/posts': () => json(page([])),
     ...extra,
   })

@@ -171,4 +171,17 @@ class AugmentDescriptionBuilderTest {
 		assertThat(r.description()).isEqualTo("Gain On-Hit effects");
 	}
 
+	@Test
+	void keepsItemColorTags() {
+		AugmentDescriptionBuilder b = new AugmentDescriptionBuilder(AugmentLocale.EN, NO_STRINGS);
+		AugmentDescriptionBuilder.Result r = b.build(
+				"<attention>900</attention> <scaleMana>a</scaleMana> <scaleHPRegen>b</scaleHPRegen> "
+						+ "<scaleArmor>c</scaleArmor> <scaleMR>d</scaleMR> <unique>e</unique> <buffedStat>f</buffedStat>",
+				SpellValues.from(List.of()));
+
+		assertThat(r.description()).isEqualTo("<attention>900</attention> <scaleMana>a</scaleMana> "
+				+ "<scaleHPRegen>b</scaleHPRegen> <scaleArmor>c</scaleArmor> <scaleMR>d</scaleMR> <unique>e</unique> "
+				+ "<buffedStat>f</buffedStat>");
+	}
+
 }

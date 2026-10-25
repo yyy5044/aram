@@ -40,9 +40,12 @@ public class PostContentValidator {
 
 	private static final Pattern VIDEO_SRC = Pattern.compile("^/api/videos/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$");
 
-	private static final Set<String> MENTION_KINDS = Set.of("champion", "augment");
+	private static final Set<String> MENTION_KINDS = Set.of("champion", "augment", "item");
 
 	private static final Pattern MENTION_ID = Pattern.compile("^[A-Za-z0-9_]{1,40}$");
+
+	// 아이템 번호는 int에 들어가는 숫자(최대 9자리)만 받아요.
+	private static final Pattern ITEM_MENTION_ID = Pattern.compile("^\\d{1,9}$");
 
 	private static final String UNSUPPORTED = "지원하지 않는 본문 형식이에요";
 
@@ -132,7 +135,8 @@ public class PostContentValidator {
 				String kind = attrs.path("kind").asString("");
 				String id = attrs.path("id").asString("");
 				String label = attrs.path("label").asString("");
-				if (!MENTION_KINDS.contains(kind) || !MENTION_ID.matcher(id).matches() || label.isBlank()
+				Pattern idPattern = "item".equals(kind) ? ITEM_MENTION_ID : MENTION_ID;
+				if (!MENTION_KINDS.contains(kind) || !idPattern.matcher(id).matches() || label.isBlank()
 						|| label.length() > 50 || node.get("content") != null) {
 					throw invalid(UNSUPPORTED);
 				}

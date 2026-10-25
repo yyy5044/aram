@@ -3,16 +3,20 @@ package com.aram.community.gamedata;
 import com.aram.community.common.ApiException;
 import com.aram.community.common.ErrorCode;
 import com.aram.community.gamedata.text.AugmentLocale;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 챔피언·증강·패치 조회와 이미지 주소 만들기. */
+/** 챔피언·증강·아이템·패치 조회와 이미지 주소 만들기. */
 @Service
 @Transactional(readOnly = true)
 public class GameDataService {
@@ -27,15 +31,22 @@ public class GameDataService {
 
 	private final AugmentTextRepository texts;
 
+	private final ItemRepository items;
+
+	private final ItemTextRepository itemTexts;
+
 	private final PatchRepository patches;
 
 	private final GameDataStateRepository states;
 
 	public GameDataService(ChampionRepository champions, AugmentRepository augments, AugmentTextRepository texts,
-			PatchRepository patches, GameDataStateRepository states) {
+			ItemRepository items, ItemTextRepository itemTexts, PatchRepository patches,
+			GameDataStateRepository states) {
 		this.champions = champions;
 		this.augments = augments;
 		this.texts = texts;
+		this.items = items;
+		this.itemTexts = itemTexts;
 		this.patches = patches;
 		this.states = states;
 	}
@@ -59,6 +70,11 @@ public class GameDataService {
 
 	public String augmentIconUrl(String iconPath) {
 		return CDRAGON_GAME + iconPath;
+	}
+
+	public String itemIconUrl(String iconFile) {
+		String version = state().getCurrentDdragonVersion();
+		return version == null ? null : DDRAGON_CDN + version + "/img/item/" + iconFile;
 	}
 
 	public ChampionDto toDto(Champion champion) {
@@ -101,6 +117,75 @@ public class GameDataService {
 			.orElse(null);
 		return new AugmentDetailDto(augment.getId(), augment.getRarity(), augmentIconUrl(coloredIconPath(augment)),
 				needsTint(augment),
+				original == null ? null : AugmentTextDto.from(original),
+				translation == null ? null : AugmentTextDto.from(translation));
+	}
+
+	/** 활성 아이템들의 재료를 뒤집어 아이템별 "이걸로 만드는 상위 아이템" 번호를 만들어요(중복 없이, 활성인 것만). */
+	private Map<Integer, List<Integer>> intoIdsByItem(List<Item> all) {
+		Map<Integer, Set<Integer>> into = new HashMap<>();
+		for (Item item : all) {
+			if (!item.isActive()) {
+				continue;
+			}
+			for (int fromId : item.getFromIds()) {
+				into.computeIfAbsent(fromId, k -> new TreeSet<>()).add(item.getId());
+			}
+		}
+		Map<Integer, List<Integer>> result = new HashMap<>();
+		into.forEach((k, v) -> result.put(k, List.copyOf(v)));
+		return result;
+	}
+
+	private static List<String> asStrings(List<Integer> ids) {
+		return ids.stream().map(String::valueOf).toList();
+	}
+
+	private ItemDto toDto(Item item, Map<Integer, List<Integer>> into) {
+		return new ItemDto(String.valueOf(item.getId()), item.getNameKo(), item.getTier(), item.getPriceTotal(),
+				itemIconUrl(item.getIconFile()), asStrings(item.getFromIds()),
+				asStrings(into.getOrDefault(item.getId(), List.of())), item.isActive());
+	}
+
+	public ItemDto toDto(Item item) {
+		return toDtos(List.of(item)).get(0);
+	}
+
+	/** 여러 아이템을 한 번에 바꿔요. 표를 한 번만 읽어서 intoIds를 만들고, 순서는 받은 그대로예요. */
+	public List<ItemDto> toDtos(Collection<Item> given) {
+		if (given.isEmpty()) {
+			return List.of();
+		}
+		Map<Integer, List<Integer>> into = intoIdsByItem(items.findAll());
+		return given.stream().map(item -> toDto(item, into)).toList();
+	}
+
+	public List<ItemDto> allItems() {
+		List<Item> all = items.findAll();
+		Map<Integer, List<Integer>> into = intoIdsByItem(all);
+		return all.stream().sorted(Comparator.comparing(Item::getNameKo)).map(item -> toDto(item, into)).toList();
+	}
+
+	/** 상자용 상세. 번호가 숫자가 아니거나 없으면 ITEM_NOT_FOUND. original은 영어 행, translation은 lang 행. */
+	public ItemDetailDto itemDetail(String id, String lang) {
+		int itemId;
+		try {
+			itemId = Integer.parseInt(id);
+		}
+		catch (NumberFormatException e) {
+			throw new ApiException(ErrorCode.ITEM_NOT_FOUND);
+		}
+		Item item = items.findById(itemId).orElseThrow(() -> new ApiException(ErrorCode.ITEM_NOT_FOUND));
+		ItemDto dto = toDto(item);
+		Map<String, ItemText> byLocale = itemTexts.findByIdItemId(itemId)
+			.stream()
+			.collect(Collectors.toMap(t -> t.getId().locale(), Function.identity()));
+		ItemText original = byLocale.get(AugmentLocale.EN.code());
+		ItemText translation = AugmentLocale.fromCode(lang)
+			.filter(locale -> locale != AugmentLocale.EN)
+			.map(locale -> byLocale.get(locale.code()))
+			.orElse(null);
+		return new ItemDetailDto(dto.id(), dto.tier(), dto.priceTotal(), dto.iconUrl(), dto.fromIds(), dto.intoIds(),
 				original == null ? null : AugmentTextDto.from(original),
 				translation == null ? null : AugmentTextDto.from(translation));
 	}

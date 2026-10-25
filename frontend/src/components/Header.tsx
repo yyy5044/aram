@@ -14,6 +14,7 @@ const TABS = [
   { to: '/', label: '전체 글', end: true },
   { to: '/augments', label: '증강', end: false },
   { to: '/champions', label: '챔피언', end: false },
+  { to: '/items', label: '아이템', end: false },
 ]
 
 /**
@@ -48,10 +49,10 @@ export default function Header() {
           <img src="/logo.png" alt="" className="h-8 w-8 lg:h-9 lg:w-9" />
           ARAM
         </Link>
-        {/* 1024px보다 좁으면(휴대폰·태블릿) 이 메뉴가 로고 줄 아래 한 줄 전체(3등분 탭)로 내려가요. */}
+        {/* 1024px보다 좁으면(휴대폰·태블릿) 이 메뉴가 로고 줄 아래 한 줄 전체(4등분 탭)로 내려가요. */}
         <nav
           aria-label="주요 메뉴"
-          className="order-last -mx-4 mt-1.5 grid basis-[calc(100%+2rem)] grid-cols-3 border-t border-white/10 sm:-mx-6 sm:basis-[calc(100%+3rem)] lg:order-none lg:mx-0 lg:mt-0 lg:flex lg:basis-auto lg:self-stretch lg:border-0"
+          className="order-last -mx-4 mt-1.5 grid basis-[calc(100%+2rem)] grid-cols-4 border-t border-white/10 sm:-mx-6 sm:basis-[calc(100%+3rem)] lg:order-none lg:mx-0 lg:mt-0 lg:flex lg:basis-auto lg:self-stretch lg:border-0"
         >
           {TABS.map(({ to, label, end }) => (
             <NavLink

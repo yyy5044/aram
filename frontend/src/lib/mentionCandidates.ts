@@ -1,7 +1,7 @@
-import type { Augment, AugmentRarity, Champion } from '../api/types'
+import type { Augment, AugmentRarity, Champion, Item } from '../api/types'
 import { matchIndex, normalizeName } from './tagSearch'
 
-export type MentionKind = 'champion' | 'augment'
+export type MentionKind = 'champion' | 'augment' | 'item'
 
 export type MentionCandidate = {
   kind: MentionKind
@@ -15,10 +15,15 @@ export type MentionCandidate = {
 const MAX_CANDIDATES = 8
 
 /**
- * 본문 @ 메뉴의 후보. 챔피언과 사용 중인 증강을 함께, 이름이 검색어로 시작하는 것부터 가나다순으로 8개까지.
+ * 본문 @ 메뉴의 후보. 챔피언과 사용 중인 증강·아이템을 함께, 이름이 검색어로 시작하는 것부터 가나다순으로 8개까지.
  * 검색 규칙은 태그 검색과 같아요(띄어쓰기·대소문자 무시, 초성·섞어 쓰기).
  */
-export function mentionCandidates(query: string, champions: Champion[], augments: Augment[]): MentionCandidate[] {
+export function mentionCandidates(
+  query: string,
+  champions: Champion[],
+  augments: Augment[],
+  items: Item[],
+): MentionCandidate[] {
   if (normalizeName(query) === '') return []
   const all: MentionCandidate[] = [
     ...champions.map((c): MentionCandidate => ({ kind: 'champion', id: c.id, name: c.nameKo, iconUrl: c.imageUrl })),
@@ -34,6 +39,9 @@ export function mentionCandidates(query: string, champions: Champion[], augments
           tinted: a.iconTinted,
         }),
       ),
+    ...items
+      .filter((it) => it.active)
+      .map((it): MentionCandidate => ({ kind: 'item', id: it.id, name: it.nameKo, iconUrl: it.iconUrl })),
   ]
   return all
     .map((c) => ({ c, at: matchIndex(c.name, query) }))

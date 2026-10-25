@@ -27,6 +27,24 @@
   "kiwi_surgefield_tooltip": "@Damage@ damage",
   "kiwi_sonata_tooltip": "Plays a song.",
   "{045c3c0e79}": "Armored Impact",
-  "{166854c780}": "After casting an Ability, your next Attack deals <physicalDamage>@ArmorDamage@ bonus physical damage</physicalDamage> to nearby enemies."
+  "{166854c780}": "After casting an Ability, your next Attack deals <physicalDamage>@ArmorDamage@ bonus physical damage</physicalDamage> to nearby enemies.",
+  "item_3084_name": "Heartsteel",
+  "item_3004_name": "Manamune",
+  "item_1001_name": "Boots",
+  "item_1006_name": "Rejuvenation Bead",
+  "item_1011_name": "Giant's Belt",
+  "item_1028_name": "Ruby Crystal",
+  "item_1036_name": "Long Sword",
+  "item_1042_name": "Dagger",
+  "item_3006_name": "Berserker's Greaves",
+  "item_3070_name": "Tear of the Goddess",
+  "item_3133_name": "Caulfield's Warhammer",
+  "item_3801_name": "Crystalline Bracer",
+  "cherry_woogletswitchcap_itemname": "Wooglet's Witchcap",
+  "generatedtip_item_3084_description": "<section></section><section><attention>%i:scaleHealth% @FlatHPPoolMod@</attention> Health<br><attention>%i:scaleHPRegen% @PercentBaseHPRegenMod*100@%</attention> Base Health Regen</section><section><passive>Colossal Consumption</passive> {{ Item_Cooldown }} per target<br>If an enemy champion is nearby for @TotalDemolishTime@ seconds, your next Attack against them deals <physicalDamage>@BaseDamage@ plus @MaxHPRatio*100@%</physicalDamage> of your max Health as <physicalDamage>bonus physical damage</physicalDamage> and grants <scaleHealth>@DamageToMaxHealthRatio*100@%</scaleHealth> of the damage as <scaleHealth>max Health.</scaleHealth><br><br><passive>Goliath</passive><br>For each <scaleHealth>@HealthSizeThreshold@ max Health</scaleHealth>, gain @SizeAmount*100@% increased size, up to @SizeCap*100@%. </section><section></section><section><flavorText></flavorText></section>",
+  "generatedtip_item_3004_description": "<section></section><section><attention>%i:scaleAD% @FlatPhysicalDamageMod@</attention> Attack Damage<br><attention>%i:scaleMana% @FlatMPPoolMod@</attention> Mana<br><attention>%i:scaleCooldown% @AbilityHasteMod@</attention> Ability Haste</section><section><passive>Awe</passive><br>Gain <scaleAD>@BonusADFromMana@ bonus Attack Damage</scaleAD>.<br><br><passive>Manaflow</passive> %i:cooldown% (@ManaChargeAmmoCD@s, max @ManaChargeMaxAmmo@ charges)<br>Landing Attacks and Abilities grants <scaleMana>@ManaPerCharge@ max Mana</scaleMana> (doubled vs. champions).<br>Transforms into <rarityLegendary>Muramana</rarityLegendary> at <scaleMana>@MaxMana@ max Mana</scaleMana>.</section><section></section><section><flavorText></flavorText></section>",
+  "generatedtip_item_228002_description": "<section></section><section><ornnBonus>%i:scaleAP% @FlatMagicDamageMod@</ornnBonus> Ability Power<br><ornnBonus>%i:scaleArmor% @FlatArmorMod@</ornnBonus> Armor<br><ornnBonus>%i:scaleCooldown% @AbilityHasteMod@</ornnBonus> Ability Haste</section><section><passive>Magical Opus:</passive><br>Increases your total <scaleAP>Ability Power by @APAmp*100@% (@f1@)</scaleAP>.</section><section>{{ Item_OnActivation }} {{ Item_Cooldown }}<br><active>Stasis</active> <br>You become <status>Invulnerable</status> and <status>Untargetable</status> for @Effect2Amount@ seconds, but are prevented from taking any other actions during this time.</section><section><flavorText></flavorText></section>",
+  "item_cooldown": "%i:cooldown% (@Cooldown@s)",
+  "item_onactivation": "<br><br>%i:activeEffect% <active>ACTIVE</active>"
  }
 }

@@ -35,4 +35,17 @@ describe('postExtensions', () => {
     })
     editor.destroy()
   })
+
+  it('keeps a pasted item box with its number id', () => {
+    const editor = new Editor({
+      extensions: postExtensions(),
+      content: '<p><span data-tag-mention data-kind="item" data-id="3084" data-label="강철심장">강철심장</span></p>',
+    })
+    const paragraph = editor.getJSON().content?.[0]
+    expect(paragraph?.content?.[0]).toEqual({
+      type: 'tagMention',
+      attrs: { kind: 'item', id: '3084', label: '강철심장' },
+    })
+    editor.destroy()
+  })
 })

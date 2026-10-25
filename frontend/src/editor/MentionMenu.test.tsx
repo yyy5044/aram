@@ -1,7 +1,7 @@
 import type { Editor, JSONContent } from '@tiptap/core'
 import { act, fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { Augment, Champion } from '../api/types'
+import type { Augment, Champion, Item } from '../api/types'
 import { json, mockApi } from '../test/mockApi'
 import { renderWithProviders } from '../test/render'
 import PostEditor from './PostEditor'
@@ -9,19 +9,38 @@ import PostEditor from './PostEditor'
 const xin: Champion = { id: 'XinZhao', nameKo: '신짜오', imageUrl: 'https://x/XinZhao.png' }
 const stoneGuts: Augment = { id: 'StoneGuts', nameKo: '거석상의 용기', iconUrl: 'https://x/sg.png', active: true, rarity: 'GOLD' }
 
+const heart: Item = {
+  id: '3084',
+  nameKo: '강철심장',
+  tier: 'LEGENDARY',
+  priceTotal: 3000,
+  iconUrl: 'https://x/item/3084.png',
+  fromIds: [],
+  intoIds: [],
+  active: true,
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 async function setup(content: JSONContent = { type: 'doc', content: [{ type: 'paragraph' }] }) {
+  // 챔피언·증강·아이템 목록이 모두 도착했는지 세요. 시간을 짐작해 기다리면 느린 때 목록 없이 @를 쳐서 메뉴가 안 떠요.
+  let answered = 0
+  const answer = (body: unknown) => () => {
+    answered += 1
+    return json(body)
+  }
   mockApi({
-    'GET /api/champions': () => json([xin]),
-    'GET /api/augments': () => json([stoneGuts]),
+    'GET /api/champions': answer([xin]),
+    'GET /api/augments': answer([stoneGuts]),
+    'GET /api/items': answer([heart]),
   })
   const onMention = vi.fn()
   const onError = vi.fn()
   renderWithProviders(<PostEditor initialContent={content} onChange={() => {}} onError={onError} onMention={onMention} />)
   const dom = document.querySelector('.ProseMirror') as HTMLElement & { editor: Editor }
-  // 챔피언·증강 목록을 받을 때까지 기다려요.
-  await act(() => new Promise((r) => setTimeout(r, 20)))
+  await vi.waitFor(() => expect(answered).toBe(3), { timeout: 15000 })
+  // 받은 목록이 화면과 편집기에 반영될 때까지 한 박자 더 기다려요.
+  await act(() => new Promise((r) => setTimeout(r, 50)))
   return { editor: dom.editor, dom, onMention, onError }
 }
 
@@ -40,7 +59,7 @@ function mentions(editor: Editor) {
   return found
 }
 
-const MENU = { name: '넣을 챔피언·증강' }
+const MENU = { name: '넣을 챔피언·증강·아이템' }
 
 describe('@ menu', () => {
   it('finds a champion by initial consonants and inserts its box on Enter', async () => {
@@ -69,10 +88,23 @@ describe('@ menu', () => {
     expect(onMention).toHaveBeenCalledWith('augment', 'StoneGuts')
   })
 
+  it('finds an item by initial consonants and labels it as an item', async () => {
+    const { editor, dom, onMention } = await setup()
+    type(editor, '@ㄱㅊ')
+    const menu = await screen.findByRole('listbox', MENU)
+    expect(menu).toHaveTextContent('강철심장')
+    const row = screen.getByRole('option', { name: /강철심장/ })
+    expect(row).toHaveTextContent('아이템')
+    expect(row.querySelector('img')?.className).toContain('rounded-mark')
+    fireEvent.keyDown(dom, { key: 'Enter' })
+    expect(mentions(editor)).toEqual([{ kind: 'item', id: '3084', label: '강철심장' }])
+    expect(onMention).toHaveBeenCalledWith('item', '3084')
+  })
+
   it('asks for a name when only @ is typed', async () => {
     const { editor } = await setup()
     type(editor, '@')
-    expect(await screen.findByText('챔피언이나 증강 이름을 쳐 주세요')).toBeInTheDocument()
+    expect(await screen.findByText('챔피언·증강·아이템 이름을 쳐 주세요')).toBeInTheDocument()
   })
 
   it('shows no menu when nothing matches', async () => {
@@ -101,12 +133,12 @@ describe('@ menu', () => {
     })
     type(editor, ' @신짜')
     // 박스 30개를 그리느라 느릴 수 있어요(전체 테스트를 함께 돌릴 때).
-    await screen.findByRole('listbox', MENU, { timeout: 5000 })
+    await screen.findByRole('listbox', MENU, { timeout: 15000 })
     fireEvent.keyDown(dom, { key: 'Enter' })
     expect(onError).toHaveBeenCalledWith('본문 태그는 한 글에 30개까지 넣을 수 있어요')
     expect(mentions(editor)).toHaveLength(30)
     expect(onMention).not.toHaveBeenCalled()
-  })
+  }, 20000)
 
   it('leaves the / menu working', async () => {
     const { editor } = await setup()

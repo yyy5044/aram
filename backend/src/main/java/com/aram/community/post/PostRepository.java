@@ -2,6 +2,7 @@ package com.aram.community.post;
 
 import com.aram.community.gamedata.Augment;
 import com.aram.community.gamedata.Champion;
+import com.aram.community.gamedata.Item;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -12,18 +13,20 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-	/** 태그 필터는 null이면 무시해요. 둘 다 있으면 둘 다 만족하는 글만. */
+	/** 태그 필터는 null이면 무시해요. 여럿이면 모두 만족하는 글만. */
 	@EntityGraph(attributePaths = "author")
 	@Query(value = """
 			select p from Post p
 			where (:championId is null or exists (select 1 from p.champions c where c.id = :championId))
 			  and (:augmentId is null or exists (select 1 from p.augments a where a.id = :augmentId))
+			  and (:itemId is null or exists (select 1 from p.items i where i.id = :itemId))
 			""", countQuery = """
 			select count(p) from Post p
 			where (:championId is null or exists (select 1 from p.champions c where c.id = :championId))
 			  and (:augmentId is null or exists (select 1 from p.augments a where a.id = :augmentId))
+			  and (:itemId is null or exists (select 1 from p.items i where i.id = :itemId))
 			""")
-	Page<Post> search(String championId, String augmentId, Pageable pageable);
+	Page<Post> search(String championId, String augmentId, Integer itemId, Pageable pageable);
 
 	@EntityGraph(attributePaths = "author")
 	Page<Post> findByAuthor_Id(Long authorId, Pageable pageable);
@@ -56,6 +59,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 	}
 
+	interface PostItem {
+
+		Long getPostId();
+
+		Item getItem();
+
+	}
+
 	interface TagCount {
 
 		String getId();
@@ -79,6 +90,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 	@Query("select a.id as id, count(p) as postCount from Post p join p.augments a group by a.id")
 	List<TagCount> countByAugment();
 
+	@Query("select cast(i.id as string) as id, count(p) as postCount from Post p join p.items i group by i.id")
+	List<TagCount> countByItem();
+
 	/** 이 챔피언 글에 함께 태그된 증강을 많이 쓰인 순으로. 지금 게임에 있는 증강만. */
 	@Query("""
 			select a as augment, count(p) as postCount from Post p join p.champions c join p.augments a
@@ -92,5 +106,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 	@Query("select p.id as postId, a as augment from Post p join p.augments a where p.id in :postIds")
 	List<PostAugment> findAugmentTags(Collection<Long> postIds);
+
+	@Query("select p.id as postId, i as item from Post p join p.items i where p.id in :postIds")
+	List<PostItem> findItemTags(Collection<Long> postIds);
 
 }

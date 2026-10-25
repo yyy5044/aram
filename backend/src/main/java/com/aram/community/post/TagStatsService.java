@@ -31,7 +31,8 @@ public class TagStatsService {
 	}
 
 	public TagCountsResponse counts() {
-		return new TagCountsResponse(toMap(posts.countByChampion()), toMap(posts.countByAugment()));
+		return new TagCountsResponse(toMap(posts.countByChampion()), toMap(posts.countByAugment()),
+				toMap(posts.countByItem()));
 	}
 
 	public List<TopAugmentItem> topAugments(String championId) {

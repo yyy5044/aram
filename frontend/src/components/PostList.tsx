@@ -11,16 +11,17 @@ import SortPills from './SortPills'
 type Props = {
   champion?: string
   augment?: string
+  item?: string
   empty?: ReactNode
   header?: (page: Page<Item> | undefined) => ReactNode
 }
 
 /** 정렬 버튼, 글 목록, 페이지 번호. 정렬과 페이지는 주소(?sort=&page=)에 남아요. */
-export default function PostList({ champion, augment, empty, header }: Props) {
+export default function PostList({ champion, augment, item, empty, header }: Props) {
   const [params, setParams] = useSearchParams()
   const sort: PostSort = params.get('sort') === 'likes' ? 'likes' : 'latest'
   const page = Math.max(1, Number(params.get('page')) || 1)
-  const { data, error, isPending } = usePostList({ sort, page, champion, augment })
+  const { data, error, isPending } = usePostList({ sort, page, champion, augment, item })
 
   const pastLastPage = !!data && data.items.length === 0 && data.totalItems > 0
 

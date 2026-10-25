@@ -3,10 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../api/client'
-import { useAugments, useChampions, usePatches } from '../api/gamedata'
+import { useAugments, useChampions, useItems, usePatches } from '../api/gamedata'
 import { startDiscordLogin, useMe } from '../api/me'
 import { createPost, updatePost, usePost } from '../api/posts'
-import type { Augment, Champion, Patches, PostDetail } from '../api/types'
+import type { Augment, Champion, Item, Patches, PostDetail } from '../api/types'
 import TagPicker from '../components/TagPicker'
 import { useToast } from '../components/toastContext'
 import { buttonClass } from '../components/ui/button'
@@ -24,6 +24,7 @@ const LEAVE_MESSAGE = '작성 중인 내용이 사라져요. 나갈까요?'
 /** 태그 칸 한도. 서버 검사와 같아요. */
 const MAX_CHAMPIONS = 5
 const MAX_AUGMENTS = 10
+const MAX_ITEMS = 10
 
 /** 글쓰기(/write)와 글 수정(/posts/:postId/edit). */
 export default function WritePage() {
@@ -34,6 +35,7 @@ export default function WritePage() {
   const post = usePost(editId ?? Number.NaN)
   const champions = useChampions()
   const augments = useAugments()
+  const items = useItems()
   const patches = usePatches()
   // 한 번 로그인 상태로 폼을 열었다면, 나중에 로그인이 풀려도 쓰던 내용을 지키려고 폼을 그대로 둬요.
   const [hadSession, setHadSession] = useState(false)
@@ -66,6 +68,7 @@ export default function WritePage() {
       initial={editId !== null ? post.data! : null}
       champions={champions.data ?? []}
       augments={augments.data ?? []}
+      items={items.data ?? []}
       patches={patches.data ?? { current: null, patches: [] }}
     />
   )
@@ -76,10 +79,11 @@ type FormProps = {
   initial: PostDetail | null
   champions: Champion[]
   augments: Augment[]
+  items: Item[]
   patches: Patches
 }
 
-function PostForm({ editId, initial, champions, augments, patches }: FormProps) {
+function PostForm({ editId, initial, champions, augments, items, patches }: FormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -89,6 +93,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
   const [content, setContent] = useState<JSONContent | null>(initial?.content ?? null)
   const [championIds, setChampionIds] = useState<string[]>(initial?.champions.map((c) => c.id) ?? [])
   const [augmentIds, setAugmentIds] = useState<string[]>(initial?.augments.map((a) => a.id) ?? [])
+  const [itemIds, setItemIds] = useState<string[]>(initial?.items.map((i) => i.id) ?? [])
   const [gamePatch, setGamePatch] = useState(initial?.gamePatch ?? patches.current ?? patches.patches[0] ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -100,6 +105,8 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
 
   const augmentItems = [...augments, ...(initial?.augments.filter((a) => !augments.some((x) => x.id === a.id)) ?? [])]
   const augmentOptions = augments.filter((a) => a.active)
+  const itemItems = [...items, ...(initial?.items.filter((i) => !items.some((x) => x.id === i.id)) ?? [])]
+  const itemOptions = items.filter((i) => i.active)
   const patchOptions =
     initial && !patches.patches.includes(initial.gamePatch) ? [...patches.patches, initial.gamePatch] : patches.patches
 
@@ -127,10 +134,14 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
     }
   }
 
-  /** @ 메뉴로 넣은 챔피언·증강을 태그 칸에도 더해요. 이미 있으면 그대로, 칸이 차 있으면 본문에만 둬요. */
+  /** @ 메뉴로 넣은 챔피언·증강·아이템을 태그 칸에도 더해요. 이미 있으면 그대로, 칸이 차 있으면 본문에만 둬요. */
   function addMentionedTag(kind: MentionKind, id: string) {
     const [ids, setIds, max] =
-      kind === 'champion' ? [championIds, setChampionIds, MAX_CHAMPIONS] : [augmentIds, setAugmentIds, MAX_AUGMENTS]
+      kind === 'champion'
+        ? [championIds, setChampionIds, MAX_CHAMPIONS]
+        : kind === 'augment'
+          ? [augmentIds, setAugmentIds, MAX_AUGMENTS]
+          : [itemIds, setItemIds, MAX_ITEMS]
     if (ids.includes(id)) return
     if (ids.length >= max) {
       toast.show('태그 칸이 가득 차서 본문에만 넣었어요')
@@ -153,6 +164,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
       content: cleanContent(content ?? { type: 'doc', content: [] }),
       championIds,
       augmentIds,
+      itemIds,
       gamePatch,
     }
     try {
@@ -267,6 +279,25 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
             placeholder="증강 검색…"
           />
           {fieldError('augmentIds')}
+        </div>
+
+        <div>
+          <div className="flex items-baseline justify-between">
+            <span className={label}>아이템</span>
+            {counter(itemIds.length, MAX_ITEMS)}
+          </div>
+          <TagPicker<Item>
+            label="아이템"
+            items={itemItems}
+            options={itemOptions}
+            selected={itemIds}
+            onChange={change(setItemIds)}
+            max={MAX_ITEMS}
+            iconOf={(i) => i.iconUrl}
+            square
+            placeholder="아이템 검색…"
+          />
+          {fieldError('itemIds')}
         </div>
 
         <div>

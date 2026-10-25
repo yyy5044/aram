@@ -56,10 +56,39 @@ export type AugmentDetail = {
   translation: AugmentText | null
 }
 
+/** 아이템 단계. 화면 순서와 이름은 lib/itemTiers.ts에 있어요. */
+export type ItemTier = 'AUGMENT_MODE' | 'LEGENDARY' | 'EPIC' | 'BOOTS' | 'BASIC' | 'STARTER'
+
+/** 증강 칼바람에서 살 수 있는 아이템. 재료·상위 아이템은 번호 목록(같은 재료가 여러 번 나올 수 있어요). */
+export type Item = {
+  id: string
+  nameKo: string
+  tier: ItemTier
+  priceTotal: number
+  /** 첫 게임 데이터 동기화 전에는 없을 수 있어요. */
+  iconUrl: string | null
+  fromIds: string[]
+  intoIds: string[]
+  active: boolean
+}
+
+/** 카드용 아이템 상세. original은 영어, translation은 선택 언어(원문과 같거나 없으면 null). */
+export type ItemDetail = {
+  id: string
+  tier: ItemTier
+  priceTotal: number
+  iconUrl: string | null
+  fromIds: string[]
+  intoIds: string[]
+  original: AugmentText | null
+  translation: AugmentText | null
+}
+
 /** 태그 id → 글 수. 글이 있는 태그만 들어 있어요. */
 export type TagCounts = {
   champions: Record<string, number>
   augments: Record<string, number>
+  items: Record<string, number>
 }
 
 export type TopAugment = { augment: Augment; postCount: number }
@@ -76,6 +105,7 @@ export type PostListItem = {
   author: Author
   champions: Champion[]
   augments: Augment[]
+  items: Item[]
   likeCount: number
   commentCount: number
   createdAt: string
@@ -89,6 +119,7 @@ export type PostDetail = {
   author: Author
   champions: Champion[]
   augments: Augment[]
+  items: Item[]
   likeCount: number
   commentCount: number
   likedByMe: boolean
@@ -120,6 +151,7 @@ export type PostRequest = {
   content: JSONContent
   championIds: string[]
   augmentIds: string[]
+  itemIds: string[]
   gamePatch: string
 }
 
