@@ -41,6 +41,8 @@ public class PostService {
 
 	private final ImagePostLinker imageLinker;
 
+	private final VideoPostLinker videoLinker;
+
 	private final GameDataService gameData;
 
 	private final LikeLookup likeLookup;
@@ -51,7 +53,7 @@ public class PostService {
 
 	public PostService(PostRepository posts, ChampionRepository champions, AugmentRepository augments,
 			PatchRepository patches, PostContentValidator validator, ImagePostLinker imageLinker,
-			GameDataService gameData, LikeLookup likeLookup, ScrapLookup scrapLookup, JsonMapper jsonMapper) {
+			VideoPostLinker videoLinker, GameDataService gameData, LikeLookup likeLookup, ScrapLookup scrapLookup, JsonMapper jsonMapper) {
 		this.scrapLookup = scrapLookup;
 		this.posts = posts;
 		this.champions = champions;
@@ -59,6 +61,7 @@ public class PostService {
 		this.patches = patches;
 		this.validator = validator;
 		this.imageLinker = imageLinker;
+		this.videoLinker = videoLinker;
 		this.gameData = gameData;
 		this.likeLookup = likeLookup;
 		this.jsonMapper = jsonMapper;
@@ -70,6 +73,7 @@ public class PostService {
 		Post post = posts.save(Post.create(author, input.title(), input.content(), req.gamePatch(), input.champions(),
 				input.augments(), Instant.now()));
 		imageLinker.link(post.getId(), author.getId(), input.content().imageIds());
+		videoLinker.link(post.getId(), author.getId(), input.content().videoIds());
 		return post.getId();
 	}
 
@@ -83,6 +87,7 @@ public class PostService {
 		Input input = prepare(req, alreadyAttached);
 		post.edit(input.title(), input.content(), req.gamePatch(), input.champions(), input.augments(), Instant.now());
 		imageLinker.link(post.getId(), actor.getId(), input.content().imageIds());
+		videoLinker.link(post.getId(), actor.getId(), input.content().videoIds());
 	}
 
 	@Transactional
@@ -92,6 +97,7 @@ public class PostService {
 			throw new ApiException(ErrorCode.FORBIDDEN);
 		}
 		imageLinker.deleteForPost(postId);
+		videoLinker.deleteForPost(postId);
 		posts.delete(post);
 	}
 

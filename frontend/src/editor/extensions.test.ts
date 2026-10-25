@@ -15,6 +15,7 @@ describe('postExtensions', () => {
       'orderedList',
       'paragraph',
       'text',
+      'video',
     ])
     expect(Object.keys(editor.schema.marks).sort()).toEqual(['bold', 'italic'])
     editor.destroy()

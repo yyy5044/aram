@@ -1,5 +1,6 @@
 package com.aram.community.common;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -52,9 +53,11 @@ public class GlobalExceptionHandler {
 		return respond(ErrorCode.INVALID_INPUT, null);
 	}
 
+	/** multipart 한도(210MB)에서 Spring이 먼저 막은 경우. 어디에 올리던 중인지에 맞는 문구를 줘요. */
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
-	ResponseEntity<ErrorResponse> handleTooLarge(MaxUploadSizeExceededException e) {
-		return respond(ErrorCode.IMAGE_TOO_LARGE, null);
+	ResponseEntity<ErrorResponse> handleTooLarge(MaxUploadSizeExceededException e, HttpServletRequest request) {
+		boolean video = request.getRequestURI().startsWith("/api/videos");
+		return respond(video ? ErrorCode.VIDEO_TOO_LARGE : ErrorCode.IMAGE_TOO_LARGE, null);
 	}
 
 	@ExceptionHandler(NoResourceFoundException.class)

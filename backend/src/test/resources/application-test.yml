@@ -7,3 +7,7 @@ app:
     enabled: false
   images:
     dir: build/test-images
+  videos:
+    # 한도 검사를 작은 파일로 확인하려고 1MB로 줄여요.
+    max-bytes: 1048576
+    tmp-dir: build/test-video-tmp

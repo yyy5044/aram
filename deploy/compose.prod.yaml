@@ -41,7 +41,8 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - images:/data/images
-    mem_limit: 1200m
+    # Java 힙은 이 한도의 50%, 나머지는 영상 변환(ffmpeg) 몫이에요.
+    mem_limit: 1500m
     logging: *logging
 
   web:

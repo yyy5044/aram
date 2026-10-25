@@ -25,7 +25,7 @@ ARAM(증강 칼바람 커뮤니티): 리그 오브 레전드 증강 칼바람 �
 | `deploy/` | 운영 Compose(`compose.prod.yaml`), Caddy 설정·업데이트 중 안내 페이지, 화면 이미지(`web.Dockerfile`), 배포·되돌리기(`deploy.sh`), 서버 준비(`server-setup.sh`) |
 | `.github/workflows/ci.yml` | 푸시마다 백엔드·화면 테스트, `main` 푸시면 이미지(ghcr.io) → 서버 반영 |
 
-백엔드는 기능별 패키지(`auth`, `user`, `gamedata`, `post`, `image`, `comment`, `like`, `scrap`, `profile`, `common`)로 나뉜다. 프론트엔드는 `api/`, `components/`(공통 디자인 부품은 `ui/`, 프로필 부품은 `profile/`, 증강·챔피언 탭 부품은 `tags/`), `pages/`, `editor/`, `lib/`, `test/`.
+백엔드는 기능별 패키지(`auth`, `user`, `gamedata`, `post`, `image`, `video`, `comment`, `like`, `scrap`, `profile`, `common`)로 나뉜다. 프론트엔드는 `api/`, `components/`(공통 디자인 부품은 `ui/`, 프로필 부품은 `profile/`, 증강·챔피언 탭 부품은 `tags/`), `pages/`, `editor/`(본문 편집기·영상 칸·`/` 메뉴), `lib/`, `test/`.
 
 ## 실행과 테스트
 
@@ -37,6 +37,7 @@ cd frontend && npm test && npm run build && npm run lint
 ```
 
 - Node는 `C:\Program Files\nodejs`에 있다. Git Bash에서는 `export PATH="/c/Program Files/nodejs:$PATH"`가 필요할 수 있다.
+- 영상 변환 테스트와 로컬 영상 올리기에는 **ffmpeg·ffprobe**가 PATH에 있어야 한다. 이 컴퓨터에는 winget(`Gyan.FFmpeg`)으로 깔려 있고, 설치 전에 열린 셸에서는 `export PATH="/c/Users/오양호/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.2-full_build/bin:$PATH"`가 필요하다. CI는 apt로 설치한다.
 - 브라우저 확인은 `.claude/launch.json`의 `frontend` 설정으로 미리보기를 띄운다.
 - 디스코드 없이 확인할 때는 `backend/.env`에 `APP_DEV_LOGIN_ENABLED=true`를 두고 `POST /api/dev/login`(`{discordId, nickname}`, `X-XSRF-TOKEN` 헤더 필요)으로 로그인한다. 운영에서는 절대 켜지 않는다.
 
@@ -60,6 +61,7 @@ cd frontend && npm test && npm run build && npm run lint
 - 운영 설정은 `application-prod.yml`(이미지가 `SPRING_PROFILES_ACTIVE=prod`로 켠다): DB는 Compose의 `db`, `forward-headers-strategy: native`(Caddy의 `X-Forwarded-Proto`로 디스코드 돌아올 주소가 https), 세션 쿠키 `Secure`, 사진은 `/data/images` 볼륨. 개발 로그인은 `@Profile("!prod")`라 운영에서는 설정과 상관없이 없다(환경 변수가 설정 파일보다 우선해서 파일로는 못 막는다).
 - Docker 이미지는 저장소 루트를 빌드 위치로 만든다: `docker build -f backend/Dockerfile .`, `docker build -f deploy/web.Dockerfile .`. 실행 jar 이름은 `app.jar`로 고정. 백엔드가 꺼져도 Caddy가 화면 파일은 주므로, 업데이트 중에는 화면이 열리고 API만 503 `MAINTENANCE`("잠시 업데이트 중이에요…")를 준다(목록·글·프로필이 이 문장을 그대로 띄운다). Caddy의 `header`는 `try_files`보다 먼저 정해져서 `/assets/*` 밖은 블록 전체에 `no-cache`를 붙인다.
 - 서버 `deploy.sh`는 `.env`의 `IMAGE_TAG`만 바꿔 교체하고, 백엔드 `127.0.0.1:8080/actuator/health`가 UP이고 Caddy가 `Host: $DOMAIN`의 http 요청에 308을 줄 때까지 180초 기다린다. 교체(`up -d`)가 실패하거나 시간 안에 정상이 안 되면 직전 태그로 되돌리고, 직전 태그가 없으면 줄을 지운다. Caddyfile 오타는 `web` 이미지를 만들 때(`caddy validate`) 막힌다. 백엔드 이미지 사용자는 UID 10001로 고정(사진 볼륨 소유자).
+- 영상 클립(설계 `docs/superpowers/specs/2026-10-26-video-clip-design.md`): 글쓰기에서 `/` 메뉴(영상·사진, `@tiptap/suggestion`)나 도구 줄 **영상** 버튼으로 점선 칸을 넣고, 끌어다 놓거나 눌러서 고른 영상을 `POST /api/videos`로 올린다(원본 200MB, `app.videos.max-bytes`). 서버 `video/VideoQueue`가 한 번에 하나씩 `FfmpegVideoTranscoder`로 **앞 30초·1280×720 안·24fps·무음·H.264 MP4 + 첫 장면 JPEG**로 바꿔 이미지 저장소 `videos/{id}.mp4|.jpg`에 두고, 원본(`app.videos.tmp-dir`, 운영 `/data/images/tmp`)은 지운다. 화면은 `GET /api/videos/{id}/status`를 1초마다 물어 "올리는 중 n%" → "변환 중 n%"를 보여준다. 본문 노드 `video`(`src=/api/videos/{uuid}`, 한 글에 3칸)는 서버 `PostContentValidator`·화면 `editor/extensions.ts`가 함께 지키고, 글 저장 때 `DbVideoPostLinker`가 내 것·READY·다른 글에 안 쓰인 영상만 연결한다. 글에서는 `VideoPlayer`가 소리 없이 반복하고 화면에 보일 때만 재생하며, 누르면 멈춘다. `GET /api/videos/{id}`는 `FileSystemResource`라 Range(206)를 지원한다(iPhone 재생에 필요). 편집기 전용인 사진 칸 노드 `uploadBox`와 영상 노드의 `uploadId`·`truncated` 속성은 저장 전 `editor/cleanContent.ts`가 빼고, 변환 중이면 등록 버튼이 잠긴다. 변환이 끝난 클립은 ✕ 버튼으로만 지운다(`VideoNode`의 `protectClips` 플러그인이 클립 수가 줄어드는 변경을 막고, ✕ 버튼만 `clipGuard.ts`의 메타를 붙인다). 올리기 상태는 칸(NodeView) 밖 `editor/uploadJobs.ts`에 있어서 칸을 옮겨도 끊기지 않고, 칸이 본문에서 사라지면 멈춘다. 쓰이지 않은 영상은 하루 뒤 `VideoCleanupJob`이 지우고, 서버 재시작 때 멈춘 변환은 FAILED가 된다. 운영 백엔드 이미지에는 apt ffmpeg가 들어 있고(이미지 약 1.2GB), 메모리 한도 1500m·`MaxRAMPercentage=50`.
 - 서비스 이름은 **ARAM**. 아이콘은 포로 그림(사용자가 이미지 생성으로 고름)으로 `frontend/public/`의 `favicon.ico`(16·32·48), `apple-touch-icon.png`(180, 모서리 채움), `logo.png`(128, 둥근 모서리 투명, 머리말 로고·업데이트 중 안내 페이지)에 있다. 모든 화면 맨 아래 `components/SiteFooter.tsx`에 라이엇 팬 콘텐츠 정책의 안내 문구("ARAM은 Riot Games의 보증을 받지 않았으며…")가 있다. 게임 그림을 쓰는 공개 사이트라 지우지 않는다.
 - 화면 언어 설정(`lib/language.ts`, 머리말 드롭다운, localStorage `lang`)은 지금 증강 카드의 번역 언어만 바꾼다. 화면 문구 번역(i18n)은 아직 없다.
 - 디자인(칼바람 나락의 밤, 설계 `docs/superpowers/specs/2026-10-25-design-polish-design.md`): 색·모서리·글꼴은 `index.css`의 `@theme` 이름(`bg-night`, `text-gold-deep`, `rounded-touch` …)만 쓴다. 버튼은 `components/ui/button.ts`의 `buttonClass(종류, 높이)`. 크기는 글자 28/20/17/15/13, 버튼 56/48/44/40/36, 간격 4의 배수, 모서리는 담는 것 0·작은 표시 4·누르는 것 8·얼굴은 원. Tailwind 4는 같은 속성의 클래스 두 개가 한 요소에 붙으면 어느 쪽이 이길지 순서로 정해지지 않으니, `buttonClass(...)` 뒤에 높이·여백·글자색·display를 덧붙이지 말고 종류를 더하거나 감싸는 요소를 쓴다(꼭 덮어써야 하면 `!`). 다크 모드는 없다.
@@ -84,11 +86,12 @@ cd frontend && npm test && npm run build && npm run lint
 - 2026-10-24: 증강·챔피언 탭(`/augments`, `/champions`) — 위쪽 메뉴 탭, 증강은 프리즘·골드·실버 묶음(접힘), 이름 검색과 가나다순/글 많은 순, 칸을 누르면 그 줄 아래로 글 목록(5개씩 더 보기)이 펼쳐지고 `?open=`에 남는다. 챔피언에는 자주 함께 쓰는 증강. API `GET /api/tag-counts`, `GET /api/champions/{id}/top-augments`, `GET /api/posts?size=`. 설계 `docs/superpowers/specs/2026-10-24-tag-browse-design.md`, 계획 `docs/superpowers/plans/2026-10-24-tag-browse.md`.
 - 2026-10-25: 배포 준비 — 로그인 정보 DB 저장(Spring Session JDBC), `prod` 설정, Docker 이미지 2개, 운영 Compose·Caddy·업데이트 중 안내, 자동 되돌리기 `deploy.sh`, GitHub Actions(테스트·배포), 서버 준비 스크립트, 안내서 `docs/deploy.md`. `dev` 가지를 만들어 이제 작업은 `dev`로 합친다. 설계 `docs/superpowers/specs/2026-10-25-deploy-design.md`, 계획 `docs/superpowers/plans/2026-10-25-deploy.md`.
 - 2026-10-25: 이름을 ARAM으로, 포로 아이콘(탭·홈 화면·머리말), 바닥글에 라이엇 안내 문구.
+- 2026-10-26: 영상 클립 블록 — `/` 메뉴·영상 버튼·끌어다 놓기, 서버 변환(720p·24fps·무음·30초), 진행률, 자동 반복 재생, 등록 잠금. `dev`에 합침(운영 배포 전). 설계 `docs/superpowers/specs/2026-10-26-video-clip-design.md`, 계획 `docs/superpowers/plans/2026-10-26-video-clip.md`.
 - 2026-10-26: 첫 배포 — **https://aram.asia** 운영 시작. 도메인은 가비아(`aram.asia`, 첫해 7,700원·연장 약 27,500원, DNS는 가비아 A 레코드 `@` → 고정 IP). Lightsail 인스턴스 `aram`(서울 ap-northeast-2a, Ubuntu 24.04, 월 12달러 2GB, 듀얼 스택, 자동 스냅샷 매일 05:00 KST), 고정 IP `aram-ip` = `3.36.255.35`, 방화벽 22·80·443. 서버 `/opt/aram/.env`는 다 채워짐(DB 비밀번호는 서버에서 만들어 밖에 없음). 서버 호스트 키 지문 `SHA256:X+yQg1G94r8Bdd2egh8MqOxGXfbDYO1BTLureIV6wjE`. GitHub Secrets 4개 등록, 배포 전용 키의 비밀 쪽은 GitHub에만 있다(로컬 사본은 지움 — 서버에 직접 들어갈 때는 Lightsail 브라우저 SSH를 쓰거나 새 키를 만들어 `authorized_keys`에 더한다). AWS 예산 `aram-monthly` 월 15달러(네이버·지메일). 예전 EC2의 놀던 탄력적 IP(월 약 3.6달러)를 지웠다. AWS 크레딧 약 22달러가 2027-03-22까지 남아 있다(가입 크레딧 100달러는 2026-09에 소진).
 
 **다음 단계**
 1. 운영 확인 마무리: 사용자가 실제 디스코드 로그인·글쓰기·사진 올리기를 해 본다. 서버 재부팅 후 로그인·사진 유지, 다음 날 첫 자동 스냅샷이 생겼는지 확인한다.
-2. 새 기능 구상(사용자가 배포 다음에 하자고 함).
+2. 영상 클립 운영 배포: "업데이트해줘"로 `main`에 올리면 된다. 배포 뒤 실제 휴대폰(iPhone 포함)에서 영상 올리기와 클립 재생을 확인한다.
 3. 화면 문구 영어 번역(i18n).
 
 2026-10-24에 main을 GitHub에 처음 푸시했고, 2026-10-25에 증강 카드와 새 증강 자료 보완(240개 모두 설명), 미뤄둔 작은 문제 정리, 디자인 다듬기(칼바람 나락의 밤)까지 푸시했다. 2026-10-26에 `dev`를 처음 푸시하고 `main`에 합쳐 첫 배포했다. 이후 푸시는 사용자가 요청할 때만 한다.
