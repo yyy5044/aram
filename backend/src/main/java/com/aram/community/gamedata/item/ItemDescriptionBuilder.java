@@ -12,7 +12,8 @@ import java.util.regex.Pattern;
 
 /**
  * 아이템 설명 틀(`generatedtip_item_{id}_description`)을 화면에 보일 설명으로 만들어요. 틀은 `<section>` 여러 개라서
- * 내용 있는 section만 `<br>`로 이어 붙이고(빈 section과 `<flavorText>` 이야기 글은 버려요), 나머지는 증강 설명과 같은
+ * 내용 있는 section만 `<br>`로 이어 붙이고(빈 section과 `<flavorText>` 이야기 글은 버려요), 목록 항목(`<li>`)도
+ * 줄을 나눠요. 나머지는 증강 설명과 같은
  * 방법({@link AugmentDescriptionBuilder})으로 채워요.
  */
 public final class ItemDescriptionBuilder {
@@ -26,6 +27,9 @@ public final class ItemDescriptionBuilder {
 	private static final Pattern FLAVOR = Pattern.compile("<flavorText>.*?</flavorText>", Pattern.DOTALL);
 
 	private static final Pattern REFERENCE = Pattern.compile("\\{\\{[^}]*\\}\\}");
+
+	/** 목록 항목의 여는 태그. 닫는 태그는 증강 설명 다듬기가 지워요. */
+	private static final Pattern LIST_ITEM = Pattern.compile("<li(?:\\s[^>]*)?/?>", Pattern.CASE_INSENSITIVE);
 
 	/** 능력치 줄의 아이콘(`<attention>%i:scaleHealth% 900</attention>`). 뒤 공백까지 지워야 색 글이 공백으로 시작하지 않아요. */
 	private static final Pattern ICON = Pattern.compile("%i:[^%]+%\\s*");
@@ -53,7 +57,7 @@ public final class ItemDescriptionBuilder {
 			return found;
 		};
 		AugmentDescriptionBuilder.Result result = new AugmentDescriptionBuilder(locale, orBlank).build(joined, values);
-		// 참조를 다섯 번 넘게 따라가도 남은 것까지 혹시 모르니 지워요(그 수는 이미 result.unresolved에 있어요).
+		// 참조를 다섯 번 넘게 따라가도 남은 것까지 혹시 모르니 지워요. 이렇게 지운 것은 unresolved에 세지 않아요.
 		String description = REFERENCE.matcher(result.description()).replaceAll("").strip();
 		return new Result(description, result.unresolved().size() + missing[0]);
 	}
@@ -61,6 +65,8 @@ public final class ItemDescriptionBuilder {
 	private static String joinSections(String template) {
 		String text = FLAVOR.matcher(template).replaceAll("");
 		text = ICON.matcher(text).replaceAll("");
+		// 목록 항목이 한 줄로 붙지 않게("…회복합니다.불굴의 의지:") 줄을 나눠요. 앞뒤 빈 줄은 증강 설명 다듬기가 지워요.
+		text = LIST_ITEM.matcher(text).replaceAll("<br>");
 		Matcher m = SECTION.matcher(text);
 		List<String> sections = new ArrayList<>();
 		boolean found = false;

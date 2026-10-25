@@ -73,6 +73,22 @@ class ItemValuesTest {
 	}
 
 	@Test
+	void effectAmountsNamedByPosition() throws IOException {
+		// 옛 방식 수치 배열: @Effect1Amount@ = mEffectAmount[0], @Effect2Amount@ = mEffectAmount[1] …
+		// 칸 자체가 배열이면 첫 값을 써요.
+		JsonNode item = ItemCatalogTest.MAPPER.readTree("""
+				{ "mEffectAmount": [ 0.0, 2.5, [ 20.0, 30.0 ] ] }
+				""");
+
+		SpellValues values = ItemValues.from(item);
+
+		assertThat(values.dataValue("Effect1Amount")).contains(List.of(0.0));
+		assertThat(values.dataValue("Effect2Amount")).contains(List.of(2.5));
+		assertThat(values.dataValue("Effect3Amount")).contains(List.of(20.0));
+		assertThat(values.dataValue("Effect4Amount")).isEmpty();
+	}
+
+	@Test
 	void calculationsReadable() throws IOException {
 		SpellValues values = ItemValues.from(item(3084));
 

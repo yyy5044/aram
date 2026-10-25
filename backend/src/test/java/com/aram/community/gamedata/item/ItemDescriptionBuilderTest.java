@@ -68,11 +68,12 @@ class ItemDescriptionBuilderTest {
 	}
 
 	@Test
-	void woogletKeepsUnfilledName() throws IOException {
+	void woogletFillsEffectAmount() throws IOException {
 		ItemDescriptionBuilder.Result r = build(AugmentLocale.KO, "stringtable.json", 228002);
 
-		// 게임 자료에 없는 @Effect2Amount@는 이름 그대로 남고 화면에서 ?로 보여요.
-		assertThat(r.description()).contains("@Effect2Amount@");
+		// @Effect2Amount@는 옛 방식 수치 배열(mEffectAmount)의 두 번째 값 2.5예요.
+		assertThat(r.description()).doesNotContain("@Effect2Amount@").contains("2.5초");
+		// 게임 중 누적치(@f1@)만 남아요.
 		assertThat(r.unresolved()).isPositive();
 		// {{ Item_OnActivation }} {{ Item_Cooldown }}이 채워지고, 쿨타임은 Kiwi 값 60초예요.
 		assertThat(r.description()).doesNotContain("{{").contains("<active>").contains("(60초)");
@@ -97,6 +98,17 @@ class ItemDescriptionBuilderTest {
 				SpellValues.of(Map.of(), Map.of()));
 
 		assertThat(r.description()).isEqualTo("a<br>b");
+	}
+
+	@Test
+	void listItemsBreakLines() {
+		ItemDescriptionBuilder.Result r = new ItemDescriptionBuilder(AugmentLocale.KO, key -> Optional.empty()).build(
+				"<section><li><passive>첫째:</passive> 회복합니다.</li><li><passive>불굴의 의지:</passive> 강해져요.</li></section>",
+				SpellValues.of(Map.of(), Map.of()));
+
+		// 목록 항목이 한 줄로 붙지 않고 줄마다 나뉘어요. 맨 앞에 빈 줄은 생기지 않아요.
+		assertThat(r.description())
+			.isEqualTo("<passive>첫째:</passive> 회복합니다.<br><passive>불굴의 의지:</passive> 강해져요.");
 	}
 
 	@Test

@@ -10,7 +10,7 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * 아이템 하나(`ItemData`)의 설명에 넣을 수치를 모아요. 능력치 필드(`mFlatHPPoolMod: 900` → `@FlatHPPoolMod@`),
- * 수치(`mDataValues`), 계산식(`mItemCalculations`)이에요. 수치는 증강 칼바람 값이 먼저예요: `Kiwi` > `ARAM` > 기본.
+ * 옛 방식 수치 배열(`mEffectAmount[0]` → `@Effect1Amount@`), 수치(`mDataValues`), 계산식(`mItemCalculations`)이에요. 수치는 증강 칼바람 값이 먼저예요: `Kiwi` > `ARAM` > 기본.
  */
 public final class ItemValues {
 
@@ -28,6 +28,7 @@ public final class ItemValues {
 				values.put(statName(e.getKey()).toLowerCase(Locale.ROOT), List.of(e.getValue().asDouble()));
 			}
 		});
+		putEffectAmounts(values, item.path("mEffectAmount"));
 		putDataValues(values, item.path("mDataValues"));
 		JsonNode overrides = item.path("DataValuesModeOverride");
 		for (String mode : MODE_OVERRIDES) {
@@ -47,6 +48,19 @@ public final class ItemValues {
 			return field.substring(1);
 		}
 		return field;
+	}
+
+	/** `mEffectAmount`의 i번째 값은 `@Effect{i+1}Amount@`예요. 칸 자체가 배열이면 첫 값을 써요. */
+	private static void putEffectAmounts(Map<String, List<Double>> values, JsonNode amounts) {
+		for (int i = 0; i < amounts.size(); i++) {
+			JsonNode amount = amounts.get(i);
+			if (amount.isArray()) {
+				amount = amount.path(0);
+			}
+			if (amount.isNumber()) {
+				values.put("effect" + (i + 1) + "amount", List.of(amount.asDouble()));
+			}
+		}
 	}
 
 	/** 값이 빠진 항목은 게임 자료의 기본값 0이에요. */
