@@ -26,7 +26,7 @@
 | 자료 | 주소 | 쓰는 곳 |
 |---|---|---|
 | 칼바람 맵 | `game/data/maps/shipping/map12/map12.bin.json` | `Maps/Shipping/Map12/Modes/KIWI`의 `itemLists`가 가리키는 `GameModeItemList`들의 `mItems` 합집합 = 증강 칼바람 상점 목록 |
-| 아이템 | `game/items.cdtb.bin.json` | `ItemData`: `itemID`, `price`(조합 가격), `recipeItemLinks`(재료), `epicness`(없으면 `mItemDataClient.epicness`), `mCategories`, 능력치 필드(`mFlatHPPoolMod` 등), `mDataValues`, `mItemCalculations`, `DataValuesModeOverride`, `mItemDataAvailability.mInStore` |
+| 아이템 | `game/items.cdtb.bin.json` | `ItemData`: `itemID`, `price`(조합 가격), `recipeItemLinks`(재료), `epicness`(최상위 값), `mCategories`, 능력치 필드(`mFlatHPPoolMod` 등), `mDataValues`, `mItemCalculations`, `DataValuesModeOverride`, `mItemDataAvailability.mInStore` |
 | 문자열 표 | `game/{ko_kr,en_us}/data/menu/en_us/lol.stringtable.json` | `item_{id}_name`, 설명 틀 `generatedtip_item_{id}_description`, 그 안의 `{{ … }}` 참조 |
 | 아이콘 | Data Dragon `cdn/{버전}/img/item/{id}.png` | 칼바람 전용(`126697`, `994403` 등)까지 모두 있음을 확인(2026-10-26) |
 
@@ -41,14 +41,14 @@
 
 | 묶음 | 규칙 | 16.21 예 |
 |---|---|---|
-| 증강 칼바람 전용 | `epicness` 7·8 중 소모품이 아닌 것 | 공허의 불길, 궁극의 히드라, 우글렛의 마녀 모자, 황금 뒤집개, 추가 능력치 |
+| 증강 칼바람 전용 | `epicness` 8, 그리고 7 중 소모품이 아닌 것 | 공허의 불길, 궁극의 히드라, 우글렛의 마녀 모자, 황금 뒤집개, 추가 능력치 |
 | 전설 | 5 | 강철심장, 무한의 대검 … |
 | 서사 | 4 (신발 제외) | 거인의 허리띠, 쇠사슬 조끼 … |
 | 신발 | 분류에 `Boots`가 있는 것 | 장화, 광전사의 군화 … |
 | 기본 | 2 또는 없음 | 롱소드, 루비 수정 … |
 | 시작·소모품 | 0·1·3, 그리고 분류에 `Consumable`이 있는 것 | 수호자 4종, 물약, 여신의 눈물, 카파 주스, 영약 3종 |
 
-판정 순서는 신발 → 시작·소모품 → 나머지 표 순서. 화면 순서도 위 표 순서. 단계 값은 DB에 문자열(`AUGMENT_MODE`, `LEGENDARY`, `EPIC`, `BOOTS`, `BASIC`, `STARTER`)로 저장한다. 처음 구현 때 192개가 모두 한 묶음에 들어가는지 테스트로 확인하고, 규칙에 안 맞는 아이템이 있으면 표를 고친다.
+판정 순서는 epicness 8 → 신발 → 시작·소모품 → 나머지 표 순서. epicness는 `ItemData` 최상위 값만 쓴다(`mItemDataClient.epicness`는 상점 묶음과 다르다). 화면 순서도 위 표 순서. 단계 값은 DB에 문자열(`AUGMENT_MODE`, `LEGENDARY`, `EPIC`, `BOOTS`, `BASIC`, `STARTER`)로 저장한다. 처음 구현 때 192개가 모두 한 묶음에 들어가는지 테스트로 확인하고, 규칙에 안 맞는 아이템이 있으면 표를 고친다.
 
 ### 3.3 설명 계산
 
