@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
+import { stopDropsOnUploadBox } from './stopDrops'
 import VideoNodeView from './VideoNodeView'
 
 /**
@@ -29,6 +30,6 @@ export const VideoNode = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(VideoNodeView)
+    return ReactNodeViewRenderer(VideoNodeView, { stopEvent: stopDropsOnUploadBox })
   },
 })

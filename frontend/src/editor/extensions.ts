@@ -1,6 +1,7 @@
 import type { Extensions } from '@tiptap/core'
 import Image from '@tiptap/extension-image'
 import StarterKit from '@tiptap/starter-kit'
+import { UploadBoxNode } from './UploadBoxNode'
 import { VideoNode } from './VideoNode'
 
 /**
@@ -21,4 +22,9 @@ export function postExtensions(): Extensions {
     Image.configure({ inline: false, allowBase64: false }),
     VideoNode,
   ]
+}
+
+/** 글쓰기 편집기 전용: 본문 규칙에 사진 칸(uploadBox)을 더해요. 사진 칸은 저장 전에 cleanContent가 빼요. */
+export function editorExtensions(): Extensions {
+  return [...postExtensions(), UploadBoxNode]
 }
