@@ -35,4 +35,11 @@ describe('TagChip', () => {
     await userEvent.click(screen.getByRole('button', { name: '아무무 빼기' }))
     expect(onRemove).toHaveBeenCalledTimes(1)
   })
+
+  it('links an item chip to its page with a square icon', () => {
+    renderWithProviders(<TagChip kind="item" id="3084" nameKo="강철심장" imageUrl="https://example.test/3084.png" size="lg" link />)
+    const link = screen.getByRole('link', { name: /강철심장/ })
+    expect(link).toHaveAttribute('href', '/items/3084')
+    expect(link.querySelector('img')?.className).not.toContain('rounded-full')
+  })
 })

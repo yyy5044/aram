@@ -75,6 +75,8 @@ describe('Header', () => {
     ['/augments/ARAM_LegDay', '증강'],
     ['/champions', '챔피언'],
     ['/champions/Amumu', '챔피언'],
+    ['/items', '아이템'],
+    ['/items/3084', '아이템'],
   ])('marks the tab for %s', async (path, tab) => {
     mockApi({ 'GET /api/me': () => json(null) })
     renderRoutes([{ path: '*', element: <Header /> }], path)
@@ -83,7 +85,7 @@ describe('Header', () => {
     const others = within(nav)
       .getAllByRole('link')
       .filter((l) => l.textContent !== tab)
-    expect(others).toHaveLength(2)
+    expect(others).toHaveLength(3)
     for (const other of others) expect(other).not.toHaveAttribute('aria-current')
   })
 
