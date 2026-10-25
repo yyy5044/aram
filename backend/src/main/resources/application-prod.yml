@@ -21,3 +21,6 @@ app:
   images:
     # Compose의 images 볼륨
     dir: /data/images
+  videos:
+    # 변환 전 원본을 잠깐 두는 곳. 같은 볼륨이라 디스크를 함께 써요.
+    tmp-dir: /data/images/tmp

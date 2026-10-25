@@ -10,6 +10,8 @@ COPY backend/src ./src
 RUN sh ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
+# 영상 클립 변환(ffmpeg·ffprobe)
+RUN apt-get update 	&& apt-get install -y --no-install-recommends ffmpeg 	&& rm -rf /var/lib/apt/lists/*
 # UID를 고정해야 기반 이미지가 바뀌어도 사진 볼륨(/data/images)에 계속 쓸 수 있어요.
 RUN useradd --system --uid 10001 --create-home app \
 	&& mkdir -p /data/images \
@@ -17,7 +19,7 @@ RUN useradd --system --uid 10001 --create-home app \
 WORKDIR /app
 COPY --from=build /src/build/libs/app.jar app.jar
 ENV SPRING_PROFILES_ACTIVE=prod \
-	JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70"
+	JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50"
 USER app
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

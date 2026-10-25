@@ -23,6 +23,9 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: gradle
+      # 영상 변환 테스트가 실제 ffmpeg로 돌아요.
+      - name: ffmpeg 설치
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       # 실행 환경에 Docker가 있어서 Testcontainers(PostgreSQL)가 그대로 돌아요.
       - run: ./gradlew test --no-daemon
 
