@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import type { AugmentRarity } from '../api/types'
+import { matchesName } from '../lib/tagSearch'
 import AugmentIcon from './augment/AugmentIcon'
 import SearchInput from './ui/SearchInput'
 import TagChip from './ui/TagChip'
@@ -43,8 +44,8 @@ export default function TagPicker<T extends Item>({
   const selectedItems = selected
     .map((id) => items.find((i) => i.id === id))
     .filter((i): i is T => i !== undefined)
-  const q = query.trim()
-  const matches = options.filter((o) => !selected.includes(o.id) && (!q || o.nameKo.includes(q))).slice(0, 30)
+  // 띄어쓰기와 대소문자는 무시해요("거석상의용기"로도 "거석상의 용기"가 찾아져요). 증강·챔피언 탭과 같은 규칙.
+  const matches = options.filter((o) => !selected.includes(o.id) && matchesName(o.nameKo, query)).slice(0, 30)
 
   function add(id: string) {
     onChange([...selected, id])

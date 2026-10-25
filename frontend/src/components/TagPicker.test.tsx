@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it } from 'vitest'
-import type { Champion } from '../api/types'
-import { amumu, jinx } from '../test/fixtures'
+import type { Augment, Champion } from '../api/types'
+import { amumu, jinx, legDay } from '../test/fixtures'
 import TagPicker from './TagPicker'
 
 function Harness({ max = 5, initial = [] as string[] }) {
@@ -28,6 +28,29 @@ describe('TagPicker', () => {
     await userEvent.type(screen.getByLabelText('챔피언 검색'), '아무')
     expect(screen.getByRole('option', { name: /아무무/ })).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /징크스/ })).not.toBeInTheDocument()
+  })
+
+  it('ignores spaces when matching names', async () => {
+    const stoneGuts: Augment = { ...legDay, id: 'StoneGuts', nameKo: '거석상의 용기' }
+    render(
+      <TagPicker<Augment>
+        label="증강"
+        items={[stoneGuts, legDay]}
+        options={[stoneGuts, legDay]}
+        selected={[]}
+        onChange={() => {}}
+        max={10}
+        iconOf={(a) => a.iconUrl}
+        placeholder="증강 검색…"
+      />,
+    )
+    const input = screen.getByLabelText('증강 검색')
+    await userEvent.type(input, '거석상의용기')
+    expect(screen.getByRole('option', { name: /거석상의 용기/ })).toBeInTheDocument()
+
+    await userEvent.clear(input)
+    await userEvent.type(input, '거석 상의 용')
+    expect(screen.getByRole('option', { name: /거석상의 용기/ })).toBeInTheDocument()
   })
 
   it('adds and removes chips', async () => {
