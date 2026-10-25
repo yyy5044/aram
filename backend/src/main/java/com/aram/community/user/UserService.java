@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,12 +75,23 @@ public class UserService {
 		return users.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
 	}
 
+	/** 확인과 저장 사이에 바뀐 상황(같은 닉네임을 먼저 저장, 고른 사진이 정리됨)을 알맞은 오류로 바꿔요. */
 	private User saveCheckingNickname(User user) {
 		try {
 			return users.saveAndFlush(user);
 		}
 		catch (DataIntegrityViolationException e) {
-			throw new ApiException(ErrorCode.NICKNAME_TAKEN);
+			String constraint = e.getCause() instanceof ConstraintViolationException c ? c.getConstraintName() : null;
+			if (constraint == null) {
+				throw e;
+			}
+			if (constraint.contains("nickname")) {
+				throw new ApiException(ErrorCode.NICKNAME_TAKEN);
+			}
+			if (constraint.contains("profile_image")) {
+				throw new ApiException(ErrorCode.IMAGE_NOT_FOUND);
+			}
+			throw e;
 		}
 	}
 

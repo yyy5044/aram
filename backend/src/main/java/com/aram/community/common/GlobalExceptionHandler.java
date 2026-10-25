@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -44,7 +46,8 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
-			MissingServletRequestParameterException.class })
+			MissingServletRequestParameterException.class, MissingServletRequestPartException.class,
+			MultipartException.class })
 	ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
 		return respond(ErrorCode.INVALID_INPUT, null);
 	}
@@ -54,9 +57,14 @@ public class GlobalExceptionHandler {
 		return respond(ErrorCode.IMAGE_TOO_LARGE, null);
 	}
 
-	@ExceptionHandler({ NoResourceFoundException.class, HttpRequestMethodNotSupportedException.class })
-	ResponseEntity<ErrorResponse> handleNotFound(Exception e) {
+	@ExceptionHandler(NoResourceFoundException.class)
+	ResponseEntity<ErrorResponse> handleNotFound(NoResourceFoundException e) {
 		return respond(ErrorCode.NOT_FOUND, null);
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	ResponseEntity<ErrorResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException e) {
+		return respond(ErrorCode.METHOD_NOT_ALLOWED, null);
 	}
 
 	@ExceptionHandler(Exception.class)

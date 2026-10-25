@@ -119,6 +119,18 @@ class PostApiTest extends IntegrationTest {
 	}
 
 	@Test
+	void titleLengthIsCheckedAfterTrimming() throws Exception {
+		String title = "가".repeat(100);
+		String response = create(testUsers.as(author), body(title + "  ", List.of(), List.of(), "26.21"))
+			.andExpect(status().isCreated())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+		long id = ((Number) JsonPath.read(response, "$.id")).longValue();
+		mockMvc.perform(get("/api/posts/" + id)).andExpect(jsonPath("$.title").value(title));
+	}
+
+	@Test
 	void unknownPatchRejected() throws Exception {
 		create(testUsers.as(author), body("제목", List.of(), List.of(), "99.1")).andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.fieldErrors.gamePatch").exists());

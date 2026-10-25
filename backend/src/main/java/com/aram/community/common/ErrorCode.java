@@ -5,6 +5,7 @@ public enum ErrorCode {
 
 	UNAUTHORIZED(401, "로그인이 필요해요"),
 	FORBIDDEN(403, "권한이 없어요"),
+	CSRF_INVALID(403, "화면이 오래 열려 있었어요. 새로고침한 뒤 다시 시도해주세요"),
 	NICKNAME_REQUIRED(403, "닉네임을 먼저 정해주세요"),
 	INVALID_INPUT(400, "입력값을 확인해주세요"),
 	POST_NOT_FOUND(404, "글을 찾을 수 없어요"),
@@ -12,6 +13,7 @@ public enum ErrorCode {
 	IMAGE_NOT_FOUND(404, "이미지를 찾을 수 없어요"),
 	NICKNAME_TAKEN(409, "이미 쓰고 있는 닉네임이에요"),
 	NOT_FOUND(404, "찾을 수 없어요"),
+	METHOD_NOT_ALLOWED(405, "지원하지 않는 요청이에요"),
 	USER_NOT_FOUND(404, "사용자를 찾을 수 없어요"),
 	CHAMPION_NOT_FOUND(404, "챔피언을 찾을 수 없어요"),
 	AUGMENT_NOT_FOUND(404, "없는 증강이에요"),

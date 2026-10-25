@@ -90,11 +90,13 @@ class ProfileUpdateApiTest extends IntegrationTest {
 	@Test
 	void duplicateNicknameIs409AndNothingChanges() throws Exception {
 		testUsers.create("민수");
-		putProfile(me, body("민수", null, false)).andExpect(status().isConflict())
+		UUID img = insertImage(me.getId(), null);
+		putProfile(me, body("민수", img, false)).andExpect(status().isConflict())
 			.andExpect(jsonPath("$.code").value("NICKNAME_TAKEN"));
 		mockMvc.perform(get("/api/me").with(testUsers.as(me)))
 			.andExpect(jsonPath("$.nickname").value("하포"))
-			.andExpect(jsonPath("$.profilePublic").value(true));
+			.andExpect(jsonPath("$.profilePublic").value(true))
+			.andExpect(jsonPath("$.profileImageId").doesNotExist());
 	}
 
 	@Test

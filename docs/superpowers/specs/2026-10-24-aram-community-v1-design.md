@@ -270,7 +270,7 @@ React 19, TypeScript, Vite, Tailwind CSS, React Router(화면 이동), TanStack 
 | GET | `/api/status` | 서버·DB 상태 (기존) | 누구나 |
 
 - 추천 PUT/DELETE는 여러 번 호출해도 결과가 같다(멱등).
-- 글 목록의 `champion`, `augment`는 각각 하나의 ID다. 화면은 둘 중 하나만 쓰지만, 둘 다 오면 두 조건을 모두 만족하는 글만 준다. `sort` 기본값은 `latest`, `page` 기본값은 1이고 범위를 벗어나면 빈 목록을 준다.
+- 글 목록의 `champion`, `augment`는 각각 하나의 ID다. 화면은 둘 중 하나만 쓰지만, 둘 다 오면 두 조건을 모두 만족하는 글만 준다. `sort` 기본값은 `latest`, `page` 기본값은 1이고 마지막 페이지를 넘으면 빈 목록을 준다. 1보다 작으면 400(`INVALID_INPUT`)이다.
 - 글 작성·수정 요청: `{ title, content, championIds[], augmentIds[], gamePatch }`. `gamePatch`는 `patches` 테이블에 있는 값이어야 한다. 태그 ID는 존재해야 하고 중복은 하나로 합친다. 새로 붙이는 증강은 `active`여야 한다(이미 붙어 있던 비활성 증강은 유지 가능).
 
 ### 7.1 오류 응답

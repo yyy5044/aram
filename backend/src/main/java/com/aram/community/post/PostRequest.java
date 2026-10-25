@@ -2,12 +2,12 @@ package com.aram.community.post;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import java.util.List;
 import tools.jackson.databind.JsonNode;
 
 public record PostRequest(
-		@NotBlank(message = "제목을 입력해주세요") @Size(max = 100, message = "제목은 100자 이하로 써주세요") String title,
+		// 길이는 앞뒤 공백을 뺀 뒤 PostService에서 검사해요.
+		@NotBlank(message = "제목을 입력해주세요") String title,
 		@NotNull(message = "본문을 입력해주세요") JsonNode content, List<String> championIds, List<String> augmentIds,
 		@NotBlank(message = "패치를 골라주세요") String gamePatch) {
 

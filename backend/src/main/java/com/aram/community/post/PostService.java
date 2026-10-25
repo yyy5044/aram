@@ -23,6 +23,8 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class PostService {
 
+	static final int TITLE_MAX = 100;
+
 	static final int MAX_CHAMPIONS = 5;
 
 	static final int MAX_AUGMENTS = 10;
@@ -121,6 +123,9 @@ public class PostService {
 		String title = req.title().strip();
 		if (title.isEmpty()) {
 			throw field("title", "제목을 입력해주세요");
+		}
+		if (title.length() > TITLE_MAX) {
+			throw field("title", "제목은 100자 이하로 써주세요");
 		}
 		ValidatedContent content = validator.validate(jsonMapper.writeValueAsString(req.content()));
 		if (!patches.existsByGamePatch(req.gamePatch())) {
