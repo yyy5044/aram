@@ -14,6 +14,14 @@ afterEach(() => {
 const me = { id: 1, nickname: '양호', avatarUrl: null, admin: false, suggestedNickname: '양호' }
 
 describe('Header', () => {
+  it('shows the ARAM logo linking home', async () => {
+    mockApi({ 'GET /api/me': () => json(null) })
+    renderWithProviders(<Header />)
+    const home = await screen.findByRole('link', { name: 'ARAM' })
+    expect(home).toHaveAttribute('href', '/')
+    expect(home.querySelector('img')).toHaveAttribute('src', '/logo.png')
+  })
+
   it('shows Discord login and 글쓰기 when logged out', async () => {
     mockApi({ 'GET /api/me': () => json(null) })
     renderWithProviders(<Header />)
@@ -47,7 +55,7 @@ describe('Header', () => {
     renderWithProviders(<Header />)
     expect(await screen.findByRole('button', { name: '내 메뉴' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '글쓰기' })).toHaveAttribute('href', '/write')
-    expect(screen.getByRole('link', { name: '증강 칼바람' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'ARAM' })).toHaveAttribute('href', '/')
   })
 
   it('has my nickname, 내 프로필 and 프로필 수정 in the menu, above 로그아웃', async () => {

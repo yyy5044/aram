@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-증강 칼바람 커뮤니티: 리그 오브 레전드 증강 칼바람 나락 모드의 증강 정보를 친구들(약 10명)과 공유하는 취미 커뮤니티 사이트.
+ARAM(증강 칼바람 커뮤니티): 리그 오브 레전드 증강 칼바람 나락 모드의 증강 정보를 친구들(약 10명)과 공유하는 취미 커뮤니티 사이트.
 
 - 설계: `docs/superpowers/specs/2026-10-24-aram-community-v1-design.md` (기능·권한·데이터·API의 기준)
 - 구현 계획: `docs/superpowers/plans/2026-10-24-aram-community-v1.md` (v1 14개 작업, 모두 완료)
@@ -60,6 +60,7 @@ cd frontend && npm test && npm run build && npm run lint
 - 운영 설정은 `application-prod.yml`(이미지가 `SPRING_PROFILES_ACTIVE=prod`로 켠다): DB는 Compose의 `db`, `forward-headers-strategy: native`(Caddy의 `X-Forwarded-Proto`로 디스코드 돌아올 주소가 https), 세션 쿠키 `Secure`, 사진은 `/data/images` 볼륨. 개발 로그인은 `@Profile("!prod")`라 운영에서는 설정과 상관없이 없다(환경 변수가 설정 파일보다 우선해서 파일로는 못 막는다).
 - Docker 이미지는 저장소 루트를 빌드 위치로 만든다: `docker build -f backend/Dockerfile .`, `docker build -f deploy/web.Dockerfile .`. 실행 jar 이름은 `app.jar`로 고정. 백엔드가 꺼져도 Caddy가 화면 파일은 주므로, 업데이트 중에는 화면이 열리고 API만 503 `MAINTENANCE`("잠시 업데이트 중이에요…")를 준다(목록·글·프로필이 이 문장을 그대로 띄운다). Caddy의 `header`는 `try_files`보다 먼저 정해져서 `/assets/*` 밖은 블록 전체에 `no-cache`를 붙인다.
 - 서버 `deploy.sh`는 `.env`의 `IMAGE_TAG`만 바꿔 교체하고, 백엔드 `127.0.0.1:8080/actuator/health`가 UP이고 Caddy가 `Host: $DOMAIN`의 http 요청에 308을 줄 때까지 180초 기다린다. 교체(`up -d`)가 실패하거나 시간 안에 정상이 안 되면 직전 태그로 되돌리고, 직전 태그가 없으면 줄을 지운다. Caddyfile 오타는 `web` 이미지를 만들 때(`caddy validate`) 막힌다. 백엔드 이미지 사용자는 UID 10001로 고정(사진 볼륨 소유자).
+- 서비스 이름은 **ARAM**. 아이콘은 포로 그림(사용자가 이미지 생성으로 고름)으로 `frontend/public/`의 `favicon.ico`(16·32·48), `apple-touch-icon.png`(180, 모서리 채움), `logo.png`(128, 둥근 모서리 투명, 머리말 로고·업데이트 중 안내 페이지)에 있다. 모든 화면 맨 아래 `components/SiteFooter.tsx`에 라이엇 팬 콘텐츠 정책의 안내 문구("ARAM은 Riot Games의 보증을 받지 않았으며…")가 있다. 게임 그림을 쓰는 공개 사이트라 지우지 않는다.
 - 화면 언어 설정(`lib/language.ts`, 머리말 드롭다운, localStorage `lang`)은 지금 증강 카드의 번역 언어만 바꾼다. 화면 문구 번역(i18n)은 아직 없다.
 - 디자인(칼바람 나락의 밤, 설계 `docs/superpowers/specs/2026-10-25-design-polish-design.md`): 색·모서리·글꼴은 `index.css`의 `@theme` 이름(`bg-night`, `text-gold-deep`, `rounded-touch` …)만 쓴다. 버튼은 `components/ui/button.ts`의 `buttonClass(종류, 높이)`. 크기는 글자 28/20/17/15/13, 버튼 56/48/44/40/36, 간격 4의 배수, 모서리는 담는 것 0·작은 표시 4·누르는 것 8·얼굴은 원. Tailwind 4는 같은 속성의 클래스 두 개가 한 요소에 붙으면 어느 쪽이 이길지 순서로 정해지지 않으니, `buttonClass(...)` 뒤에 높이·여백·글자색·display를 덧붙이지 말고 종류를 더하거나 감싸는 요소를 쓴다(꼭 덮어써야 하면 `!`). 다크 모드는 없다.
 
@@ -82,6 +83,7 @@ cd frontend && npm test && npm run build && npm run lint
 - 2026-10-25: 미뤄둔 작은 문제 정리 — 잘못된 숫자 주소(`/posts/abc`)는 "없는 글이에요"(`lib/routeId.ts`), 디스코드 로그인 실패·취소는 `/auth/done?error`로 와서 안내 후 원래 화면으로, CSRF 실패는 `CSRF_INVALID`("새로고침한 뒤 다시"), 지원하지 않는 메서드 405, 파일 칸 없는/multipart 아닌 업로드 400, 제목 길이는 공백 제거 뒤 검사, 추천·스크랩 버튼이 다시 불러온 값을 따라감, 펼침 영역의 글 정렬은 주소 `?order=likes`에 남음(다른 칸을 열면 지워짐), 남은 글 수는 마지막 페이지 기준, 챔피언 자료가 없으면 "아직 챔피언 정보를 받아오지 못했어요", 마지막 페이지를 넘으면 "이 페이지는 비어 있어요"와 「첫 페이지로」, 가입일은 한국 시간, 사진이 저장 직전 지워지면 "이미지를 찾을 수 없어요", 게임 데이터 동기화가 실패하면 30분 뒤 재시도(`SyncTimer`), 줄바꿈은 루트 `.gitattributes`로 작업 폴더까지 LF.
 - 2026-10-24: 증강·챔피언 탭(`/augments`, `/champions`) — 위쪽 메뉴 탭, 증강은 프리즘·골드·실버 묶음(접힘), 이름 검색과 가나다순/글 많은 순, 칸을 누르면 그 줄 아래로 글 목록(5개씩 더 보기)이 펼쳐지고 `?open=`에 남는다. 챔피언에는 자주 함께 쓰는 증강. API `GET /api/tag-counts`, `GET /api/champions/{id}/top-augments`, `GET /api/posts?size=`. 설계 `docs/superpowers/specs/2026-10-24-tag-browse-design.md`, 계획 `docs/superpowers/plans/2026-10-24-tag-browse.md`.
 - 2026-10-25: 배포 준비 — 로그인 정보 DB 저장(Spring Session JDBC), `prod` 설정, Docker 이미지 2개, 운영 Compose·Caddy·업데이트 중 안내, 자동 되돌리기 `deploy.sh`, GitHub Actions(테스트·배포), 서버 준비 스크립트, 안내서 `docs/deploy.md`. `dev` 가지를 만들어 이제 작업은 `dev`로 합친다. 설계 `docs/superpowers/specs/2026-10-25-deploy-design.md`, 계획 `docs/superpowers/plans/2026-10-25-deploy.md`.
+- 2026-10-25: 이름을 ARAM으로, 포로 아이콘(탭·홈 화면·머리말), 바닥글에 라이엇 안내 문구.
 
 **다음 단계**
 1. 첫 배포: 코드는 준비됐다(2026-10-25, `dev`). `docs/deploy.md` 1장을 사용자와 함께 진행한다 — 도메인 구입, Lightsail 서버·고정 IP·443·자동 스냅샷, A 레코드, `server-setup.sh`, 서버 `.env`, 디스코드 Redirects에 운영 주소, AWS Budgets, `gh secret set`(DEPLOY_HOST·DEPLOY_USER·DEPLOY_SSH_KEY·DEPLOY_KNOWN_HOSTS), `dev` 푸시로 CI 확인, `main` 푸시로 배포. 사진은 서버 디스크 + 스냅샷(S3는 쓰지 않기로 함, `ImageStorage`는 그대로).

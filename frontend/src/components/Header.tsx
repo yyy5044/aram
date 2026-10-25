@@ -45,11 +45,8 @@ export default function Header() {
     <header className="bg-nightsky relative z-20 border-b border-gold shadow-[0_3px_0_-1px_var(--color-night),0_4px_0_-1px_#c8aa6e66]">
       <div className={`${PAGE_WIDE} flex flex-wrap items-center gap-x-2 py-1.5 lg:h-16 lg:flex-nowrap lg:py-0`}>
         <Link to="/" className="mr-2 flex items-center gap-2.5 font-display text-[19px] whitespace-nowrap text-gold-pale lg:mr-6 lg:text-[22px]">
-          <span
-            aria-hidden="true"
-            className="h-3.5 w-3.5 rotate-45 border border-gold bg-linear-to-br from-teal-hi to-[#0a5f6a]"
-          />
-          증강 칼바람
+          <img src="/logo.png" alt="" className="h-8 w-8 lg:h-9 lg:w-9" />
+          ARAM
         </Link>
         {/* 1024px보다 좁으면(휴대폰·태블릿) 이 메뉴가 로고 줄 아래 한 줄 전체(3등분 탭)로 내려가요. */}
         <nav
