@@ -7,9 +7,12 @@ import com.aram.community.gamedata.AugmentRepository;
 import com.aram.community.gamedata.Champion;
 import com.aram.community.gamedata.ChampionRepository;
 import com.aram.community.gamedata.GameDataService;
+import com.aram.community.gamedata.Item;
+import com.aram.community.gamedata.ItemRepository;
 import com.aram.community.gamedata.PatchRepository;
 import com.aram.community.user.User;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,11 +32,15 @@ public class PostService {
 
 	static final int MAX_AUGMENTS = 10;
 
+	static final int MAX_ITEMS = 10;
+
 	private final PostRepository posts;
 
 	private final ChampionRepository champions;
 
 	private final AugmentRepository augments;
+
+	private final ItemRepository items;
 
 	private final PatchRepository patches;
 
@@ -52,12 +59,13 @@ public class PostService {
 	private final JsonMapper jsonMapper;
 
 	public PostService(PostRepository posts, ChampionRepository champions, AugmentRepository augments,
-			PatchRepository patches, PostContentValidator validator, ImagePostLinker imageLinker,
+			ItemRepository items, PatchRepository patches, PostContentValidator validator, ImagePostLinker imageLinker,
 			VideoPostLinker videoLinker, GameDataService gameData, LikeLookup likeLookup, ScrapLookup scrapLookup, JsonMapper jsonMapper) {
 		this.scrapLookup = scrapLookup;
 		this.posts = posts;
 		this.champions = champions;
 		this.augments = augments;
+		this.items = items;
 		this.patches = patches;
 		this.validator = validator;
 		this.imageLinker = imageLinker;
@@ -69,9 +77,9 @@ public class PostService {
 
 	@Transactional
 	public long create(User author, PostRequest req) {
-		Input input = prepare(req, Set.of());
+		Input input = prepare(req, Set.of(), Set.of());
 		Post post = posts.save(Post.create(author, input.title(), input.content(), req.gamePatch(), input.champions(),
-				input.augments(), Instant.now()));
+				input.augments(), input.items(), Instant.now()));
 		imageLinker.link(post.getId(), author.getId(), input.content().imageIds());
 		videoLinker.link(post.getId(), author.getId(), input.content().videoIds());
 		return post.getId();
@@ -84,8 +92,10 @@ public class PostService {
 			throw new ApiException(ErrorCode.FORBIDDEN);
 		}
 		Set<String> alreadyAttached = post.getAugments().stream().map(Augment::getId).collect(Collectors.toSet());
-		Input input = prepare(req, alreadyAttached);
-		post.edit(input.title(), input.content(), req.gamePatch(), input.champions(), input.augments(), Instant.now());
+		Set<Integer> alreadyAttachedItems = post.getItems().stream().map(Item::getId).collect(Collectors.toSet());
+		Input input = prepare(req, alreadyAttached, alreadyAttachedItems);
+		post.edit(input.title(), input.content(), req.gamePatch(), input.champions(), input.augments(), input.items(),
+				Instant.now());
 		imageLinker.link(post.getId(), actor.getId(), input.content().imageIds());
 		videoLinker.link(post.getId(), actor.getId(), input.content().videoIds());
 	}
@@ -114,6 +124,7 @@ public class PostService {
 					.map(gameData::toDto)
 					.toList(),
 				post.getAugments().stream().sorted(Comparator.comparing(Augment::getNameKo)).map(gameData::toDto).toList(),
+				gameData.toDtos(post.getItems().stream().sorted(Comparator.comparing(Item::getNameKo)).toList()),
 				post.getLikeCount(), post.getCommentCount(), likedByMe, scrappedByMe, post.getCreatedAt(), post.getUpdatedAt(),
 				post.isEdited());
 	}
@@ -122,24 +133,45 @@ public class PostService {
 		return posts.findById(postId).orElseThrow(() -> new ApiException(ErrorCode.POST_NOT_FOUND));
 	}
 
-	private record Input(String title, ValidatedContent content, Set<Champion> champions, Set<Augment> augments) {
+	private record Input(String title, ValidatedContent content, Set<Champion> champions, Set<Augment> augments,
+			Set<Item> items) {
 	}
 
-	/** 본문 박스의 챔피언·증강이 실제로 있는지 봐요. 사용 중이 아닌(옛) 증강도 있는 것으로 쳐요. */
+	/** 본문 박스의 챔피언·증강·아이템이 실제로 있는지 봐요. 사용 중이 아닌(옛) 증강·아이템도 있는 것으로 쳐요. */
 	private void requireMentionedTagsExist(List<Mention> mentions) {
 		Set<String> championIds = new LinkedHashSet<>();
 		Set<String> augmentIds = new LinkedHashSet<>();
+		Set<Integer> itemIds = new LinkedHashSet<>();
 		for (Mention m : mentions) {
-			("champion".equals(m.kind()) ? championIds : augmentIds).add(m.id());
+			switch (m.kind()) {
+				case "champion" -> championIds.add(m.id());
+				case "item" -> itemIds.add(Integer.valueOf(m.id()));
+				default -> augmentIds.add(m.id());
+			}
 		}
 		boolean allExist = champions.findAllById(championIds).size() == championIds.size()
-				&& augments.findAllById(augmentIds).size() == augmentIds.size();
+				&& augments.findAllById(augmentIds).size() == augmentIds.size()
+				&& items.findAllById(itemIds).size() == itemIds.size();
 		if (!allExist) {
-			throw field("content", "없는 챔피언·증강이 들어 있어요");
+			throw field("content", "없는 챔피언·증강·아이템이 들어 있어요");
 		}
 	}
 
-	private Input prepare(PostRequest req, Set<String> alreadyAttachedAugments) {
+	/** 아이템 번호 문자열을 숫자로 바꿔요. 숫자가 아니거나 int를 넘으면 없는 아이템으로 쳐요. */
+	private static Set<Integer> parseItemIds(Collection<String> ids) {
+		Set<Integer> parsed = new LinkedHashSet<>();
+		for (String id : ids) {
+			try {
+				parsed.add(Integer.valueOf(id));
+			}
+			catch (NumberFormatException e) {
+				throw field("itemIds", "없는 아이템이 들어 있어요");
+			}
+		}
+		return parsed;
+	}
+
+	private Input prepare(PostRequest req, Set<String> alreadyAttachedAugments, Set<Integer> alreadyAttachedItems) {
 		String title = req.title().strip();
 		if (title.isEmpty()) {
 			throw field("title", "제목을 입력해주세요");
@@ -175,7 +207,23 @@ public class PostService {
 		if (addsInactive) {
 			throw field("augmentIds", "현재 게임에 없는 증강은 새로 붙일 수 없어요");
 		}
-		return new Input(title, content, new LinkedHashSet<>(foundChampions), new LinkedHashSet<>(foundAugments));
+
+		Set<String> itemIdStrings = new LinkedHashSet<>(req.itemIdsOrEmpty());
+		if (itemIdStrings.size() > MAX_ITEMS) {
+			throw field("itemIds", "아이템은 10개까지 고를 수 있어요");
+		}
+		Set<Integer> itemIds = parseItemIds(itemIdStrings);
+		List<Item> foundItems = items.findAllById(itemIds);
+		if (foundItems.size() != itemIds.size()) {
+			throw field("itemIds", "없는 아이템이 들어 있어요");
+		}
+		boolean addsInactiveItem = foundItems.stream()
+			.anyMatch(i -> !i.isActive() && !alreadyAttachedItems.contains(i.getId()));
+		if (addsInactiveItem) {
+			throw field("itemIds", "현재 게임에 없는 아이템은 새로 붙일 수 없어요");
+		}
+		return new Input(title, content, new LinkedHashSet<>(foundChampions), new LinkedHashSet<>(foundAugments),
+				new LinkedHashSet<>(foundItems));
 	}
 
 	private static ApiException field(String name, String message) {

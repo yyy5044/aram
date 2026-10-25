@@ -31,6 +31,9 @@ class PostMentionTest extends IntegrationTest {
 		jdbc.update("insert into champions (id, name_ko, image_file) values ('XinZhao', '신짜오', 'XinZhao.png')");
 		jdbc.update("insert into augments (id, name_ko, icon_path, active, updated_at) values "
 				+ "('StoneGuts', '거석상의 용기', 'a.png', true, now()), ('OldOne', '옛 증강', 'b.png', false, now())");
+		jdbc.update("insert into items (id, name_ko, tier, price_total, icon_file, from_ids, active, updated_at) values "
+				+ "(3084, '굳건한 심장', 'LEGENDARY', 3000, '3084.png', '{}', true, now()), "
+				+ "(9999, '옛 아이템', 'EPIC', 2000, '9999.png', '{}', false, now())");
 		author = testUsers.create("양호");
 	}
 
@@ -50,7 +53,23 @@ class PostMentionTest extends IntegrationTest {
 	@Test
 	void rejectsUnknownMention() throws Exception {
 		create(doc(paragraph(mention("champion", "Nobody", "없는 챔피언")))).andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.fieldErrors.content").value("없는 챔피언·증강이 들어 있어요"));
+			.andExpect(jsonPath("$.fieldErrors.content").value("없는 챔피언·증강·아이템이 들어 있어요"));
+	}
+
+	@Test
+	void savesExistingItemMention() throws Exception {
+		create(doc(paragraph(mention("item", "3084", "굳건한 심장")))).andExpect(status().isCreated());
+	}
+
+	@Test
+	void rejectsUnknownItemMention() throws Exception {
+		create(doc(paragraph(mention("item", "4242", "없는 아이템")))).andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.fieldErrors.content").value("없는 챔피언·증강·아이템이 들어 있어요"));
+	}
+
+	@Test
+	void acceptsInactiveItemMention() throws Exception {
+		create(doc(paragraph(mention("item", "9999", "옛 아이템")))).andExpect(status().isCreated());
 	}
 
 	@Test
