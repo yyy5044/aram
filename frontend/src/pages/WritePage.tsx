@@ -14,6 +14,7 @@ import EmptyState from '../components/ui/EmptyState'
 import { DiscordIcon } from '../components/ui/icons'
 import { PAGE_NARROW } from '../components/ui/layout'
 import VersionChip from '../components/ui/VersionChip'
+import { cleanContent } from '../editor/cleanContent'
 import PostEditor from '../editor/PostEditor'
 import { parseRouteId } from '../lib/routeId'
 import NotFoundPage from './NotFoundPage'
@@ -89,6 +90,8 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
   const [submitting, setSubmitting] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [sessionExpired, setSessionExpired] = useState(false)
+  // 본문 영상 칸 중 올리는 중·변환 중(busy)과 실패한(failed) 수. 등록 잠금에 써요.
+  const [clips, setClips] = useState({ busy: 0, failed: 0 })
   const leaving = useRef(false)
 
   const augmentItems = [...augments, ...(initial?.augments.filter((a) => !augments.some((x) => x.id === a.id)) ?? [])]
@@ -122,11 +125,16 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    if (clips.busy > 0) return
+    if (clips.failed > 0) {
+      toast.show('변환하지 못한 영상을 빼거나 다시 올려 주세요')
+      return
+    }
     setSubmitting(true)
     setErrors({})
     const body = {
       title,
-      content: content ?? { type: 'doc', content: [] },
+      content: cleanContent(content ?? { type: 'doc', content: [] }),
       championIds,
       augmentIds,
       gamePatch,
@@ -200,6 +208,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
             initialContent={initial?.content ?? null}
             onChange={change(setContent)}
             onError={toast.show}
+            onPendingChange={setClips}
             labelledBy={bodyLabelId}
           />
           {fieldError('content')}
@@ -268,8 +277,12 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
       </div>
 
       {/* 글이 길어져도 스크롤 없이 누를 수 있게 화면 아래에 붙어 있어요. */}
-      <div className="sticky bottom-0 z-10 mt-4 flex items-center gap-2 border-t border-line bg-white/95 px-3 py-3 shadow-[0_-4px_16px_#0c1f2e14] sm:px-4">
-        <span className="flex-1 max-sm:hidden" />
+      <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center gap-2 border-t border-line bg-white/95 px-3 py-3 shadow-[0_-4px_16px_#0c1f2e14] sm:px-4">
+        {clips.busy > 0 ? (
+          <span className="flex-1 text-[13px] text-ink-3 max-sm:basis-full">영상 변환이 끝나면 등록할 수 있어요</span>
+        ) : (
+          <span className="flex-1 max-sm:hidden" />
+        )}
         <button
           type="button"
           onClick={() => navigate(editId !== null ? `/posts/${editId}` : '/')}
@@ -277,7 +290,7 @@ function PostForm({ editId, initial, champions, augments, patches }: FormProps) 
         >
           취소
         </button>
-        <button type="submit" disabled={submitting} className={`${buttonClass('primary', 44)} min-w-[120px] max-sm:flex-1`}>
+        <button type="submit" disabled={submitting || clips.busy > 0} className={`${buttonClass('primary', 44)} min-w-[120px] max-sm:flex-1`}>
           {editId !== null ? '수정 완료' : '등록'}
         </button>
       </div>
