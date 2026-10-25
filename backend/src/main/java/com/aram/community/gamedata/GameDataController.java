@@ -32,6 +32,16 @@ public class GameDataController {
 		return gameData.augmentDetail(id, lang);
 	}
 
+	@GetMapping("/items")
+	public List<ItemDto> items() {
+		return gameData.allItems();
+	}
+
+	@GetMapping("/items/{id}")
+	public ItemDetailDto item(@PathVariable String id, @RequestParam(required = false) String lang) {
+		return gameData.itemDetail(id, lang);
+	}
+
 	@GetMapping("/patches")
 	public PatchesResponse patches() {
 		return new PatchesResponse(gameData.currentGamePatch().orElse(null), gameData.selectablePatches());

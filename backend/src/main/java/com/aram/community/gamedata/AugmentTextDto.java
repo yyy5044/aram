@@ -6,4 +6,8 @@ public record AugmentTextDto(String locale, String name, String description) {
 		return new AugmentTextDto(text.getId().locale(), text.getName(), text.getDescription());
 	}
 
+	static AugmentTextDto from(ItemText text) {
+		return new AugmentTextDto(text.getId().locale(), text.getName(), text.getDescription());
+	}
+
 }
