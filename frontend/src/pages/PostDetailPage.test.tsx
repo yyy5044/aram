@@ -124,6 +124,22 @@ describe('PostDetailPage', () => {
     expect(screen.getByRole('button', { name: /추천 24/ })).toHaveAttribute('aria-pressed', 'false')
   })
 
+  it('shows like and scrap changes made elsewhere when the post reloads', async () => {
+    let current = detail()
+    const api = mockApi({
+      'GET /api/me': () => json(meMinsu),
+      'GET /api/posts/5': () => json(current),
+      'GET /api/posts/5/comments': () => json([]),
+    })
+    const { queryClient } = renderWithProviders(<PostDetailPage />, { path: '/posts/:postId', route: '/posts/5' })
+    expect(await screen.findByRole('button', { name: /추천 24/ })).toHaveAttribute('aria-pressed', 'false')
+    current = detail({ likeCount: 30, likedByMe: true, scrappedByMe: true })
+    await queryClient.invalidateQueries({ queryKey: ['posts', 'detail', 5] })
+    expect(await screen.findByRole('button', { name: /추천 30/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: '★ 스크랩됨' })).toBeInTheDocument()
+    expect(api.find('GET', '/api/posts/5').length).toBeGreaterThan(1)
+  })
+
   it('shows the scrap button next to the like button', async () => {
     setup(meMinsu, detail({ scrappedByMe: true }))
     const like = await screen.findByRole('button', { name: /추천 24/ })

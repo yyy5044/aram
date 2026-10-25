@@ -7,12 +7,17 @@ import { useToast } from './toastContext'
 
 type Props = { postId: number; likeCount: number; likedByMe: boolean }
 
-/** 추천 버튼. 누르면 바로 바뀌고, 실패하면 원래대로 돌아가요. */
+/** 추천 버튼. 누르면 바로 바뀌고, 실패하면 원래대로 돌아가요. 글을 다시 불러와 값이 바뀌면 그 값을 따라가요. */
 export default function LikeButton({ postId, likeCount, likedByMe }: Props) {
   const { data: me } = useMe()
   const toast = useToast()
   const queryClient = useQueryClient()
   const [state, setState] = useState({ likeCount, likedByMe })
+  const [shown, setShown] = useState({ likeCount, likedByMe })
+  if (shown.likeCount !== likeCount || shown.likedByMe !== likedByMe) {
+    setShown({ likeCount, likedByMe })
+    setState({ likeCount, likedByMe })
+  }
   const [busy, setBusy] = useState(false)
 
   async function toggle() {
