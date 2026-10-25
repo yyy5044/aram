@@ -76,7 +76,7 @@ cd frontend && npm test && npm run build && npm run lint
 작업을 마칠 때마다 이 목록을 실제 상태에 맞게 고친다.
 
 **완료**
-- 2026-10-24: 디스코드 앱 등록(앱 이름 `aram`, Client ID `1563452857179578451`), 로컬에서 실제 디스코드 로그인 성공. 관리자는 사용자 "하포"(디스코드 ID `472407196144107529`). 디스코드 개발자 포털 Redirects에는 `http://localhost:5173/login/oauth2/code/discord`만 등록돼 있다.
+- 2026-10-24: 디스코드 앱 등록(앱 이름 `aram`, Client ID `1563452857179578451`), 로컬에서 실제 디스코드 로그인 성공. 관리자는 사용자 "하포"(디스코드 ID `472407196144107529`). 디스코드 개발자 포털 Redirects에는 `http://localhost:5173/login/oauth2/code/discord`와 운영 `https://aram.asia/login/oauth2/code/discord`가 등록돼 있다.
 - 2026-10-24: 프로필 페이지(`/users/:userId`, `/settings/profile`) — 활동 잔디(한국 시간, 53주/좁은 화면 26주), 통계, 쓴 글·쓴 댓글·스크랩 탭, 공개/비공개, 직접 올린 프로필 사진, 글 스크랩. 설계 `docs/superpowers/specs/2026-10-24-profile-design.md`, 계획 `docs/superpowers/plans/2026-10-24-profile.md`.
 - 2026-10-24: 증강 카드 — 증강 탭에서 증강을 누르면 게임 카드 틀(CommunityDragon 그림)로 영어 원문 카드와 선택 언어 카드가 나란히 나오고(같은 언어면 한 장), 수치가 채워진 긴 설명에 게임 색 표식을 입힌다. 마우스를 올리면 복사 버튼, 머리말에 언어 설정(한국어·English), 글 목록은 한 줄짜리. API `GET /api/augments/{id}?lang=`. 설계 `docs/superpowers/specs/2026-10-24-augment-card-design.md`, 계획 `docs/superpowers/plans/2026-10-24-augment-card.md`.
 - 2026-10-25: 디자인 다듬기(칼바람 나락의 밤) — 연한 하늘색 바탕, 밤하늘 머리말·머리 띠, 금색 장식, 청록 버튼. 글 목록은 작성자(사진+이름) 칸·20px 제목·아이콘+이름 태그·"26.21 버전 최신" 묶음, 증강·챔피언 칸은 글 수 없이, 프로필 숫자에 받은 추천(API `stats.receivedLikeCount`), 글쓰기 아래 고정 등록 띠, 휴대폰 떠 있는 글쓰기 버튼, 알림은 아래 가운데. 설계·계획·목업은 `docs/superpowers/specs/2026-10-25-design-polish-*`, `plans/2026-10-25-design-polish.md`.
@@ -84,12 +84,14 @@ cd frontend && npm test && npm run build && npm run lint
 - 2026-10-24: 증강·챔피언 탭(`/augments`, `/champions`) — 위쪽 메뉴 탭, 증강은 프리즘·골드·실버 묶음(접힘), 이름 검색과 가나다순/글 많은 순, 칸을 누르면 그 줄 아래로 글 목록(5개씩 더 보기)이 펼쳐지고 `?open=`에 남는다. 챔피언에는 자주 함께 쓰는 증강. API `GET /api/tag-counts`, `GET /api/champions/{id}/top-augments`, `GET /api/posts?size=`. 설계 `docs/superpowers/specs/2026-10-24-tag-browse-design.md`, 계획 `docs/superpowers/plans/2026-10-24-tag-browse.md`.
 - 2026-10-25: 배포 준비 — 로그인 정보 DB 저장(Spring Session JDBC), `prod` 설정, Docker 이미지 2개, 운영 Compose·Caddy·업데이트 중 안내, 자동 되돌리기 `deploy.sh`, GitHub Actions(테스트·배포), 서버 준비 스크립트, 안내서 `docs/deploy.md`. `dev` 가지를 만들어 이제 작업은 `dev`로 합친다. 설계 `docs/superpowers/specs/2026-10-25-deploy-design.md`, 계획 `docs/superpowers/plans/2026-10-25-deploy.md`.
 - 2026-10-25: 이름을 ARAM으로, 포로 아이콘(탭·홈 화면·머리말), 바닥글에 라이엇 안내 문구.
+- 2026-10-26: 첫 배포 — **https://aram.asia** 운영 시작. 도메인은 가비아(`aram.asia`, 첫해 7,700원·연장 약 27,500원, DNS는 가비아 A 레코드 `@` → 고정 IP). Lightsail 인스턴스 `aram`(서울 ap-northeast-2a, Ubuntu 24.04, 월 12달러 2GB, 듀얼 스택, 자동 스냅샷 매일 05:00 KST), 고정 IP `aram-ip` = `3.36.255.35`, 방화벽 22·80·443. 서버 `/opt/aram/.env`는 다 채워짐(DB 비밀번호는 서버에서 만들어 밖에 없음). 서버 호스트 키 지문 `SHA256:X+yQg1G94r8Bdd2egh8MqOxGXfbDYO1BTLureIV6wjE`. GitHub Secrets 4개 등록, 배포 전용 키의 비밀 쪽은 GitHub에만 있다(로컬 사본은 지움 — 서버에 직접 들어갈 때는 Lightsail 브라우저 SSH를 쓰거나 새 키를 만들어 `authorized_keys`에 더한다). AWS 예산 `aram-monthly` 월 15달러(네이버·지메일). 예전 EC2의 놀던 탄력적 IP(월 약 3.6달러)를 지웠다. AWS 크레딧 약 22달러가 2027-03-22까지 남아 있다(가입 크레딧 100달러는 2026-09에 소진).
 
 **다음 단계**
-1. 첫 배포: 코드는 준비됐다(2026-10-25, `dev`). `docs/deploy.md` 1장을 사용자와 함께 진행한다 — 도메인 구입, Lightsail 서버·고정 IP·443·자동 스냅샷, A 레코드, `server-setup.sh`, 서버 `.env`, 디스코드 Redirects에 운영 주소, AWS Budgets, `gh secret set`(DEPLOY_HOST·DEPLOY_USER·DEPLOY_SSH_KEY·DEPLOY_KNOWN_HOSTS), `dev` 푸시로 CI 확인, `main` 푸시로 배포. 사진은 서버 디스크 + 스냅샷(S3는 쓰지 않기로 함, `ImageStorage`는 그대로).
-2. 화면 문구 영어 번역(i18n).
+1. 운영 확인 마무리: 사용자가 실제 디스코드 로그인·글쓰기·사진 올리기를 해 본다. 서버 재부팅 후 로그인·사진 유지, 다음 날 첫 자동 스냅샷이 생겼는지 확인한다.
+2. 새 기능 구상(사용자가 배포 다음에 하자고 함).
+3. 화면 문구 영어 번역(i18n).
 
-2026-10-24에 main을 GitHub에 처음 푸시했고, 2026-10-25에 증강 카드와 새 증강 자료 보완(240개 모두 설명), 미뤄둔 작은 문제 정리, 디자인 다듬기(칼바람 나락의 밤)까지 푸시했다. 이후 푸시는 사용자가 요청할 때만 한다.
+2026-10-24에 main을 GitHub에 처음 푸시했고, 2026-10-25에 증강 카드와 새 증강 자료 보완(240개 모두 설명), 미뤄둔 작은 문제 정리, 디자인 다듬기(칼바람 나락의 밤)까지 푸시했다. 2026-10-26에 `dev`를 처음 푸시하고 `main`에 합쳐 첫 배포했다. 이후 푸시는 사용자가 요청할 때만 한다.
 
 **v1 검토에서 미뤄둔 작은 문제** (나머지는 2026-10-25에 고침)
 - 본문 검사가 서식 이름만 확인하고 ProseMirror 구조나 추가 속성은 확인하지 않는다. 본문 글자 수에 문단 줄바꿈이 포함된다.
