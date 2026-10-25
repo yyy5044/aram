@@ -1,5 +1,8 @@
 package com.aram.community.gamedata;
 
+import com.aram.community.gamedata.item.ItemCatalog;
+import com.aram.community.gamedata.item.ItemDescriptionBuilder;
+import com.aram.community.gamedata.item.ItemValues;
 import com.aram.community.gamedata.text.AbilitySlot;
 import com.aram.community.gamedata.text.AugmentDescriptionBuilder;
 import com.aram.community.gamedata.text.AugmentLocale;
@@ -12,6 +15,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -41,6 +45,11 @@ public class GameDataClient {
 	}
 
 	public record AugmentData(String id, String nameKo, String iconPath, String largeIconPath, AugmentRarity rarity,
+			Map<AugmentLocale, LocalizedText> texts, int unresolvedCount) {
+	}
+
+	/** 증강 칼바람 상점에서 살 수 있는 아이템. 이름은 한국어가 먼저고, 없으면 영어예요. */
+	public record ItemData(int id, String nameKo, ItemTier tier, int priceTotal, List<Integer> fromIds,
 			Map<AugmentLocale, LocalizedText> texts, int unresolvedCount) {
 	}
 
@@ -202,6 +211,104 @@ public class GameDataClient {
 	}
 
 	/**
+	 * 증강 칼바람 상점의 아이템과 언어별 이름·설명. 맵(약 11MB)과 아이템 자료(약 16MB)는 스트리밍으로 필요한 항목만 남기고,
+	 * 문자열 표는 증강처럼 언어마다 두 번 받아요: 이름·설명 키, 그리고 설명 안의 {{참조}} 키(있을 때만). 어느 언어에도
+	 * 이름이 없는 아이템은 받지 않아요.
+	 */
+	public List<ItemData> fetchItems() {
+		String game = props.cdragonBaseUrl() + "/latest/game";
+		Map<String, JsonNode> map12 = readTopLevel(game + "/data/maps/shipping/map12/map12.bin.json",
+				Set.of("GameModeMapData", "GameModeItemList"));
+		Map<Integer, JsonNode> itemsById = ItemCatalog.itemsById(readTopLevel(game + "/items.cdtb.bin.json",
+				Set.of("ItemData")));
+		List<ItemCatalog.Entry> entries = ItemCatalog.build(ItemCatalog.kiwiItemIds(map12), itemsById);
+
+		Set<String> keys = new HashSet<>();
+		for (ItemCatalog.Entry e : entries) {
+			keys.add(itemNameKey(e));
+			keys.add(itemDescriptionKey(e.id()));
+		}
+		Map<AugmentLocale, Map<String, String>> strings = new EnumMap<>(AugmentLocale.class);
+		for (AugmentLocale locale : AugmentLocale.values()) {
+			Map<String, String> table = new HashMap<>(fetchStrings(locale, keys));
+			Set<String> refs = new HashSet<>();
+			for (ItemCatalog.Entry e : entries) {
+				String template = table.get(itemDescriptionKey(e.id()));
+				if (template != null) {
+					Matcher m = REFERENCE.matcher(template);
+					while (m.find()) {
+						refs.add(m.group(1).toLowerCase(Locale.ROOT));
+					}
+				}
+			}
+			refs.removeAll(table.keySet());
+			if (!refs.isEmpty()) {
+				table.putAll(fetchStrings(locale, refs));
+			}
+			strings.put(locale, table);
+		}
+
+		List<ItemData> result = new ArrayList<>();
+		for (ItemCatalog.Entry e : entries) {
+			String nameKey = itemNameKey(e);
+			String nameKo = itemName(strings.get(AugmentLocale.KO), nameKey);
+			if (nameKo == null) {
+				nameKo = itemName(strings.get(AugmentLocale.EN), nameKey);
+			}
+			if (nameKo == null) {
+				continue;
+			}
+			Map<AugmentLocale, LocalizedText> texts = new EnumMap<>(AugmentLocale.class);
+			int unresolved = 0;
+			try {
+				SpellValues values = ItemValues.from(e.data());
+				for (AugmentLocale locale : AugmentLocale.values()) {
+					Map<String, String> table = strings.get(locale);
+					String name = itemName(table, nameKey);
+					String template = table.get(itemDescriptionKey(e.id()));
+					if (name == null || template == null || template.isBlank()) {
+						continue;
+					}
+					ItemDescriptionBuilder.Result built = new ItemDescriptionBuilder(locale,
+							key -> Optional.ofNullable(table.get(key.toLowerCase(Locale.ROOT))))
+						.build(template, values);
+					unresolved += built.unresolved();
+					// 빈 설명이 되면 그 언어 행을 두지 않아요(화면은 "아직 설명이 없어요").
+					if (!built.description().isBlank()) {
+						texts.put(locale, new LocalizedText(name, built.description()));
+					}
+				}
+			}
+			catch (RuntimeException ex) {
+				// 설명 하나를 못 만들어도 나머지 아이템은 받아요. 이 아이템은 이름·가격·아이콘만 남아요.
+				log.warn("Item {} description failed, saving it without text: {}", e.id(), ex.toString());
+				texts.clear();
+				unresolved = 0;
+			}
+			if (unresolved > 0) {
+				log.debug("Item {} has {} unresolved placeholders", e.id(), unresolved);
+			}
+			result.add(new ItemData(e.id(), nameKo, e.tier(), e.priceTotal(), e.fromIds(), texts, unresolved));
+		}
+		return result;
+	}
+
+	/** 이름 키는 `mDisplayName`을 소문자로 바꾼 것이에요(보통 `item_{id}_name`, 칼바람 전용은 다른 이름도 있어요). */
+	private static String itemNameKey(ItemCatalog.Entry entry) {
+		String displayName = entry.data().path("mDisplayName").asString("");
+		return (displayName.isBlank() ? "item_" + entry.id() + "_name" : displayName).toLowerCase(Locale.ROOT);
+	}
+
+	private static String itemDescriptionKey(int id) {
+		return "generatedtip_item_" + id + "_description";
+	}
+
+	private static String itemName(Map<String, String> table, String nameKey) {
+		String name = table.get(nameKey);
+		return isRealName(name, nameKey) ? name : null;
+	}
+
+	/**
 	 * 클라이언트가 쓰는 증강 목록(cherry-augments.json, 이름은 옛것이지만 칼바람 증강도 들어 있어요)에서 id → 이름.
 	 * 보조 자료라 못 받으면 비워 두고 경고만 남겨요.
 	 */
@@ -294,6 +401,36 @@ public class GameDataClient {
 			}
 		}
 		return found;
+	}
+
+	/**
+	 * 큰 bin 자료(최상위가 `경로 → 항목` 객체)를 스트리밍으로 읽어서, `__type`이 types에 든 항목만 남겨요. 항목을 하나씩만
+	 * 트리로 만들어서 파일 전체가 한꺼번에 메모리에 올라가지 않아요.
+	 */
+	private Map<String, JsonNode> readTopLevel(String url, Set<String> types) {
+		return builder.build().get().uri(url).exchange((request, response) -> {
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				throw new IllegalStateException("GET " + url + " -> " + response.getStatusCode());
+			}
+			Map<String, JsonNode> kept = new LinkedHashMap<>();
+			try (InputStream body = response.getBody(); JsonParser p = jsonMapper.createParser(body)) {
+				if (p.nextToken() != JsonToken.START_OBJECT) {
+					throw new IllegalStateException(url + " is not an object");
+				}
+				while (p.nextToken() == JsonToken.PROPERTY_NAME) {
+					String key = p.currentName();
+					if (p.nextToken() != JsonToken.START_OBJECT) {
+						p.skipChildren();
+						continue;
+					}
+					JsonNode value = p.readValueAsTree();
+					if (types.contains(value.path("__type").asString(""))) {
+						kept.put(key, value);
+					}
+				}
+			}
+			return kept;
+		});
 	}
 
 	private JsonNode getTree(String url) {

@@ -2,6 +2,7 @@ package com.aram.community.gamedata;
 
 import com.aram.community.gamedata.GameDataClient.AugmentData;
 import com.aram.community.gamedata.GameDataClient.ChampionData;
+import com.aram.community.gamedata.GameDataClient.ItemData;
 import com.aram.community.gamedata.GameDataClient.LocalizedText;
 import com.aram.community.gamedata.text.AugmentLocale;
 import java.time.Instant;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * 패치가 바뀌었을 때만 챔피언·증강 목록을 새로 받아요. 실패하면 기존 데이터를 그대로 두고 사유만 남겨요.
+ * 패치가 바뀌었을 때만 챔피언·증강·아이템 목록을 새로 받아요. 실패하면 기존 데이터를 그대로 두고 사유만 남겨요.
  */
 @Service
 public class GameDataSyncService {
@@ -28,6 +29,9 @@ public class GameDataSyncService {
 	}
 
 	static final int MIN_AUGMENTS = 20;
+
+	/** 실제 상점은 190개쯤이에요. 이보다 적으면 자료 형식이 바뀐 것으로 봐요. */
+	static final int MIN_ITEMS = 10;
 
 	private static final int KEPT_PATCHES = 8;
 
@@ -41,6 +45,10 @@ public class GameDataSyncService {
 
 	private final AugmentTextRepository texts;
 
+	private final ItemRepository items;
+
+	private final ItemTextRepository itemTexts;
+
 	private final PatchRepository patches;
 
 	private final GameDataStateRepository states;
@@ -48,12 +56,14 @@ public class GameDataSyncService {
 	private final TransactionTemplate tx;
 
 	public GameDataSyncService(GameDataClient client, ChampionRepository champions, AugmentRepository augments,
-			AugmentTextRepository texts, PatchRepository patches, GameDataStateRepository states,
-			TransactionTemplate tx) {
+			AugmentTextRepository texts, ItemRepository items, ItemTextRepository itemTexts, PatchRepository patches,
+			GameDataStateRepository states, TransactionTemplate tx) {
 		this.client = client;
 		this.champions = champions;
 		this.augments = augments;
 		this.texts = texts;
+		this.items = items;
+		this.itemTexts = itemTexts;
 		this.patches = patches;
 		this.states = states;
 		this.tx = tx;
@@ -71,7 +81,7 @@ public class GameDataSyncService {
 			boolean cdragonChanged = cdragonVersion.isPresent()
 					&& !cdragonVersion.get().equals(state.getCurrentCdragonVersion());
 			boolean needsFull = !latest.equals(state.getCurrentDdragonVersion()) || cdragonChanged
-					|| champions.count() == 0 || augments.count() == 0;
+					|| champions.count() == 0 || augments.count() == 0 || items.count() == 0;
 			if (!needsFull) {
 				tx.executeWithoutResult(s -> updateState(st -> st.markChecked(Instant.now())));
 				return SyncResult.UNCHANGED;
@@ -87,6 +97,22 @@ public class GameDataSyncService {
 			}
 			tx.executeWithoutResult(s -> saveAugments(augmentData));
 
+			List<ItemData> itemData;
+			try {
+				itemData = client.fetchItems();
+				if (itemData.size() < MIN_ITEMS) {
+					throw new IllegalStateException(
+							"Only " + itemData.size() + " items found; data format may have changed");
+				}
+				tx.executeWithoutResult(s -> saveItems(itemData));
+			}
+			catch (RuntimeException e) {
+				// 챔피언·증강은 이미 저장됐어요. 버전을 올리지 않아서 다음 확인(30분 뒤) 때 전체를 다시 받아요.
+				log.warn("Item sync failed, keeping the previous items: {}", e.toString());
+				markFailed(e);
+				return SyncResult.FAILED;
+			}
+
 			tx.executeWithoutResult(s -> updateState(st -> {
 				Instant now = Instant.now();
 				st.markChecked(now);
@@ -94,19 +120,25 @@ public class GameDataSyncService {
 						cdragonVersion.orElse(st.getCurrentCdragonVersion()), now);
 			}));
 			int unresolved = augmentData.stream().mapToInt(AugmentData::unresolvedCount).sum();
-			log.info("Game data synced to {} ({} champions, {} augments, {} unresolved placeholders)", latest,
-					championData.size(), augmentData.size(), unresolved);
+			int itemUnresolved = itemData.stream().mapToInt(ItemData::unresolvedCount).sum();
+			log.info(
+					"Game data synced to {} ({} champions, {} augments, {} unresolved placeholders, {} items, {} unresolved item placeholders)",
+					latest, championData.size(), augmentData.size(), unresolved, itemData.size(), itemUnresolved);
 			return SyncResult.UPDATED;
 		}
 		catch (RuntimeException e) {
 			log.warn("Game data sync failed: {}", e.toString());
-			String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-			tx.executeWithoutResult(s -> updateState(st -> {
-				st.markChecked(Instant.now());
-				st.markFailed(message);
-			}));
+			markFailed(e);
 			return SyncResult.FAILED;
 		}
+	}
+
+	private void markFailed(RuntimeException e) {
+		String message = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+		tx.executeWithoutResult(s -> updateState(st -> {
+			st.markChecked(Instant.now());
+			st.markFailed(message);
+		}));
 	}
 
 	/** 버전 파일을 못 읽어도 동기화를 멈추지 않고, 예전처럼 라이엇 패치 번호만 보게 해요. */
@@ -182,6 +214,40 @@ public class GameDataSyncService {
 			}
 		}
 		existing.values().stream().filter(a -> !incoming.containsKey(a.getId())).forEach(a -> a.deactivate(now));
+	}
+
+	private void saveItems(List<ItemData> data) {
+		Instant now = Instant.now();
+		Map<Integer, Item> existing = items.findAll()
+			.stream()
+			.collect(Collectors.toMap(Item::getId, Function.identity()));
+		Map<Integer, ItemData> incoming = data.stream()
+			.collect(Collectors.toMap(ItemData::id, Function.identity(), (a, b) -> a));
+		Map<ItemTextId, ItemText> existingTexts = itemTexts.findAll()
+			.stream()
+			.collect(Collectors.toMap(ItemText::getId, Function.identity()));
+		for (ItemData i : incoming.values()) {
+			// 아이콘은 Data Dragon의 아이템 그림 이름(번호.png)이에요.
+			String iconFile = i.id() + ".png";
+			Item item = existing.get(i.id());
+			if (item == null) {
+				items.save(new Item(i.id(), i.nameKo(), i.tier(), i.priceTotal(), iconFile, i.fromIds(), now));
+			}
+			else {
+				item.refresh(i.nameKo(), i.tier(), i.priceTotal(), iconFile, i.fromIds(), now);
+			}
+			for (Map.Entry<AugmentLocale, LocalizedText> e : i.texts().entrySet()) {
+				ItemTextId id = new ItemTextId(i.id(), e.getKey().code());
+				ItemText text = existingTexts.get(id);
+				if (text == null) {
+					itemTexts.save(new ItemText(id, e.getValue().name(), e.getValue().description(), now));
+				}
+				else {
+					text.refresh(e.getValue().name(), e.getValue().description(), now);
+				}
+			}
+		}
+		existing.values().stream().filter(i -> !incoming.containsKey(i.getId())).forEach(i -> i.deactivate(now));
 	}
 
 }
