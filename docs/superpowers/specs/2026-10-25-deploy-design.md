@@ -149,7 +149,7 @@
 - `APP_DEV_LOGIN_ENABLED`는 두지 않는다(두더라도 5.2 때문에 꺼진다).
 
 **GitHub 저장소 비밀 값(Secrets)**
-- `DEPLOY_HOST`(고정 IP), `DEPLOY_USER`(`ubuntu`), `DEPLOY_SSH_KEY`(배포 전용 개인 키), `DEPLOY_KNOWN_HOSTS`(서버 지문).
+- `DEPLOY_HOST`(고정 IP), `DEPLOY_USER`(`ubuntu`), `DEPLOY_SSH_KEY`(배포 전용 개인 키), `DEPLOY_KNOWN_HOSTS`(`ssh-keyscan`으로 받은 서버 키 줄. 서버가 출력한 지문과 같은지 확인한 것).
 - 배포 전용 키는 Claude가 사용자 컴퓨터에서 새로 만든다. 공개 키는 `server-setup.sh`가 서버에 등록하고, 개인 키는 사용자 승인을 받아 `gh secret set`으로 GitHub에 넣는다. 개인 키 파일은 등록 뒤 지운다.
 
 ## 8. 백업·복원·요금 알림

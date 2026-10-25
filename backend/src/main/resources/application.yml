@@ -15,6 +15,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  session:
+    jdbc:
+      # 로그인 정보 표는 Flyway(V10)가 만들어요.
+      initialize-schema: never
   docker:
     compose:
       lifecycle-management: start-only

@@ -13,6 +13,7 @@
 - 새 기능은 superpowers 흐름을 따른다: brainstorming → 설계 문서 → writing-plans → 실행. 테스트를 먼저 쓴다.
 - 화면 문구는 모두 한국어 해요체.
 - 기능 하나가 끝날 때마다 커밋한다. 원격(GitHub `yyy5044/aram`, **공개 저장소**)에 푸시는 사용자가 요청할 때만 한다.
+- 가지 흐름: 기능 가지에서 작업하고 끝나면 **`dev`에 합친다**(`main`에 바로 합치지 않는다). "dev에 올려줘"는 `dev` 푸시 = GitHub에서 테스트만. "업데이트해줘"는 `dev`를 `main`에 합쳐 푸시 = 테스트 통과 시 **운영 사이트에 자동 배포**(`docs/deploy.md`).
 - 커밋 이메일은 저장소 로컬 설정의 GitHub noreply 주소(`48915312+yyy5044@users.noreply.github.com`)를 쓴다. 바꾸지 않는다. 실제 이메일이 공개 기록에 남지 않게 하기 위함.
 
 ## 구조
@@ -21,6 +22,8 @@
 |---|---|
 | `backend/` | Spring Boot 4.1, Java 21, JPA(Hibernate 7), Flyway, PostgreSQL 18, Spring Security OAuth2(디스코드) |
 | `frontend/` | React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Tiptap 3 |
+| `deploy/` | 운영 Compose(`compose.prod.yaml`), Caddy 설정·업데이트 중 안내 페이지, 화면 이미지(`web.Dockerfile`), 배포·되돌리기(`deploy.sh`), 서버 준비(`server-setup.sh`) |
+| `.github/workflows/ci.yml` | 푸시마다 백엔드·화면 테스트, `main` 푸시면 이미지(ghcr.io) → 서버 반영 |
 
 백엔드는 기능별 패키지(`auth`, `user`, `gamedata`, `post`, `image`, `comment`, `like`, `scrap`, `profile`, `common`)로 나뉜다. 프론트엔드는 `api/`, `components/`(공통 디자인 부품은 `ui/`, 프로필 부품은 `profile/`, 증강·챔피언 탭 부품은 `tags/`), `pages/`, `editor/`, `lib/`, `test/`.
 
@@ -53,6 +56,10 @@ cd frontend && npm test && npm run build && npm run lint
 - 프론트엔드 테스트 렌더(`test/render.tsx`)는 실제 앱처럼 StrictMode로 감싼다. StrictMode에서만 드러나는 버그(효과 두 번 실행, 편집기 재생성)가 실제로 있었다.
 - 게임 데이터는 서버가 6시간마다(실패하면 30분 뒤) Data Dragon `versions.json`과 CommunityDragon `latest/content-metadata.json`의 버전을 확인하고, 둘 중 하나라도 바뀌었을 때만 챔피언(`ko_KR/champion.json`)과 증강(CommunityDragon `kiwi.bin.json` + 문자열 표)을 다시 받는다. CommunityDragon은 라이엇보다 늦게 갱신되거나 패치 중간에 자료를 고칠 때가 있어서다(V9 `current_cdragon_version`). 그 버전 파일을 못 읽으면 경고만 남기고 패치 번호만 본다. 패치 표기는 `16.21.1` → `26.21`. 증강 등급은 `kiwi.bin.json`의 `rarity`(없음·0 실버, 1 골드, 2 프리즘)에서 오고, `Enabled: false`인 증강은 받지 않는다. 증강 데이터 컬럼을 더했을 때는 마이그레이션에서 `game_data_state.current_ddragon_version`을 비워 시작 시 전체 재동기화를 유도한다(V7 참고).
 - 증강 설명은 동기화 때 언어별(영어·한국어)로 문자열 표를 받아 `gamedata/text/`에서 자리표시자(`@TotalShield@` 등)를 수치 표로 계산해 완성된 글로 `augment_texts`에 저장한다(V8). 언어를 더하려면 `AugmentLocale`에 항목을 추가한다. 못 채운 자리표시자는 DB에 이름 그대로 남고(동기화 로그에 수가 찍힌다) 화면과 복사 글에서는 `?`로 보인다(`lib/augmentDescription.ts`). 계산식·수치 이름도 이름을 모르면 `{해시}`(소문자 이름의 FNV-1a 32비트, 8자리 16진수)로 들어 있어서 `SpellValues.hashedName`으로 한 번 더 찾는다(문자열 표의 XXH3 해시와 다른 방식). 스탯 번호는 0 주문력, 1 방어력, 2 공격력, 6 마법 저항력, 7 이동 속도, 9 치명타 피해, 11 스킬 가속, 12 최대 체력, 34 체력 회복 및 보호막 효과까지 확인했다. 남은 원인은 게임 중 누적치·중첩, 자료에 없는 퀘스트 목표치, 모르는 계산 종류, 스탯 번호 4·8 등(16.21 기준 계산 못 한 칸 15곳). 색 표식 허용 목록은 서버 `AugmentDescriptionBuilder.COLOR_TAGS`와 화면 `lib/augmentDescription.ts`가 같아야 한다. CommunityDragon 문자열 표는 이름을 모르는 키를 `{해시}`(소문자 키의 XXH3-64 하위 38비트, 10자리 16진수. 커뮤니티드래곤 `data/hashes/lol/hashes.rst.xxh3.txt`가 원래 키 이름 목록)로 내보낸다. 새 패치 증강(16.21 기준 41개, "장갑 충격"·"보석 팔찌" 등)의 이름·툴팁이 그렇게 들어 있어서 `StringTableKeys.hashedKey`로 같은 해시를 만들어 찾는다(16.21 기준 240개 모두 설명이 있다). 증강 아이콘은 작은 것(`_small`)이 흰 그림이고 큰 것(`_large`)에 등급 색이 들어 있어서, API `iconUrl`은 큰 아이콘을 준다. 새 증강은 큰 아이콘 경로가 `{해시}`(경로의 xxh64)로만 있고 CommunityDragon에 파일도 없어서 작은 아이콘을 주고 `iconTinted: true`로 알린다. 화면 `components/augment/AugmentIcon.tsx`가 CSS 마스크로 등급 색을 입힌다(CommunityDragon 그림은 CORS 허용). 그래도 글이 없는 증강은 클라이언트 증강 목록 `plugins/rcp-be-lol-game-data/global/{ko_kr|default}/v1/cherry-augments.json`(이름은 옛것이지만 칼바람 증강도 들어 있음)에서 이름만 보충하고, 카드에는 "아직 설명이 없어요"가 보인다. 이 목록은 보조 자료라 못 받아도 동기화는 계속된다. 실제 증강 풀은 같은 폴더의 `augment-lists.json`의 `KIWI` 목록(249개 = 활성 240 + 꺼진 9)과 비교해 확인할 수 있다. 그중 `GoH_PentakillAug_Generic`은 게임 자료에 이름이 없는 펜타킬 자리표시라 이름 칸에 키(`GoH_PentakillAug_Generic_BlankName`)가 그대로 들어 있어서, 이름이 자기 키와 같으면 이름 없는 증강으로 보고 받지 않는다(16.21 기준 활성 239개).
+- 로그인 정보는 Spring Session JDBC로 DB(`spring_session`, V10)에 있어서 서버를 다시 켜도 유지된다. 쿠키 이름은 `SESSION`. 테스트에서 로그인을 이어 갈 때는 `MockHttpSession`이 아니라 응답의 `SESSION` 쿠키를 넘긴다. 쿠키의 `Max-Age`·`HttpOnly`·`Secure`는 실제 서버(내장 Tomcat)에서만 적용돼서 MockMvc로는 확인되지 않는다(`SessionPersistenceTest`, `ProdProfileTest`는 실제 포트로 띄운다).
+- 운영 설정은 `application-prod.yml`(이미지가 `SPRING_PROFILES_ACTIVE=prod`로 켠다): DB는 Compose의 `db`, `forward-headers-strategy: native`(Caddy의 `X-Forwarded-Proto`로 디스코드 돌아올 주소가 https), 세션 쿠키 `Secure`, 사진은 `/data/images` 볼륨. 개발 로그인은 `@Profile("!prod")`라 운영에서는 설정과 상관없이 없다(환경 변수가 설정 파일보다 우선해서 파일로는 못 막는다).
+- Docker 이미지는 저장소 루트를 빌드 위치로 만든다: `docker build -f backend/Dockerfile .`, `docker build -f deploy/web.Dockerfile .`. 실행 jar 이름은 `app.jar`로 고정. 백엔드가 꺼져도 Caddy가 화면 파일은 주므로, 업데이트 중에는 화면이 열리고 API만 503 `MAINTENANCE`("잠시 업데이트 중이에요…")를 준다(목록·글·프로필이 이 문장을 그대로 띄운다). Caddy의 `header`는 `try_files`보다 먼저 정해져서 `/assets/*` 밖은 블록 전체에 `no-cache`를 붙인다.
+- 서버 `deploy.sh`는 `.env`의 `IMAGE_TAG`만 바꿔 교체하고, 백엔드 `127.0.0.1:8080/actuator/health`가 UP이고 Caddy가 `Host: $DOMAIN`의 http 요청에 308을 줄 때까지 180초 기다린다. 교체(`up -d`)가 실패하거나 시간 안에 정상이 안 되면 직전 태그로 되돌리고, 직전 태그가 없으면 줄을 지운다. Caddyfile 오타는 `web` 이미지를 만들 때(`caddy validate`) 막힌다. 백엔드 이미지 사용자는 UID 10001로 고정(사진 볼륨 소유자).
 - 화면 언어 설정(`lib/language.ts`, 머리말 드롭다운, localStorage `lang`)은 지금 증강 카드의 번역 언어만 바꾼다. 화면 문구 번역(i18n)은 아직 없다.
 - 디자인(칼바람 나락의 밤, 설계 `docs/superpowers/specs/2026-10-25-design-polish-design.md`): 색·모서리·글꼴은 `index.css`의 `@theme` 이름(`bg-night`, `text-gold-deep`, `rounded-touch` …)만 쓴다. 버튼은 `components/ui/button.ts`의 `buttonClass(종류, 높이)`. 크기는 글자 28/20/17/15/13, 버튼 56/48/44/40/36, 간격 4의 배수, 모서리는 담는 것 0·작은 표시 4·누르는 것 8·얼굴은 원. Tailwind 4는 같은 속성의 클래스 두 개가 한 요소에 붙으면 어느 쪽이 이길지 순서로 정해지지 않으니, `buttonClass(...)` 뒤에 높이·여백·글자색·display를 덧붙이지 말고 종류를 더하거나 감싸는 요소를 쓴다(꼭 덮어써야 하면 `!`). 다크 모드는 없다.
 
@@ -74,9 +81,10 @@ cd frontend && npm test && npm run build && npm run lint
 - 2026-10-25: 디자인 다듬기(칼바람 나락의 밤) — 연한 하늘색 바탕, 밤하늘 머리말·머리 띠, 금색 장식, 청록 버튼. 글 목록은 작성자(사진+이름) 칸·20px 제목·아이콘+이름 태그·"26.21 버전 최신" 묶음, 증강·챔피언 칸은 글 수 없이, 프로필 숫자에 받은 추천(API `stats.receivedLikeCount`), 글쓰기 아래 고정 등록 띠, 휴대폰 떠 있는 글쓰기 버튼, 알림은 아래 가운데. 설계·계획·목업은 `docs/superpowers/specs/2026-10-25-design-polish-*`, `plans/2026-10-25-design-polish.md`.
 - 2026-10-25: 미뤄둔 작은 문제 정리 — 잘못된 숫자 주소(`/posts/abc`)는 "없는 글이에요"(`lib/routeId.ts`), 디스코드 로그인 실패·취소는 `/auth/done?error`로 와서 안내 후 원래 화면으로, CSRF 실패는 `CSRF_INVALID`("새로고침한 뒤 다시"), 지원하지 않는 메서드 405, 파일 칸 없는/multipart 아닌 업로드 400, 제목 길이는 공백 제거 뒤 검사, 추천·스크랩 버튼이 다시 불러온 값을 따라감, 펼침 영역의 글 정렬은 주소 `?order=likes`에 남음(다른 칸을 열면 지워짐), 남은 글 수는 마지막 페이지 기준, 챔피언 자료가 없으면 "아직 챔피언 정보를 받아오지 못했어요", 마지막 페이지를 넘으면 "이 페이지는 비어 있어요"와 「첫 페이지로」, 가입일은 한국 시간, 사진이 저장 직전 지워지면 "이미지를 찾을 수 없어요", 게임 데이터 동기화가 실패하면 30분 뒤 재시도(`SyncTimer`), 줄바꿈은 루트 `.gitattributes`로 작업 폴더까지 LF.
 - 2026-10-24: 증강·챔피언 탭(`/augments`, `/champions`) — 위쪽 메뉴 탭, 증강은 프리즘·골드·실버 묶음(접힘), 이름 검색과 가나다순/글 많은 순, 칸을 누르면 그 줄 아래로 글 목록(5개씩 더 보기)이 펼쳐지고 `?open=`에 남는다. 챔피언에는 자주 함께 쓰는 증강. API `GET /api/tag-counts`, `GET /api/champions/{id}/top-augments`, `GET /api/posts?size=`. 설계 `docs/superpowers/specs/2026-10-24-tag-browse-design.md`, 계획 `docs/superpowers/plans/2026-10-24-tag-browse.md`.
+- 2026-10-25: 배포 준비 — 로그인 정보 DB 저장(Spring Session JDBC), `prod` 설정, Docker 이미지 2개, 운영 Compose·Caddy·업데이트 중 안내, 자동 되돌리기 `deploy.sh`, GitHub Actions(테스트·배포), 서버 준비 스크립트, 안내서 `docs/deploy.md`. `dev` 가지를 만들어 이제 작업은 `dev`로 합친다. 설계 `docs/superpowers/specs/2026-10-25-deploy-design.md`, 계획 `docs/superpowers/plans/2026-10-25-deploy.md`.
 
 **다음 단계**
-1. 배포: AWS Lightsail(약 2GB, 월 2만원 이내) + Docker Compose, 이미지 저장소 S3 구현(`image/ImageStorage`), 세션을 DB에 저장(지금은 메모리라 서버 재시작 시 모두 로그아웃), HTTPS, DB 백업, AWS 예산 알림. 배포 주소가 정해지면 디스코드 Redirects에 운영 주소를 추가하고, Vite 프록시 대신 리버스 프록시가 원래 Host를 넘기도록 한다(돌아올 주소가 Host로 만들어진다).
+1. 첫 배포: 코드는 준비됐다(2026-10-25, `dev`). `docs/deploy.md` 1장을 사용자와 함께 진행한다 — 도메인 구입, Lightsail 서버·고정 IP·443·자동 스냅샷, A 레코드, `server-setup.sh`, 서버 `.env`, 디스코드 Redirects에 운영 주소, AWS Budgets, `gh secret set`(DEPLOY_HOST·DEPLOY_USER·DEPLOY_SSH_KEY·DEPLOY_KNOWN_HOSTS), `dev` 푸시로 CI 확인, `main` 푸시로 배포. 사진은 서버 디스크 + 스냅샷(S3는 쓰지 않기로 함, `ImageStorage`는 그대로).
 2. 화면 문구 영어 번역(i18n).
 
 2026-10-24에 main을 GitHub에 처음 푸시했고, 2026-10-25에 증강 카드와 새 증강 자료 보완(240개 모두 설명), 미뤄둔 작은 문제 정리, 디자인 다듬기(칼바람 나락의 밤)까지 푸시했다. 이후 푸시는 사용자가 요청할 때만 한다.

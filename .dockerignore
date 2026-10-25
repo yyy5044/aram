@@ -1,0 +1,11 @@
+# 이미지는 저장소 루트를 빌드 위치로 만들어요. 비밀 값과 빌드 결과물은 넣지 않아요.
+.git
+**/node_modules
+**/dist
+backend/build
+backend/.gradle
+backend/data
+**/.env
+docs
+.claude
+.superpowers

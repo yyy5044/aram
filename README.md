@@ -66,6 +66,10 @@ cd backend && ./gradlew test
 cd frontend && npm test
 ```
 
+## 배포
+
+운영 사이트는 AWS Lightsail 서버 한 대에서 Docker Compose(Caddy + 백엔드 + PostgreSQL)로 돌아요. 평소 작업은 `dev`에 합치고, `main`에 올리면 GitHub Actions가 테스트를 거쳐 서버에 자동으로 반영해요. 처음 설정, 실패했을 때, 복원 방법은 [docs/deploy.md](docs/deploy.md)에 있어요.
+
 ## 규칙
 
 - DB 테이블 변경은 `backend/src/main/resources/db/migration`의 Flyway 파일로만 해요. Hibernate는 검증만 해요.
