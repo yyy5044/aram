@@ -33,6 +33,11 @@ public class VideoService {
 
 	static final String RESTARTED = "서버가 다시 켜져서 변환이 멈췄어요. 다시 올려 주세요";
 
+	/** 한 사람이 동시에 변환을 기다리게 할 수 있는 영상 수. 큰 원본이 쌓여 디스크가 차지 않게 해요. */
+	static final int MAX_PENDING_PER_USER = 3;
+
+	private static final EnumSet<VideoStatus> PENDING = EnumSet.of(VideoStatus.QUEUED, VideoStatus.PROCESSING);
+
 	private static final Logger log = LoggerFactory.getLogger(VideoService.class);
 
 	private final VideoRepository videos;
@@ -44,6 +49,9 @@ public class VideoService {
 	private final VideoQueue queue;
 
 	private final VideoProperties props;
+
+	/** 이 서버가 켜진 시각. 그 전에 남은 변환·임시 파일만 정리해요(켜지는 사이에 들어온 올리기는 건드리지 않아요). */
+	private final Instant startedAt = Instant.now();
 
 	public VideoService(VideoRepository videos, ImageStorage storage, VideoTranscoder transcoder, VideoQueue queue,
 			VideoProperties props) {
@@ -72,16 +80,28 @@ public class VideoService {
 		if (!VideoTypes.looksLikeVideo(header)) {
 			throw new ApiException(ErrorCode.VIDEO_UNSUPPORTED);
 		}
+		if (videos.countByUploaderIdAndStatusIn(uploader.getId(), PENDING) >= MAX_PENDING_PER_USER) {
+			throw new ApiException(ErrorCode.VIDEO_BUSY);
+		}
 		UUID id = UUID.randomUUID();
 		Path source = source(id);
+		Video video;
 		try {
 			Files.createDirectories(source.getParent());
+			if (Files.getFileStore(source.getParent()).getUsableSpace() - file.getSize() < props.minFreeBytes()) {
+				throw new ApiException(ErrorCode.VIDEO_NO_SPACE);
+			}
 			file.transferTo(source);
+			video = videos.save(Video.queued(id, uploader.getId(), Instant.now()));
 		}
 		catch (IOException e) {
+			deleteQuietly(source);
 			throw new UncheckedIOException(e);
 		}
-		Video video = videos.save(Video.queued(id, uploader.getId(), Instant.now()));
+		catch (RuntimeException e) {
+			deleteQuietly(source);
+			throw e;
+		}
 		afterCompletion(committed -> {
 			if (committed) {
 				queue.submit(() -> process(id));
@@ -188,15 +208,36 @@ public class VideoService {
 		});
 	}
 
-	/** 서버가 켜질 때, 이전 실행에서 멈춘 변환을 실패로 바꾸고 남은 원본을 지워요. */
+	/**
+	 * 서버가 켜질 때, 이전 실행에서 멈춘 변환을 실패로 바꾸고 임시 폴더에 남은 파일(원본·만들다 만 결과)을 지워요.
+	 * 이번 실행이 시작된 뒤에 들어온 올리기와 그 파일은 건드리지 않아요.
+	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void failInterrupted() {
-		List<Video> stuck = videos.findByStatusIn(EnumSet.of(VideoStatus.QUEUED, VideoStatus.PROCESSING));
+		List<Video> stuck = videos.findByStatusInAndCreatedAtBefore(PENDING, startedAt);
 		for (Video v : stuck) {
 			v.markFailed(RESTARTED);
-			deleteQuietly(source(v.getId()));
 		}
 		videos.saveAll(stuck);
+		Path dir = props.tmpDir().toAbsolutePath();
+		if (!Files.isDirectory(dir)) {
+			return;
+		}
+		try (Stream<Path> files = Files.list(dir)) {
+			files.filter(Files::isRegularFile).filter(this::leftFromBefore).forEach(VideoService::deleteQuietly);
+		}
+		catch (IOException e) {
+			log.warn("Could not clean {}", dir, e);
+		}
+	}
+
+	private boolean leftFromBefore(Path file) {
+		try {
+			return Files.getLastModifiedTime(file).toInstant().isBefore(startedAt);
+		}
+		catch (IOException e) {
+			return false;
+		}
 	}
 
 	private Path source(UUID id) {

@@ -11,6 +11,8 @@ import com.aram.community.user.User;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -106,18 +108,73 @@ class VideoApiTest extends VideoTestSupport {
 	}
 
 	@Test
-	void restartFailsInterruptedJobs() {
+	void restartFailsOnlyJobsFromBeforeThisStart() {
 		User owner = testUsers.create("양호");
-		UUID id = UUID.randomUUID();
-		Video v = Video.queued(id, owner.getId(), Instant.now());
+		UUID old = UUID.randomUUID();
+		Video v = Video.queued(old, owner.getId(), Instant.now().minus(Duration.ofDays(1)));
 		v.markProcessing();
 		videos.save(v);
+		UUID fresh = UUID.randomUUID();
+		videos.save(Video.queued(fresh, owner.getId(), Instant.now()));
 
 		videoService.failInterrupted();
 
-		Video after = videos.findById(id).orElseThrow();
+		Video after = videos.findById(old).orElseThrow();
 		assertThat(after.getStatus()).isEqualTo(VideoStatus.FAILED);
 		assertThat(after.getErrorMessage()).isEqualTo("서버가 다시 켜져서 변환이 멈췄어요. 다시 올려 주세요");
+		assertThat(videos.findById(fresh).orElseThrow().getStatus()).isEqualTo(VideoStatus.QUEUED);
+	}
+
+	@Test
+	void restartRemovesLeftoverTempFilesButNotFreshOnes() throws Exception {
+		Files.createDirectories(tmpDir);
+		Path stray = Files.write(tmpDir.resolve("stray.mp4"), new byte[] { 1 });
+		Files.setLastModifiedTime(stray, FileTime.from(Instant.now().minus(Duration.ofDays(1))));
+		Path fresh = Files.write(tmpDir.resolve("fresh.src"), new byte[] { 1 });
+
+		videoService.failInterrupted();
+
+		assertThat(Files.exists(stray)).isFalse();
+		assertThat(Files.exists(fresh)).isTrue();
+		Files.delete(fresh);
+	}
+
+	@Test
+	void limitsPendingUploadsPerPerson() throws Exception {
+		User u = testUsers.create("양호");
+		for (int i = 0; i < 3; i++) {
+			videos.save(Video.queued(UUID.randomUUID(), u.getId(), Instant.now()));
+		}
+		mockMvc.perform(multipart("/api/videos").file(new MockMultipartFile("file", "clip.mp4", "video/mp4", sampleBytes(dir)))
+			.with(testUsers.as(u)))
+			.andExpect(status().isTooManyRequests())
+			.andExpect(jsonPath("$.code").value("VIDEO_BUSY"))
+			.andExpect(jsonPath("$.message").value("변환 중인 영상이 끝나면 올려 주세요"));
+	}
+
+	@Test
+	void removesTheSourceWhenSavingItFails() throws Exception {
+		User u = testUsers.create("양호");
+		Files.createDirectories(tmpDir);
+		try (var files = Files.list(tmpDir)) {
+			files.filter(f -> f.toString().endsWith(".src")).forEach(f -> f.toFile().delete());
+		}
+		byte[] bytes = sampleBytes(dir);
+		MockMultipartFile breaking = new MockMultipartFile("file", "clip.mp4", "video/mp4", bytes) {
+			@Override
+			public void transferTo(Path dest) throws java.io.IOException {
+				Files.write(dest, new byte[] { 1, 2, 3 });
+				throw new java.io.IOException("disk full");
+			}
+		};
+
+		mockMvc.perform(multipart("/api/videos").file(breaking).with(testUsers.as(u)))
+			.andExpect(status().isInternalServerError());
+
+		try (var files = Files.list(tmpDir)) {
+			assertThat(files.filter(f -> f.toString().endsWith(".src"))).isEmpty();
+		}
+		assertThat(videos.count()).isZero();
 	}
 
 	@Test

@@ -23,6 +23,8 @@ public enum ErrorCode {
 	VIDEO_TOO_LARGE(413, "영상 파일은 200MB까지 올릴 수 있어요"),
 	VIDEO_UNSUPPORTED(400, "영상 파일만 넣을 수 있어요"),
 	VIDEO_NOT_FOUND(404, "영상을 찾을 수 없어요"),
+	VIDEO_BUSY(429, "변환 중인 영상이 끝나면 올려 주세요"),
+	VIDEO_NO_SPACE(503, "지금은 영상을 올릴 수 없어요. 관리자에게 알려 주세요"),
 	INTERNAL_ERROR(500, "잠시 후 다시 시도해주세요");
 
 	private final int status;

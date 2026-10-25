@@ -22,7 +22,7 @@ class FfmpegVideoTranscoderTest {
 	Path dir;
 
 	private final FfmpegVideoTranscoder transcoder = new FfmpegVideoTranscoder(
-			new VideoProperties("ffmpeg", "ffprobe", null, 0));
+			new VideoProperties("ffmpeg", "ffprobe", null, 0, 0));
 
 	private VideoTranscoder.Result transcode(Path input, List<Integer> progress) throws TranscodeException {
 		return transcoder.transcode(input, dir.resolve("out.mp4"), dir.resolve("poster.jpg"), progress::add);
@@ -112,7 +112,7 @@ class FfmpegVideoTranscoderTest {
 	void missingFfmpegFails() throws Exception {
 		Path input = SampleVideos.make(dir, 320, 240, 24, 1, false);
 		FfmpegVideoTranscoder missing = new FfmpegVideoTranscoder(
-				new VideoProperties("no-such-ffmpeg", "no-such-ffprobe", null, 0));
+				new VideoProperties("no-such-ffmpeg", "no-such-ffprobe", null, 0, 0));
 
 		assertThatThrownBy(() -> missing.transcode(input, dir.resolve("o.mp4"), dir.resolve("p.jpg"), p -> {
 		})).isInstanceOf(TranscodeException.class).hasMessage("변환 프로그램이 없어요");
