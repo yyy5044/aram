@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.aram.community.support.IntegrationTest;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -25,9 +25,10 @@ class DevLoginEnabledTest extends IntegrationTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.nickname").value("테스터"))
 			.andReturn();
-		MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
+		// 로그인 정보는 DB에 있고, 다음 요청은 SESSION 쿠키로 찾아요.
+		Cookie session = result.getResponse().getCookie("SESSION");
 
-		mockMvc.perform(get("/api/me").session(session))
+		mockMvc.perform(get("/api/me").cookie(session))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.nickname").value("테스터"));
 	}
