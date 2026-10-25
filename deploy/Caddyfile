@@ -17,11 +17,11 @@
 	}
 
 	# 그 밖의 주소는 화면 파일, 없으면 index.html(React Router가 처리해요).
+	# 새 버전이 바로 보이도록 매번 확인하게 해요(header는 주소를 바꾸기 전에 정해져서 블록 전체에 붙여요).
 	handle {
 		root * /srv
+		header Cache-Control "no-cache"
 		try_files {path} /index.html
-		@index path /index.html
-		header @index Cache-Control "no-cache"
 		file_server
 	}
 

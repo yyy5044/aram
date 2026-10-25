@@ -1,0 +1,68 @@
+# 운영 서버 구성. 서버에서는 /opt/aram/compose.yaml로 복사되고, 값은 같은 폴더의 .env에서 읽어요.
+name: aram
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aram
+      POSTGRES_USER: aram
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aram -d aram"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 512m
+    logging: *logging
+
+  backend:
+    image: ghcr.io/yyy5044/aram-backend:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      APP_ADMIN_DISCORD_IDS: ${APP_ADMIN_DISCORD_IDS}
+    depends_on:
+      db:
+        condition: service_healthy
+    # 서버 자신에게만 열어요. 배포 스크립트가 상태를 확인할 때 써요. 바깥은 Caddy를 거쳐요.
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - images:/data/images
+    mem_limit: 1200m
+    logging: *logging
+
+  web:
+    image: ghcr.io/yyy5044/aram-web:${IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    # 백엔드가 뜨는 동안에도 업데이트 중 안내를 보여주도록 시작만 기다려요.
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    logging: *logging
+
+volumes:
+  pgdata:
+  images:
+  caddy-data:
+  caddy-config:
