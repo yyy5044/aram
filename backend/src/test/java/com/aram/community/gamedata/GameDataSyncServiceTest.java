@@ -382,6 +382,17 @@ class GameDataSyncServiceTest extends IntegrationTest {
 	}
 
 	@Test
+	void skipsPlaceholderWhoseNameIsItsOwnStringKey() throws IOException {
+		expectFullSync("kiwi.bin.json");
+
+		sync.sync();
+
+		// 게임 자료에 이름이 없어 클라이언트 목록도 키("GoH_PentakillAug_Generic_BlankName")를 그대로 주는 자리표시 증강이에요.
+		// 이름 없는 증강처럼 받지 않아요(펜타킬 Q/W/E/R은 제 이름이 있어요).
+		assertThat(augments.findById("GoH_PentakillAug_Generic")).isEmpty();
+	}
+
+	@Test
 	void clientListFailureKeepsStringTableNames() throws IOException {
 		expectVersions("content-metadata.json");
 		server.expect(requestTo(CHAMPIONS))

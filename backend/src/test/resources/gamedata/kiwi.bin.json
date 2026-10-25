@@ -214,5 +214,13 @@
    "__type": "SpellDataResource"
   },
   "__type": "SpellObject"
+ },
+ "Maps/ModeSpecificData/Augments/GuestOfHonorAugments/PentakillAugments/GoH_PentakillAug_Generic": {
+  "AugmentNameId": "GoH_PentakillAug_Generic",
+  "NameTra": "GoH_PentakillAug_Generic_BlankName",
+  "AugmentTooltipTra": "GoH_PentakillAug_Display_Tooltip",
+  "AugmentSmallIconPath": "assets/ux/kiwi/augments/icons/pentakill_small.tex",
+  "rarity": 1,
+  "__type": "AugmentData"
  }
 }

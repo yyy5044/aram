@@ -182,14 +182,23 @@ public class GameDataClient {
 		return augments;
 	}
 
-	/** 문자열 표의 이름이 우선이고, 없으면(새 증강은 표에 아직 없어요) 클라이언트 목록의 이름을 써요. */
+	/**
+	 * 문자열 표의 이름이 우선이고, 없으면(새 증강은 표에 아직 없어요) 클라이언트 목록의 이름을 써요.
+	 * 게임 자료에 이름이 없는 자리표시 증강(예: GoH_PentakillAug_Generic)은 이름 칸에 키 자체
+	 * ("GoH_PentakillAug_Generic_BlankName")가 들어 있어서, 키와 같은 이름은 없는 것으로 봐요.
+	 */
 	private static String nameOf(Map<String, String> table, String nameKey, Map<String, String> clientNames,
 			String augmentId) {
 		String name = table.get(nameKey);
-		if (name != null && !name.isBlank()) {
+		if (isRealName(name, nameKey)) {
 			return name;
 		}
-		return clientNames.get(augmentId);
+		String clientName = clientNames.get(augmentId);
+		return isRealName(clientName, nameKey) ? clientName : null;
+	}
+
+	private static boolean isRealName(String name, String nameKey) {
+		return name != null && !name.isBlank() && !name.toLowerCase(Locale.ROOT).equals(nameKey);
 	}
 
 	/**

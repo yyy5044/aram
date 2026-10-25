@@ -22,5 +22,13 @@
   "simpleNameTRA": "",
   "augmentSmallIconPath": "",
   "rarity": "kGold"
+ },
+ {
+  "id": 3051,
+  "augmentNameId": "GoH_PentakillAug_Generic",
+  "nameTRA": "GoH_PentakillAug_Generic_BlankName",
+  "simpleNameTRA": "",
+  "augmentSmallIconPath": "",
+  "rarity": "kGold"
  }
 ]
