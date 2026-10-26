@@ -88,13 +88,16 @@ describe('PostEditor video box', () => {
   it('shows upload then transcode progress, then the clip', async () => {
     let report: (p: number) => void = () => {}
     let finishUpload: (s: VideoStatus) => void = () => {}
+    let finishTranscode: (s: VideoStatus) => void = () => {}
     vi.mocked(uploadVideo).mockImplementation((_f, onProgress) => {
       report = onProgress
       return new Promise((resolve) => (finishUpload = resolve))
     })
+    // 변환 완료는 테스트가 정한 때에만 와요. 다음 물음이 바로 READY를 받으면 "변환 중 40%"가 한 순간만 떠서,
+    // 느린 컴퓨터(CI)에서는 찾은 글자가 확인 전에 사라졌어요.
     vi.mocked(fetchVideoStatus)
       .mockResolvedValueOnce(status({ status: 'PROCESSING', progress: 40 }))
-      .mockResolvedValue(status({ status: 'READY', progress: 100, url: SRC, truncated: true }))
+      .mockImplementation(() => new Promise((resolve) => (finishTranscode = resolve)))
     const { onChange, onPendingChange } = setup(emptyBoxDoc)
 
     await userEvent.upload(await screen.findByLabelText('영상 파일 고르기'), videoFile())
@@ -105,6 +108,8 @@ describe('PostEditor video box', () => {
     act(() => finishUpload(status({ status: 'QUEUED' })))
     expect(await screen.findByText('변환 중 40%')).toBeInTheDocument()
 
+    await vi.waitFor(() => expect(fetchVideoStatus).toHaveBeenCalledTimes(2))
+    act(() => finishTranscode(status({ status: 'READY', progress: 100, url: SRC, truncated: true })))
     await waitFor(() => expect(document.querySelector(`video[src="${SRC}"]`)).not.toBeNull())
     expect(screen.getByText('앞 30초만 넣었어요')).toBeInTheDocument()
     expect(onPendingChange).toHaveBeenLastCalledWith({ busy: 0, failed: 0 })
