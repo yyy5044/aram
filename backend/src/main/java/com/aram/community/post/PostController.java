@@ -3,6 +3,8 @@ package com.aram.community.post;
 import com.aram.community.auth.AppUserPrincipal;
 import com.aram.community.auth.CurrentUser;
 import com.aram.community.common.PageResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -28,10 +30,17 @@ public class PostController {
 
 	private final CurrentUser currentUser;
 
-	public PostController(PostService postService, PostListService postListService, CurrentUser currentUser) {
+	private final PostViewCounter viewCounter;
+
+	private final ViewerCookie viewerCookie;
+
+	public PostController(PostService postService, PostListService postListService, CurrentUser currentUser,
+			PostViewCounter viewCounter, ViewerCookie viewerCookie) {
 		this.postListService = postListService;
 		this.postService = postService;
 		this.currentUser = currentUser;
+		this.viewCounter = viewCounter;
+		this.viewerCookie = viewerCookie;
 	}
 
 	@GetMapping
@@ -51,7 +60,15 @@ public class PostController {
 	}
 
 	@GetMapping("/{postId}")
-	public PostDetailResponse get(@AuthenticationPrincipal AppUserPrincipal principal, @PathVariable long postId) {
+	public PostDetailResponse get(@AuthenticationPrincipal AppUserPrincipal principal, @PathVariable long postId,
+			HttpServletRequest request, HttpServletResponse response) {
+		// 먼저 세고 나서 읽어서, 처음 본 사람에게는 자기가 더해진 조회수가 보여요.
+		if (principal != null) {
+			viewCounter.count(postId, principal.userId(), null);
+		}
+		else {
+			viewCounter.count(postId, null, viewerCookie.resolve(request, response));
+		}
 		return postService.get(postId, principal == null ? null : principal.userId());
 	}
 

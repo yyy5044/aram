@@ -125,7 +125,7 @@ public class PostService {
 					.toList(),
 				post.getAugments().stream().sorted(Comparator.comparing(Augment::getNameKo)).map(gameData::toDto).toList(),
 				gameData.toDtos(post.getItems().stream().sorted(Comparator.comparing(Item::getNameKo)).toList()),
-				post.getLikeCount(), post.getCommentCount(), likedByMe, scrappedByMe, post.getCreatedAt(), post.getUpdatedAt(),
+				post.getLikeCount(), post.getCommentCount(), post.getViewCount(), likedByMe, scrappedByMe, post.getCreatedAt(), post.getUpdatedAt(),
 				post.isEdited());
 	}
 
