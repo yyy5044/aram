@@ -17,6 +17,7 @@ const heart: Item = {
   iconUrl: 'https://x/item/3084.png',
   fromIds: [],
   intoIds: [],
+  categories: [],
   active: true,
 }
 

@@ -26,6 +26,7 @@ const items: Item[] = Array.from({ length: 11 }, (_, i) => ({
   iconUrl: `https://x/${3000 + i}.png`,
   fromIds: [],
   intoIds: [],
+  categories: [],
   active: true,
 }))
 

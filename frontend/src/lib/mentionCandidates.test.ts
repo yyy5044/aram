@@ -19,6 +19,7 @@ const item = (id: string, nameKo: string, active = true): Item => ({
   iconUrl: `https://x/item/${id}.png`,
   fromIds: [],
   intoIds: [],
+  categories: [],
   active,
 })
 

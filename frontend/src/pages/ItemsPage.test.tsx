@@ -14,7 +14,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 function item(id: string, nameKo: string, extra: Partial<Item> = {}): Item {
-  return { id, nameKo, tier: 'BASIC', priceTotal: 900, iconUrl: `https://example.test/${id}.png`, fromIds: [], intoIds: [], active: true, ...extra }
+  return { id, nameKo, tier: 'BASIC', priceTotal: 900, iconUrl: `https://example.test/${id}.png`, fromIds: [], intoIds: [], active: true, categories: [], ...extra }
 }
 
 const steelheart = item('3084', '강철심장', { tier: 'LEGENDARY', priceTotal: 3000, fromIds: ['1011'] })
@@ -55,7 +55,7 @@ describe('ItemsPage', () => {
     await screen.findByRole('button', { name: /^전설/ })
     // 활성 아이템이 하나도 없는 묶음(증강 칼바람 전용, 서사)은 빠져요.
     const groups = screen.getAllByRole('button', { name: GROUP_NAME })
-    expect(groups.map((g) => g.textContent?.split('아이템')[0])).toEqual(['전설', '신발', '기본', '시작·소모품'])
+    expect(groups.map((g) => g.textContent?.split('아이템')[0])).toEqual(['시작·소모품', '신발', '기본', '전설'])
     expect(screen.getByRole('heading', { level: 1, name: '아이템' })).toBeInTheDocument()
     expect(screen.getByText('아이템 4개 · 글 3개')).toBeInTheDocument()
     expect(group('전설')).toHaveTextContent('아이템 1개 · 글 2개')

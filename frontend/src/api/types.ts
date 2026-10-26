@@ -70,6 +70,8 @@ export type Item = {
   fromIds: string[]
   intoIds: string[]
   active: boolean
+  /** 게임 자료의 능력치 분류(mCategories). 걸러내기는 lib/itemStats.ts가 해요. */
+  categories: string[]
 }
 
 /** 카드용 아이템 상세. original은 영어, translation은 선택 언어(원문과 같거나 없으면 null). */

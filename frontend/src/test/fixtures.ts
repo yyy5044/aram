@@ -50,6 +50,7 @@ export const heartsteel: Item = {
   fromIds: [],
   intoIds: [],
   active: true,
+  categories: ['Health', 'HealthRegen'],
 }
 export const oldItem: Item = { ...heartsteel, id: '9999', nameKo: '옛 아이템', iconUrl: null, active: false }
 
