@@ -12,6 +12,14 @@ import { shopRows, type ShopRow } from '../lib/itemShop'
 import { ITEM_STATS, type ItemStat } from '../lib/itemStats'
 import { useMediaQuery } from '../lib/useMediaQuery'
 
+/**
+ * 게임 상점의 스탯 아이콘(CommunityDragon `game/assets/ux/itemshop/itemshop_texture_atlas4.png`에서 잘라 public/stats에 둔 것).
+ * 꺼진 버튼(흰 바탕)은 색깔 아이콘, 켜진 버튼(청록 바탕)은 밝은 아이콘이에요.
+ */
+function statIcon(stat: ItemStat, on: boolean): string {
+  return `/stats/${stat}${on ? '-on' : ''}.png`
+}
+
 /** 능력치 버튼. 넓은 화면은 왼쪽 세로 줄, 그 밖은 가로 한 줄(휴대폰은 밀어서 봐요). */
 function StatFilter({
   stats,
@@ -38,6 +46,7 @@ function StatFilter({
       </button>
       {ITEM_STATS.map((s) => (
         <button key={s.key} type="button" aria-pressed={stats.has(s.key)} onClick={() => onToggle(s.key)} className={button(stats.has(s.key))}>
+          <img src={statIcon(s.key, stats.has(s.key))} alt="" className="h-5 w-5 flex-none" />
           {s.label}
         </button>
       ))}

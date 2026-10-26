@@ -95,6 +95,19 @@ describe('ItemsPage', () => {
     expect(rowTitles()).toHaveLength(5)
   })
 
+  it('shows the game stat icon on each stat button, brighter when pressed', async () => {
+    setup()
+    await screen.findByRole('region', { name: '전설' })
+    const icon = (name: string) => stat(name).querySelector('img')
+    expect(icon('공격력')).toHaveAttribute('src', '/stats/damage.png')
+    expect(icon('공격력')).toHaveAttribute('alt', '')
+    expect(icon('이동 속도')).toHaveAttribute('src', '/stats/moveSpeed.png')
+    expect(icon('모든 아이템')).toBeNull()
+
+    await userEvent.click(stat('공격력'))
+    expect(icon('공격력')).toHaveAttribute('src', '/stats/damage-on.png')
+  })
+
   it('combines search by initials with stats, and 조건 지우기 resets both', async () => {
     setup()
     await screen.findByRole('region', { name: '전설' })
