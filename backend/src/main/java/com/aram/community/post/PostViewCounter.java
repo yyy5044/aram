@@ -11,6 +11,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -42,7 +43,7 @@ public class PostViewCounter {
 		try {
 			return countOn(postId, viewerUserId, anonymousId, kstDate(Instant.now()));
 		}
-		catch (DataAccessException e) {
+		catch (DataAccessException | TransactionException e) {
 			log.warn("Could not count a view of post {}", postId, e);
 			return false;
 		}
