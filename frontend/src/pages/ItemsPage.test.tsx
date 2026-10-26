@@ -145,6 +145,14 @@ describe('ItemsPage', () => {
     expect(screen.getByText('강철심장 설명')).toBeInTheDocument()
   })
 
+  it('keeps a tall side panel scrollable inside the screen', async () => {
+    setup()
+    const placeholder = await screen.findByText('아이템을 고르면 조합과 설명이 나와요')
+    const aside = placeholder.closest('aside')!
+    expect(aside.className).toContain('md:max-h-[calc(100vh-2rem)]')
+    expect(aside.className).toContain('md:overflow-y-auto')
+  })
+
   it('says so when no item data has arrived yet', async () => {
     mockApi({ 'GET /api/items': () => json([]) })
     renderWithProviders(<ItemsPage />, { path: '/items', route: '/items' })

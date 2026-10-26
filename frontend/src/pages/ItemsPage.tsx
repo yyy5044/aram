@@ -197,7 +197,7 @@ export default function ItemsPage() {
             </div>
           </div>
           {!phone && (
-            <aside className="rounded-mark border border-gold bg-night p-4 shadow-pop md:sticky md:top-4">
+            <aside className="rounded-mark border border-gold bg-night p-4 shadow-pop md:sticky md:top-4 md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
               {panel ?? <p className="py-8 text-center text-[15px] text-nav">아이템을 고르면 조합과 설명이 나와요</p>}
             </aside>
           )}
