@@ -34,7 +34,9 @@
   --radius-mark: 4px;
   --radius-touch: 8px;
 
-  --font-sans: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  /* 기본 글꼴: 게임 설명처럼 읽기 편한 명조. 입력칸·버튼도 이걸 따라요. */
+  --font-body: 'Noto Serif KR', 'Nanum Myeongjo', 'AppleMyungjo', serif;
+  --default-font-family: var(--font-body);
   --font-display: 'Hahmlet', 'Nanum Myeongjo', serif;
 
   --shadow-pop: 0 12px 28px #0c1f2e29;
@@ -44,7 +46,7 @@ body {
   margin: 0;
   background: var(--color-ice);
   color: var(--color-ink);
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
 }
 
 /* 머리말·머리 띠의 밤하늘 */
