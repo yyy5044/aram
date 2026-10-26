@@ -14,6 +14,7 @@ import { PAGE_NARROW } from '../components/ui/layout'
 import TagChip from '../components/ui/TagChip'
 import VersionChip from '../components/ui/VersionChip'
 import PostContentView from '../editor/PostContentView'
+import { formatCount } from '../lib/formatCount'
 import { relativeTime } from '../lib/relativeTime'
 import { parseRouteId } from '../lib/routeId'
 import NotFoundPage from './NotFoundPage'
@@ -63,6 +64,7 @@ export default function PostDetailPage() {
           </Link>
           <span>{relativeTime(post.createdAt)}</span>
           {post.edited && <span>수정됨</span>}
+          <span>조회 {formatCount(post.viewCount)}</span>
           <VersionChip patch={post.gamePatch} />
           <span className="ml-auto flex gap-1">
             {isAuthor && (

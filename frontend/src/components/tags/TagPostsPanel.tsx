@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { ApiError } from '../../api/client'
-import { useTagPosts, type PostSort } from '../../api/posts'
+import { parsePostSort, useTagPosts, type PostSort } from '../../api/posts'
 import PostListItem from '../PostListItem'
 import SortPills from '../SortPills'
 import { buttonClass } from '../ui/button'
@@ -46,7 +46,7 @@ export default function TagPostsPanel({
   compact = false,
 }: Props) {
   const [params, setParams] = useSearchParams()
-  const sort: PostSort = params.get('order') === 'likes' ? 'likes' : 'latest'
+  const sort: PostSort = parsePostSort(params.get('order'))
   function setSort(next: PostSort) {
     const p = new URLSearchParams(params)
     if (next === 'latest') p.delete('order')

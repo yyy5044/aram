@@ -35,6 +35,9 @@ public class PostListService {
 	private static final Sort LIKES = Sort.by(Sort.Order.desc("likeCount"), Sort.Order.desc("createdAt"),
 			Sort.Order.desc("id"));
 
+	private static final Sort VIEWS = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("createdAt"),
+			Sort.Order.desc("id"));
+
 	private final PostRepository posts;
 
 	private final GameDataService gameData;
@@ -49,7 +52,8 @@ public class PostListService {
 		Sort order = switch (sort) {
 			case "latest" -> LATEST;
 			case "likes" -> LIKES;
-			default -> throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("sort", "정렬은 latest 또는 likes만 쓸 수 있어요"));
+			case "views" -> VIEWS;
+			default -> throw new ApiException(ErrorCode.INVALID_INPUT, Map.of("sort", "정렬은 latest, likes, views만 쓸 수 있어요"));
 		};
 		requireValidPage(page);
 		if (size < 1 || size > PAGE_SIZE) {
@@ -109,7 +113,7 @@ public class PostListService {
 		return PageResponse.of(result.map(p -> new PostListItem(p.getId(), p.getTitle(), p.getGamePatch(),
 				AuthorDto.of(p.getAuthor()), champions.getOrDefault(p.getId(), List.of()),
 				augments.getOrDefault(p.getId(), List.of()), items.getOrDefault(p.getId(), List.of()),
-				p.getLikeCount(), p.getCommentCount(), p.getCreatedAt())));
+				p.getLikeCount(), p.getCommentCount(), p.getViewCount(), p.getCreatedAt())));
 	}
 
 	/** 한 페이지 글들의 아이템을 모아 한 번에 바꾼 뒤(표를 한 번만 읽어요) 글별로 묶어요. 이름순. */

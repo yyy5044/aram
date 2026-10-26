@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import type { PostListItem as Item } from '../api/types'
+import { formatCount } from '../lib/formatCount'
 import { relativeTime } from '../lib/relativeTime'
 import Avatar from './Avatar'
 import CornerFrame from './ui/CornerFrame'
@@ -62,6 +63,7 @@ export default function PostListItem({ post, compact = false }: { post: Item; co
           <VersionChip patch={post.gamePatch} />
           <span>{relativeTime(post.createdAt)}</span>
           <span>댓글 {post.commentCount}</span>
+          <span>조회 {formatCount(post.viewCount)}</span>
         </div>
       </div>
       <Likes count={post.likeCount} />
@@ -94,6 +96,7 @@ function CompactRow({ post }: { post: Item }) {
         <VersionChip patch={post.gamePatch} />
       </span>
       <span className="hidden text-[13px] whitespace-nowrap text-ink-3 sm:inline">{relativeTime(post.createdAt)}</span>
+      <span className="hidden text-[13px] whitespace-nowrap text-ink-3 sm:inline">조회 {formatCount(post.viewCount)}</span>
       <Likes count={post.likeCount} compact />
     </li>
   )

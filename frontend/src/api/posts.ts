@@ -2,7 +2,12 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-qu
 import { apiFetch } from './client'
 import type { Page, PostDetail, PostListItem, PostRequest } from './types'
 
-export type PostSort = 'latest' | 'likes'
+export type PostSort = 'latest' | 'likes' | 'views'
+
+/** 주소에 남은 정렬 값(?sort=, ?order=)을 읽어요. 모르는 값이면 최신순이에요. */
+export function parsePostSort(value: string | null): PostSort {
+  return value === 'likes' || value === 'views' ? value : 'latest'
+}
 
 export type PostListParams = {
   sort: PostSort

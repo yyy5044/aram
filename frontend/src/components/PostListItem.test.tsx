@@ -24,6 +24,7 @@ describe('PostListItem', () => {
     expect(screen.getByText('하체 운동의 날')).toBeInTheDocument()
     expect(screen.getByText('26.21').closest('[data-version]')).toHaveTextContent('26.21 버전')
     expect(screen.getByText('댓글 8')).toBeInTheDocument()
+    expect(screen.getByText('조회 31')).toBeInTheDocument()
     // "추천"은 화면 읽기 프로그램용 숨김 글자예요. 화면에는 삼각형과 숫자만 보여요.
     expect(container.querySelector('[data-likes]')).toHaveTextContent('추천 24')
   })
@@ -65,6 +66,24 @@ describe('PostListItem', () => {
     )
     expect(screen.getByRole('link', { name: title })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /열두글자닉네임입니다요/ })).toHaveAttribute('href', '/users/3')
+  })
+
+  it('formats large view counts with commas', () => {
+    renderWithProviders(
+      <ul>
+        <PostListItem post={listItem({ viewCount: 1234 })} />
+      </ul>,
+    )
+    expect(screen.getByText('조회 1,234')).toBeInTheDocument()
+  })
+
+  it('compact mode shows the view count too', () => {
+    renderWithProviders(
+      <ul>
+        <PostListItem post={listItem({ viewCount: 12 })} compact />
+      </ul>,
+    )
+    expect(screen.getByText('조회 12')).toBeInTheDocument()
   })
 
   it('compact mode is one line without tag icons', () => {

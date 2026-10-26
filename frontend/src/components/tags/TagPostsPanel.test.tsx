@@ -99,6 +99,14 @@ describe('TagPostsPanel', () => {
     expect(router.state.location.search).toBe('?order=likes')
   })
 
+  it('sorts by views and remembers it in the address', async () => {
+    const { api, router } = setup(7)
+    await userEvent.click(await screen.findByRole('button', { name: '조회순' }))
+    expect(await screen.findByText('views 글 1')).toBeInTheDocument()
+    expect(api.find('GET', '/api/posts').at(-1)!.query.get('sort')).toBe('views')
+    expect(router.state.location.search).toBe('?order=views')
+  })
+
   it('starts with the sort from the address', async () => {
     const { api } = setup(7, 'augment', {}, {}, '/?order=likes')
     expect(await screen.findByText('likes 글 1')).toBeInTheDocument()

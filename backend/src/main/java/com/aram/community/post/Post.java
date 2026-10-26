@@ -53,6 +53,10 @@ public class Post {
 	@Column(name = "comment_count", nullable = false)
 	private int commentCount;
 
+	/** PostViewCounter가 SQL로만 올려요. 글을 고쳐 저장할 때 옛 값으로 덮어쓰지 않게 JPA는 읽기만 해요. */
+	@Column(name = "view_count", nullable = false, insertable = false, updatable = false)
+	private int viewCount;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -131,6 +135,10 @@ public class Post {
 
 	public int getLikeCount() {
 		return likeCount;
+	}
+
+	public int getViewCount() {
+		return viewCount;
 	}
 
 	public int getCommentCount() {

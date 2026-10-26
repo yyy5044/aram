@@ -68,6 +68,7 @@ export function listItem(overrides: Partial<PostListItem> = {}): PostListItem {
     items: [],
     likeCount: 24,
     commentCount: 8,
+    viewCount: 31,
     createdAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
     ...overrides,
   }

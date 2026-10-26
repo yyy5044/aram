@@ -108,6 +108,7 @@ export type PostListItem = {
   items: Item[]
   likeCount: number
   commentCount: number
+  viewCount: number
   createdAt: string
 }
 
@@ -122,6 +123,7 @@ export type PostDetail = {
   items: Item[]
   likeCount: number
   commentCount: number
+  viewCount: number
   likedByMe: boolean
   scrappedByMe: boolean
   createdAt: string

@@ -33,6 +33,12 @@ class PostListApiTest extends IntegrationTest {
 				Long.class, author.getId(), title, likes, comments, minutesAgo, minutesAgo);
 	}
 
+	long insertPost(String title, int minutesAgo, int likes, int comments, int views) {
+		long id = insertPost(title, minutesAgo, likes, comments);
+		jdbc.update("update posts set view_count = ? where id = ?", views, id);
+		return id;
+	}
+
 	void tagChampion(long postId, String championId) {
 		jdbc.update("insert into post_champions (post_id, champion_id) values (?, ?)", postId, championId);
 	}
@@ -119,7 +125,39 @@ class PostListApiTest extends IntegrationTest {
 
 	@Test
 	void unknownSortRejected() throws Exception {
-		mockMvc.perform(get("/api/posts?sort=views")).andExpect(status().isBadRequest());
+		mockMvc.perform(get("/api/posts?sort=popular"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.fieldErrors.sort").value("정렬은 latest, likes, views만 쓸 수 있어요"));
+	}
+
+	@Test
+	void sortsByViews() throws Exception {
+		insertPost("5회", 3, 0, 0, 5);
+		insertPost("9회", 2, 0, 0, 9);
+		insertPost("1회", 1, 0, 0, 1);
+
+		mockMvc.perform(get("/api/posts?sort=views"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.items[0].title").value("9회"))
+			.andExpect(jsonPath("$.items[1].title").value("5회"))
+			.andExpect(jsonPath("$.items[2].title").value("1회"));
+	}
+
+	@Test
+	void viewsTieNewestFirst() throws Exception {
+		insertPost("옛 글", 5, 0, 0, 4);
+		insertPost("새 글", 1, 0, 0, 4);
+
+		mockMvc.perform(get("/api/posts?sort=views"))
+			.andExpect(jsonPath("$.items[0].title").value("새 글"))
+			.andExpect(jsonPath("$.items[1].title").value("옛 글"));
+	}
+
+	@Test
+	void listIncludesViewCount() throws Exception {
+		insertPost("7회", 1, 0, 0, 7);
+
+		mockMvc.perform(get("/api/posts")).andExpect(jsonPath("$.items[0].viewCount").value(7));
 	}
 
 	@Test

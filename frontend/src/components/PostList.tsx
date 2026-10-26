@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { ApiError } from '../api/client'
-import { usePostList, type PostSort } from '../api/posts'
+import { parsePostSort, usePostList, type PostSort } from '../api/posts'
 import type { Page, PostListItem as Item } from '../api/types'
 import Pagination from './Pagination'
 import PastLastPage from './PastLastPage'
@@ -19,7 +19,7 @@ type Props = {
 /** 정렬 버튼, 글 목록, 페이지 번호. 정렬과 페이지는 주소(?sort=&page=)에 남아요. */
 export default function PostList({ champion, augment, item, empty, header }: Props) {
   const [params, setParams] = useSearchParams()
-  const sort: PostSort = params.get('sort') === 'likes' ? 'likes' : 'latest'
+  const sort: PostSort = parsePostSort(params.get('sort'))
   const page = Math.max(1, Number(params.get('page')) || 1)
   const { data, error, isPending } = usePostList({ sort, page, champion, augment, item })
 
