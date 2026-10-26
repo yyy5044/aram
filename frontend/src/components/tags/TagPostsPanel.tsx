@@ -9,7 +9,7 @@ import CornerFrame from '../ui/CornerFrame'
 import TopAugments from './TopAugments'
 
 type Props = {
-  kind: 'augment' | 'champion' | 'item'
+  kind: 'augment' | 'champion'
   id: string
   title: string
   subtitle: string
@@ -57,7 +57,6 @@ export default function TagPostsPanel({
     sort,
     champion: kind === 'champion' ? id : undefined,
     augment: kind === 'augment' ? id : undefined,
-    item: kind === 'item' ? id : undefined,
   })
   const posts = data?.pages.flatMap((p) => p.items) ?? []
   const total = data?.pages[0]?.totalItems ?? 0

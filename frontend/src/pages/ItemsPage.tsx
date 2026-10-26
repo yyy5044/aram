@@ -1,190 +1,213 @@
-import { useEffect, useState } from 'react'
-import { useItems, useTagCounts } from '../api/gamedata'
-import type { Item, ItemTier } from '../api/types'
-import ItemTooltipBody from '../components/item/ItemTooltipBody'
-import TagGrid from '../components/tags/TagGrid'
+import { useEffect, useId, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { useItems } from '../api/gamedata'
+import type { Item } from '../api/types'
+import ItemDetailPanel from '../components/item/ItemDetailPanel'
 import TagPageStatus from '../components/tags/TagPageStatus'
-import TagPostsPanel from '../components/tags/TagPostsPanel'
-import TagToolbar from '../components/tags/TagToolbar'
-import { useOpenTag } from '../components/tags/useOpenTag'
+import BottomSheet from '../components/ui/BottomSheet'
+import { buttonClass } from '../components/ui/button'
 import { PAGE_WIDE } from '../components/ui/layout'
-import { ITEM_TIER_LABEL, ITEM_TIERS } from '../lib/itemTiers'
-import { matchesName, sortTags, type TagSort } from '../lib/tagSearch'
+import SearchInput from '../components/ui/SearchInput'
+import { shopRows, type ShopRow } from '../lib/itemShop'
+import { ITEM_STATS, type ItemStat } from '../lib/itemStats'
+import { useMediaQuery } from '../lib/useMediaQuery'
 
-/** 묶음 머리 왼쪽 4px 세로줄 색. */
-const TIER_BAR: Record<ItemTier, string> = {
-  AUGMENT_MODE: 'bg-prismatic',
-  LEGENDARY: 'bg-gold',
-  EPIC: 'bg-gold-rarity',
-  BOOTS: 'bg-teal',
-  BASIC: 'bg-silver',
-  STARTER: 'bg-line',
+/** 능력치 버튼. 넓은 화면은 왼쪽 세로 줄, 그 밖은 가로 한 줄(휴대폰은 밀어서 봐요). */
+function StatFilter({
+  stats,
+  onToggle,
+  onClear,
+  layout,
+}: {
+  stats: ReadonlySet<ItemStat>
+  onToggle: (stat: ItemStat) => void
+  onClear: () => void
+  layout: 'column' | 'wrap' | 'scroll'
+}) {
+  const list =
+    layout === 'column'
+      ? 'flex flex-col gap-1 [&>button]:w-full'
+      : layout === 'wrap'
+        ? 'flex flex-wrap gap-1.5'
+        : '-mx-4 flex flex-nowrap gap-1.5 overflow-x-auto px-4 pb-1'
+  const button = (on: boolean) => buttonClass(on ? 'primary' : 'ghost', 36)
+  return (
+    <div role="group" aria-label="능력치" className={list}>
+      <button type="button" aria-pressed={stats.size === 0} onClick={onClear} className={button(stats.size === 0)}>
+        모든 아이템
+      </button>
+      {ITEM_STATS.map((s) => (
+        <button key={s.key} type="button" aria-pressed={stats.has(s.key)} onClick={() => onToggle(s.key)} className={button(stats.has(s.key))}>
+          {s.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
-/** 아이템 목록. 단계별 묶음으로 접혀 있고, 아이템을 누르면 그 아래로 설명 상자와 글 목록이 펼쳐져요. */
+/** 상점 칸: 아이콘 48과 아래 가격. 이름은 마우스를 올리면 보이고 화면 읽기 프로그램이 읽어요. */
+function ShopItem({ item, selected, onPick }: { item: Item; selected: boolean; onPick: (id: string) => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={`${item.nameKo} ${item.priceTotal} 골드`}
+      aria-pressed={selected}
+      title={item.nameKo}
+      onClick={() => onPick(item.id)}
+      className="flex flex-col items-center gap-1 rounded-mark p-0.5 focus-visible:outline-2 focus-visible:outline-teal"
+    >
+      {item.iconUrl ? (
+        <img
+          src={item.iconUrl}
+          alt=""
+          className={`h-12 w-12 rounded-mark bg-night-2 ${selected ? 'ring-2 ring-gold' : 'hover:ring-2 hover:ring-gold/50'}`}
+        />
+      ) : (
+        <span aria-hidden="true" className={`block h-12 w-12 rounded-mark bg-night-2 ${selected ? 'ring-2 ring-gold' : ''}`} />
+      )}
+      <span aria-hidden="true" className="text-[13px] leading-none text-gold-deep">
+        {item.priceTotal}
+      </span>
+    </button>
+  )
+}
+
+function Row({ row, selectedId, onPick }: { row: ShopRow; selectedId: string | null; onPick: (id: string) => void }) {
+  const headingId = useId()
+  return (
+    <section aria-labelledby={headingId} className="border-b border-line-soft pb-4 last:border-b-0">
+      <div className="mb-2 flex items-baseline gap-2">
+        <h2 id={headingId} className="text-[15px] font-bold text-ink">
+          {row.label}
+        </h2>
+        <span className="text-[13px] text-ink-3">{row.items.length}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {row.items.map((it) => (
+          <ShopItem key={it.id} item={it} selected={it.id === selectedId} onPick={onPick} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/**
+ * 아이템 탭(설계 docs/superpowers/specs/2026-10-26-item-shop-design.md): 게임 상점처럼 능력치로 걸러내고 단계별 줄에서 찾아요.
+ * 고른 아이템은 주소 ?item=에 남고, 넓은 화면은 오른쪽 칸에, 휴대폰은 아래서 올라오는 창에 조합 나무와 설명이 나와요.
+ */
 export default function ItemsPage() {
   const items = useItems()
-  const counts = useTagCounts()
+  const [params, setParams] = useSearchParams()
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<TagSort>('name')
-  const [openGroups, setOpenGroups] = useState<Set<ItemTier>>(() => new Set())
-  const [openId, toggle, close, openTo] = useOpenTag()
-  // 재료·상위 아이템 아이콘으로 넘어간 칸. 그 펼침 영역이 그려지면 화면 맨 위로 데려와요.
-  const [scrollTo, setScrollTo] = useState<string | null>(null)
+  const [stats, setStats] = useState<Set<ItemStat>>(() => new Set())
+  const wide = useMediaQuery('(min-width: 1024px)')
+  const phone = useMediaQuery('(max-width: 767px)')
+
+  const requested = params.get('item')
+  const all = items.data ?? []
+  const selected = all.find((it) => it.id === requested && it.active) ?? null
+  // 없거나 상점에서 빠진 번호는 주소에서 지워요(목록을 받은 뒤에만).
+  const stale = items.data !== undefined && requested !== null && selected === null
 
   useEffect(() => {
-    if (scrollTo === null || scrollTo !== openId) return
-    // 칸 격자가 펼침 영역 자리를 재고 옮긴 다음(레이아웃 뒤)에 찾아요.
-    const frame = requestAnimationFrame(() => {
-      document.querySelector(`[data-item-panel="${CSS.escape(scrollTo)}"]`)?.scrollIntoView({ block: 'start' })
-      setScrollTo(null)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [scrollTo, openId])
+    if (!stale) return
+    setParams(
+      (p) => {
+        p.delete('item')
+        return p
+      },
+      { replace: true },
+    )
+  }, [stale, setParams])
 
-  if (items.isPending || counts.isPending || items.error || counts.error) {
-    return <TagPageStatus pending={items.isPending || counts.isPending} error={items.error ?? counts.error} />
+  if (items.isPending || items.error) return <TagPageStatus pending={items.isPending} error={items.error} />
+
+  function pick(id: string) {
+    setParams(
+      (p) => {
+        p.set('item', id)
+        return p
+      },
+      { replace: true },
+    )
   }
 
-  const countOf = (it: Item) => counts.data.items?.[it.id] ?? 0
-  const active = items.data.filter((it) => it.active)
-  const searching = query.trim() !== ''
-  const groups = ITEM_TIERS.map((tier) => {
-    const all = active.filter((it) => it.tier === tier)
-    const matches = sortTags(
-      all.filter((it) => matchesName(it.nameKo, query)),
-      sort,
-      (it) => it.nameKo,
-      countOf,
+  function unpick() {
+    setParams(
+      (p) => {
+        p.delete('item')
+        return p
+      },
+      { replace: true },
     )
-    const containsOpen = openId !== null && all.some((it) => it.id === openId)
-    return {
-      tier,
-      label: ITEM_TIER_LABEL[tier],
-      bar: TIER_BAR[tier],
-      all,
-      matches,
-      posts: all.reduce((sum, it) => sum + countOf(it), 0),
-      open: openGroups.has(tier) || (searching && matches.length > 0) || containsOpen,
-    }
-  }).filter((g) => g.all.length > 0 && (!searching || g.matches.length > 0))
+  }
 
-  function setGroupOpen(tier: ItemTier, open: boolean) {
-    setOpenGroups((prev) => {
+  function toggleStat(stat: ItemStat) {
+    setStats((prev) => {
       const next = new Set(prev)
-      if (open) next.add(tier)
-      else next.delete(tier)
+      if (next.has(stat)) next.delete(stat)
+      else next.add(stat)
       return next
     })
   }
 
-  /** 펼침 영역을 품은 묶음의 제목을 누르면 펼침 영역도 닫고 묶음을 접어요. */
-  function toggleGroup(g: (typeof groups)[number]) {
-    const containsOpen = openId !== null && g.all.some((it) => it.id === openId)
-    if (containsOpen) close()
-    setGroupOpen(g.tier, !(g.open || containsOpen))
-  }
-
-  /** 묶음 안의 칸이나 펼침 영역을 건드리면 그 묶음은 계속 펼쳐 둬요(?open=으로만 열렸던 경우). */
-  function toggleItem(tier: ItemTier, id: string) {
-    setGroupOpen(tier, true)
-    toggle(id)
-  }
-
-  function closePanel(tier: ItemTier) {
-    setGroupOpen(tier, true)
-    close()
-  }
-
-  /**
-   * 재료·상위 아이템 아이콘을 누르면 그 아이템을 펼쳐요. 지금 묶음과 넘어간 아이템의 묶음을 모두 펼쳐 두고,
-   * 검색어가 그 아이템을 가리지 않게 지우고, 새 펼침 영역으로 화면을 옮겨요.
-   */
-  function pick(from: ItemTier, id: string) {
-    const target = active.find((it) => it.id === id)
-    setGroupOpen(from, true)
-    if (target) setGroupOpen(target.tier, true)
+  function clearAll() {
     setQuery('')
-    openTo(id)
-    setScrollTo(id)
+    setStats(new Set())
   }
 
-  const totalPosts = active.reduce((sum, it) => sum + countOf(it), 0)
+  const rows = shopRows(all, query, stats)
+  const shown = rows.reduce((sum, r) => sum + r.items.length, 0)
+  const noData = !all.some((it) => it.active)
+  const panel = selected ? <ItemDetailPanel itemId={selected.id} items={all} onPick={pick} /> : null
 
   return (
     <section className={PAGE_WIDE}>
       <div className="mb-4 flex items-baseline gap-3">
         <h1 className="font-display text-[28px] leading-tight text-night">아이템</h1>
-        <span className="text-[13px] text-ink-3">
-          아이템 {active.length}개 · 글 {totalPosts}개
-        </span>
+        <span className="text-[13px] text-ink-3">아이템 {shown}개</span>
       </div>
-      <TagToolbar query={query} onQueryChange={setQuery} sort={sort} onSortChange={setSort} placeholder="아이템 이름 검색" />
-      {active.length === 0 ? (
+      {noData ? (
         <p className="py-16 text-center text-ink-3">아직 아이템 정보를 받아오지 못했어요. 잠시 후 다시 확인해주세요</p>
-      ) : groups.length === 0 ? (
-        <p className="py-16 text-center text-ink-3">검색 결과가 없어요</p>
-      ) : null}
-      {groups.map((g) => (
-        <div key={g.tier} className="mb-2 border border-line-soft bg-surface">
-          <button
-            type="button"
-            aria-expanded={g.open}
-            onClick={() => toggleGroup(g)}
-            className={`flex h-14 w-full items-center gap-3 pr-5 text-left hover:bg-[#f1f7fb] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal ${
-              g.open ? 'border-b border-line-soft' : ''
-            }`}
-          >
-            <span aria-hidden="true" className={`w-1 self-stretch ${g.bar}`} />
-            <span className="text-[17px] font-bold text-ink">{g.label}</span>
-            <span className="text-[13px] text-ink-3">
-              아이템 {searching ? `${g.matches.length}/` : ''}
-              {g.all.length}개 · 글 {g.posts}개
-            </span>
-            <span aria-hidden="true" className={`ml-auto text-lg text-ink-3 transition-transform ${g.open ? '-rotate-90' : 'rotate-90'}`}>
-              ›
-            </span>
-          </button>
-          {g.open && (
-            <div className="p-2 sm:p-4">
-              <TagGrid
-                items={g.matches.map((it) => ({ id: it.id, name: it.nameKo, image: it.iconUrl }))}
-                openId={openId}
-                onToggle={(id) => toggleItem(g.tier, id)}
-                renderPanel={(id) => {
-                  const it = g.all.find((x) => x.id === id)!
-                  return (
-                    <div data-item-panel={id}>
-                      <TagPostsPanel
-                        kind="item"
-                        id={id}
-                        title={it.nameKo}
-                        subtitle={`${g.label} 아이템 · 게시글 ${countOf(it)}개`}
-                        onClose={() => closePanel(g.tier)}
-                        media={
-                          it.iconUrl ? (
-                            <img src={it.iconUrl} alt="" className="h-12 w-12 rounded-mark bg-night-2" />
-                          ) : (
-                            <span aria-hidden="true" className="block h-12 w-12 rounded-mark bg-night-2" />
-                          )
-                        }
-                        moreTo={`/items/${encodeURIComponent(id)}`}
-                        postsHeading={`이 아이템 글 ${countOf(it)}개`}
-                        compact
-                        aside={
-                          <div className="[&>*]:max-w-full">
-                            <ItemTooltipBody itemId={id} onPick={(next) => pick(g.tier, next)} />
-                          </div>
-                        }
-                      />
-                    </div>
-                  )
-                }}
-              />
+      ) : (
+        <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1fr)_340px] lg:grid-cols-[176px_minmax(0,1fr)_340px]">
+          {wide && (
+            <aside className="lg:sticky lg:top-4">
+              <StatFilter stats={stats} onToggle={toggleStat} onClear={() => setStats(new Set())} layout="column" />
+            </aside>
+          )}
+          <div className="min-w-0">
+            <SearchInput label="아이템 이름 검색" placeholder="아이템 이름 검색" value={query} onChange={(e) => setQuery(e.target.value)} />
+            {!wide && (
+              <div className="mt-3">
+                <StatFilter stats={stats} onToggle={toggleStat} onClear={() => setStats(new Set())} layout={phone ? 'scroll' : 'wrap'} />
+              </div>
+            )}
+            <div className="mt-4 flex flex-col gap-4 border border-line-soft bg-surface p-4">
+              {rows.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-12">
+                  <p className="text-ink-3">조건에 맞는 아이템이 없어요</p>
+                  <button type="button" onClick={clearAll} className={buttonClass('ghost', 40)}>
+                    조건 지우기
+                  </button>
+                </div>
+              ) : (
+                rows.map((row) => <Row key={row.tier} row={row} selectedId={selected?.id ?? null} onPick={pick} />)
+              )}
             </div>
+          </div>
+          {!phone && (
+            <aside className="rounded-mark border border-gold bg-night p-4 shadow-pop md:sticky md:top-4">
+              {panel ?? <p className="py-8 text-center text-[15px] text-nav">아이템을 고르면 조합과 설명이 나와요</p>}
+            </aside>
           )}
         </div>
-      ))}
+      )}
+      {phone && (
+        <BottomSheet open={selected !== null} onClose={unpick} label={selected?.nameKo ?? ''}>
+          {panel}
+        </BottomSheet>
+      )}
     </section>
   )
 }
