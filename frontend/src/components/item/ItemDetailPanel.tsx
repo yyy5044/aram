@@ -75,7 +75,7 @@ export default function ItemDetailPanel({ itemId, items, onPick }: Props) {
     <div className="flex flex-col gap-5 text-ice">
       <div role="group" aria-label="조합 나무">
         <p className="mb-3 text-[13px] text-silver">조합 나무</p>
-        <div className="flex flex-col items-center overflow-x-auto">
+        <div className="flex flex-col items-center overflow-x-auto overflow-y-hidden pb-1">
           <div className="flex flex-col items-center gap-0.5">
             <Icon item={item} size="h-12 w-12 ring-2 ring-gold" />
             <span className="text-[13px] leading-none text-gold">{item?.priceTotal}</span>
