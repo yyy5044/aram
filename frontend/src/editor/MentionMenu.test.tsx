@@ -40,8 +40,6 @@ async function setup(content: JSONContent = { type: 'doc', content: [{ type: 'pa
   renderWithProviders(<PostEditor initialContent={content} onChange={() => {}} onError={onError} onMention={onMention} />)
   const dom = document.querySelector('.ProseMirror') as HTMLElement & { editor: Editor }
   await vi.waitFor(() => expect(answered).toBe(3), { timeout: 15000 })
-  // 받은 목록이 화면과 편집기에 반영될 때까지 한 박자 더 기다려요.
-  await act(() => new Promise((r) => setTimeout(r, 50)))
   return { editor: dom.editor, dom, onMention, onError }
 }
 
@@ -62,11 +60,33 @@ function mentions(editor: Editor) {
 
 const MENU = { name: '넣을 챔피언·증강·아이템' }
 
+/**
+ * 글을 치고 @ 메뉴가 뜰 때까지 기다려요. 받은 목록은 편집기가 다시 그려질 때 넘어가서, 느린 컴퓨터(CI)에서는 목록이 닿기 전에
+ * 친 검색어로는 메뉴가 안 떠요. 시간을 짐작해 기다리지 않고, 사람이 글자를 하나 더 쳤다 지우듯 검색어를 다시 넣어 확인해요.
+ */
+async function openMenu(editor: Editor, text: string) {
+  type(editor, text)
+  await vi.waitFor(
+    () => {
+      if (screen.queryByRole('listbox', MENU)) return
+      act(() => {
+        editor.commands.insertContent('x')
+        editor.commands.command(({ tr }) => {
+          tr.delete(tr.selection.from - 1, tr.selection.from)
+          return true
+        })
+      })
+      throw new Error('@ 메뉴가 아직 안 떴어요')
+    },
+    { timeout: 15000, interval: 50 },
+  )
+  return screen.getByRole('listbox', MENU)
+}
+
 describe('@ menu', () => {
   it('finds a champion by initial consonants and inserts its box on Enter', async () => {
     const { editor, dom, onMention } = await setup()
-    type(editor, '추천 @ㅅㅉ')
-    const menu = await screen.findByRole('listbox', MENU)
+    const menu = await openMenu(editor, '추천 @ㅅㅉ')
     expect(menu).toHaveTextContent('신짜오')
     expect(menu).toHaveTextContent('챔피언')
 
@@ -80,8 +100,7 @@ describe('@ menu', () => {
 
   it('finds an augment while ignoring spaces', async () => {
     const { editor, dom, onMention } = await setup()
-    type(editor, '@거석상의용')
-    const menu = await screen.findByRole('listbox', MENU)
+    const menu = await openMenu(editor, '@거석상의용')
     expect(menu).toHaveTextContent('거석상의 용기')
     expect(menu).toHaveTextContent('증강')
     fireEvent.keyDown(dom, { key: 'Enter' })
@@ -91,8 +110,7 @@ describe('@ menu', () => {
 
   it('finds an item by initial consonants and labels it as an item', async () => {
     const { editor, dom, onMention } = await setup()
-    type(editor, '@ㄱㅊ')
-    const menu = await screen.findByRole('listbox', MENU)
+    const menu = await openMenu(editor, '@ㄱㅊ')
     expect(menu).toHaveTextContent('강철심장')
     const row = screen.getByRole('option', { name: /강철심장/ })
     expect(row).toHaveTextContent('아이템')
@@ -119,8 +137,7 @@ describe('@ menu', () => {
 
   it('closes on Escape and keeps the typed text', async () => {
     const { editor, dom } = await setup()
-    type(editor, '@신짜')
-    await screen.findByRole('listbox', MENU)
+    await openMenu(editor, '@신짜')
     fireEvent.keyDown(dom, { key: 'Escape' })
     expect(screen.queryByRole('listbox', MENU)).not.toBeInTheDocument()
     expect(editor.getText()).toContain('@신짜')
@@ -132,9 +149,8 @@ describe('@ menu', () => {
       type: 'doc',
       content: [{ type: 'paragraph', content: Array.from({ length: 30 }, () => box) }],
     })
-    type(editor, ' @신짜')
-    // 박스 30개를 그리느라 느릴 수 있어요(전체 테스트를 함께 돌릴 때).
-    await screen.findByRole('listbox', MENU, { timeout: 15000 })
+    // 박스 30개를 그리느라 목록이 편집기에 늦게 닿을 수 있어요(CI에서 실제로 있었어요).
+    await openMenu(editor, ' @신짜')
     fireEvent.keyDown(dom, { key: 'Enter' })
     expect(onError).toHaveBeenCalledWith('본문 태그는 한 글에 30개까지 넣을 수 있어요')
     expect(mentions(editor)).toHaveLength(30)
