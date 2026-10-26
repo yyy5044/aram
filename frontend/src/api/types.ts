@@ -88,7 +88,8 @@ export type ItemDetail = {
 export type TagCounts = {
   champions: Record<string, number>
   augments: Record<string, number>
-  items: Record<string, number>
+  /** 아이템 탭 묶음 글 수. 서버는 더 이상 보내지 않아요(아이템 탭을 새로 만들 때 함께 빠짐). */
+  items?: Record<string, number>
 }
 
 export type TopAugment = { augment: Augment; postCount: number }
@@ -105,7 +106,6 @@ export type PostListItem = {
   author: Author
   champions: Champion[]
   augments: Augment[]
-  items: Item[]
   likeCount: number
   commentCount: number
   viewCount: number
@@ -120,7 +120,6 @@ export type PostDetail = {
   author: Author
   champions: Champion[]
   augments: Augment[]
-  items: Item[]
   likeCount: number
   commentCount: number
   viewCount: number
@@ -153,7 +152,6 @@ export type PostRequest = {
   content: JSONContent
   championIds: string[]
   augmentIds: string[]
-  itemIds: string[]
   gamePatch: string
 }
 

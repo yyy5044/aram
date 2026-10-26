@@ -7,7 +7,7 @@ import { tagPath } from './tagPath'
 export type TagChipSize = 'sm' | 'md' | 'lg'
 
 type Props = {
-  kind: 'champion' | 'augment' | 'item'
+  kind: 'champion' | 'augment'
   id: string
   nameKo: string
   imageUrl: string | null
@@ -34,15 +34,13 @@ const BOX: Record<TagChipSize, string> = {
 const PAD_RIGHT: Record<TagChipSize, string> = { sm: 'pr-2.5', md: 'pr-3', lg: 'pr-4' }
 const ICON: Record<TagChipSize, string> = { sm: 'h-5 w-5', md: 'h-7 w-7', lg: 'h-9 w-9' }
 
-/** 챔피언·증강·아이템 태그. 아이콘과 이름을 한 덩어리로 보여줘서 순서를 맞춰 읽을 필요가 없어요. */
+/** 챔피언·증강 태그. 아이콘과 이름을 한 덩어리로 보여줘서 순서를 맞춰 읽을 필요가 없어요. */
 export default function TagChip({ kind, id, nameKo, imageUrl, rarity, tinted, size, link, to, onRemove, extra }: Props) {
   const icon = ICON[size]
   const picture = !imageUrl ? (
-    <span aria-hidden="true" className={`${icon} flex-none ${kind === 'item' ? 'rounded-mark' : 'rounded-full'} bg-line`} />
+    <span aria-hidden="true" className={`${icon} flex-none rounded-full bg-line`} />
   ) : kind === 'augment' && rarity ? (
     <AugmentIcon src={imageUrl} rarity={rarity} tinted={tinted} frame="ring" className={`${icon} flex-none rounded-mark bg-night`} />
-  ) : kind === 'item' ? (
-    <img src={imageUrl} alt="" className={`${icon} flex-none rounded-mark bg-night-2`} />
   ) : (
     <img src={imageUrl} alt="" className={`${icon} flex-none rounded-full ring-1 ring-gold`} />
   )

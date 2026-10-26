@@ -46,7 +46,7 @@ export default function ItemsPage() {
     return <TagPageStatus pending={items.isPending || counts.isPending} error={items.error ?? counts.error} />
   }
 
-  const countOf = (it: Item) => counts.data.items[it.id] ?? 0
+  const countOf = (it: Item) => counts.data.items?.[it.id] ?? 0
   const active = items.data.filter((it) => it.active)
   const searching = query.trim() !== ''
   const groups = ITEM_TIERS.map((tier) => {

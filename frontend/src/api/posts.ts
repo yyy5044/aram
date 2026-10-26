@@ -14,14 +14,12 @@ export type PostListParams = {
   page: number
   champion?: string
   augment?: string
-  item?: string
 }
 
 export function usePostList(params: PostListParams) {
   const query = new URLSearchParams({ sort: params.sort, page: String(params.page) })
   if (params.champion) query.set('champion', params.champion)
   if (params.augment) query.set('augment', params.augment)
-  if (params.item) query.set('item', params.item)
   return useQuery({
     queryKey: ['posts', 'list', params],
     queryFn: () => apiFetch<Page<PostListItem>>(`/api/posts?${query}`),

@@ -29,14 +29,14 @@ describe('PostListItem', () => {
     expect(container.querySelector('[data-likes]')).toHaveTextContent('추천 24')
   })
 
-  it('shows item chips as plain icon + name, even without champions or augments', () => {
+  it('shows no item chips, even if old data still carries items', () => {
+    const old = { ...listItem({ champions: [], augments: [] }), items: [heartsteel] }
     renderWithProviders(
       <ul>
-        <PostListItem post={listItem({ champions: [], augments: [], items: [heartsteel] })} />
+        <PostListItem post={old} />
       </ul>,
     )
-    expect(screen.getByText('심장 강타')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /심장 강타/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('심장 강타')).not.toBeInTheDocument()
   })
 
   it('puts the gold corner frame only on liked posts', () => {
