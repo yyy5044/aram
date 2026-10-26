@@ -39,7 +39,7 @@
 
 ```sql
 alter table posts add column view_count integer not null default 0;
-create index posts_view_count_idx on posts (view_count desc, id desc);
+create index posts_view_count_idx on posts (view_count desc, created_at desc, id desc);
 
 create table post_views (
     post_id    bigint      not null references posts (id) on delete cascade,
@@ -68,7 +68,7 @@ count(postId, viewerUserId 또는 null, anonymousId 또는 null) -> boolean (올
 
 1. `select author_id from posts where id = ?`. 글이 없으면 아무것도 하지 않는다(이어서 `PostService.get`이 404를 낸다).
 2. 로그인한 사람이 글쓴이면 아무것도 하지 않는다.
-3. 오늘 날짜는 `Clock`(새 빈 `common/ClockConfig`, 기본 `Clock.systemUTC()`)으로 지금 시각을 얻어 한국 시간 날짜로 바꾼다. 테스트는 이 빈을 고정 시계로 바꿔 날짜 넘김을 확인한다.
+3. 오늘 날짜는 지금 시각을 한국 시간 날짜로 바꾼 것(`PostViewCounter.kstDate(Instant)`)이다. 날짜를 받는 `countOn(…, LocalDate)`를 따로 두어 테스트가 날짜 넘김을 직접 확인한다.
 4. `insert into post_views (post_id, viewer_key, view_date) values (?, ?, ?) on conflict do nothing`
 5. 넣은 행이 1이면 `update posts set view_count = view_count + 1 where id = ?`. 0이면(오늘 이미 봄) 그대로 둔다.
 
@@ -88,7 +88,7 @@ count(postId, viewerUserId 또는 null, anonymousId 또는 null) -> boolean (올
 ### 5.3 응답
 
 - `PostDetailResponse`, `PostListItem`에 `viewCount`(int)를 더한다.
-- `GET /api/posts?sort=` 에 `views`를 더한다: `view_count desc, id desc`. 잘못된 값의 오류 문구는 "정렬은 latest, likes, views만 쓸 수 있어요".
+- `GET /api/posts?sort=` 에 `views`를 더한다: `view_count desc, created_at desc, id desc`(추천순과 같은 방식). 잘못된 값의 오류 문구는 "정렬은 latest, likes, views만 쓸 수 있어요".
 
 ### 5.4 기록 정리
 
@@ -117,7 +117,7 @@ count(postId, viewerUserId 또는 null, anonymousId 또는 null) -> boolean (올
 
 **서버**(Testcontainers PostgreSQL)
 - 로그인한 다른 사람이 처음 열면 1, 같은 날 다시 열면 그대로 1.
-- 날짜가 바뀌면(고정 시계를 다음 날 한국 시간 00:00 이후로 옮겨서) 다시 오른다. 한국 시간 23:59와 00:00의 경계를 확인한다.
+- 날짜가 바뀌면(`countOn`에 다음 날을 넘겨서) 다시 오른다. `kstDate`가 한국 시간 23:59:59와 00:00의 경계에서 날짜를 바꾸는지 확인한다.
 - 글쓴이가 열면 오르지 않는다.
 - 로그인하지 않은 요청: 쿠키가 없으면 `ARAM_VIEWER`를 받고 1, 같은 쿠키로 다시 열면 그대로, 다른 쿠키면 2.
 - 이상한 쿠키 값이면 새 쿠키를 준다.
