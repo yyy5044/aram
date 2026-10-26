@@ -22,7 +22,8 @@ public final class ItemCatalog {
 	}
 
 	/** 상점 아이템 하나. fromIds는 재료 번호로, 자료에 적힌 순서와 중복을 그대로 둬요. */
-	public record Entry(int id, JsonNode data, ItemTier tier, int priceTotal, List<Integer> fromIds) {
+	public record Entry(int id, JsonNode data, ItemTier tier, int priceTotal, List<Integer> fromIds,
+			List<String> categories) {
 	}
 
 	/** map12 자료에서 KIWI 모드의 아이템 목록들을 합친 번호 집합이에요. */
@@ -71,7 +72,7 @@ public final class ItemCatalog {
 			if (total <= 0) {
 				continue;
 			}
-			entries.add(new Entry(id, item, tierOf(item), total, recipeIds(item)));
+			entries.add(new Entry(id, item, tierOf(item), total, recipeIds(item), categoriesOf(item)));
 		}
 		return entries;
 	}
@@ -104,13 +105,20 @@ public final class ItemCatalog {
 		return item.path("mItemDataAvailability").path("mInStore").asBoolean(false);
 	}
 
-	private static boolean hasCategory(JsonNode item, String name) {
+	/** 능력치 분류(`mCategories`). 자료 순서 그대로, 빈 값은 건너뛰어요. 없으면 빈 목록이에요. */
+	public static List<String> categoriesOf(JsonNode item) {
+		List<String> categories = new ArrayList<>();
 		for (JsonNode category : item.path("mCategories")) {
-			if (name.equals(category.asString(""))) {
-				return true;
+			String name = category.asString("");
+			if (!name.isEmpty()) {
+				categories.add(name);
 			}
 		}
-		return false;
+		return categories;
+	}
+
+	private static boolean hasCategory(JsonNode item, String name) {
+		return categoriesOf(item).contains(name);
 	}
 
 	private static List<Integer> recipeIds(JsonNode item) {

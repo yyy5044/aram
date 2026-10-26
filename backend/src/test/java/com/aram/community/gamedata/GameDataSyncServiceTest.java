@@ -472,6 +472,7 @@ class GameDataSyncServiceTest extends IntegrationTest {
 		assertThat(heartsteel.getPriceTotal()).isEqualTo(3000);
 		assertThat(heartsteel.getIconFile()).isEqualTo("3084.png");
 		assertThat(heartsteel.getFromIds()).containsExactly(1011, 3801, 1011);
+		assertThat(heartsteel.getCategories()).containsExactly("Health", "HealthRegen");
 		assertThat(heartsteel.isActive()).isTrue();
 		ItemText ko = itemTexts.findById(new ItemTextId(3084, "ko")).orElseThrow();
 		assertThat(ko.getName()).isEqualTo("강철심장");

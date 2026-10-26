@@ -37,6 +37,11 @@ public class Item {
 	@Column(name = "from_ids", nullable = false)
 	private List<Integer> fromIds;
 
+	/** 능력치 분류(게임 자료 mCategories). 아이템 탭 걸러내기에 써요. */
+	@JdbcTypeCode(SqlTypes.ARRAY)
+	@Column(nullable = false)
+	private List<String> categories;
+
 	@Column(nullable = false)
 	private boolean active;
 
@@ -47,24 +52,26 @@ public class Item {
 	}
 
 	public Item(int id, String nameKo, ItemTier tier, int priceTotal, String iconFile, List<Integer> fromIds,
-			Instant now) {
+			List<String> categories, Instant now) {
 		this.id = id;
 		this.nameKo = nameKo;
 		this.tier = tier;
 		this.priceTotal = priceTotal;
 		this.iconFile = iconFile;
 		this.fromIds = List.copyOf(fromIds);
+		this.categories = List.copyOf(categories);
 		this.active = true;
 		this.updatedAt = now;
 	}
 
 	public void refresh(String nameKo, ItemTier tier, int priceTotal, String iconFile, List<Integer> fromIds,
-			Instant now) {
+			List<String> categories, Instant now) {
 		this.nameKo = nameKo;
 		this.tier = tier;
 		this.priceTotal = priceTotal;
 		this.iconFile = iconFile;
 		this.fromIds = List.copyOf(fromIds);
+		this.categories = List.copyOf(categories);
 		this.active = true;
 		this.updatedAt = now;
 	}
@@ -98,6 +105,10 @@ public class Item {
 
 	public List<Integer> getFromIds() {
 		return fromIds;
+	}
+
+	public List<String> getCategories() {
+		return categories;
 	}
 
 	public boolean isActive() {

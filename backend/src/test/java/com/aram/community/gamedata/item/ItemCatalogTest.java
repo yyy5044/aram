@@ -109,4 +109,18 @@ class ItemCatalogTest {
 		assertThat(entry(built, 3006).tier()).isEqualTo(ItemTier.BOOTS);
 		assertThat(entry(built, 6032).tier()).isEqualTo(ItemTier.AUGMENT_MODE);
 	}
+
+	@Test
+	void builtEntriesCarryCategories() throws IOException {
+		List<ItemCatalog.Entry> built = ItemCatalog.build(Set.of(3084, 1036), items());
+
+		assertThat(entry(built, 3084).categories()).containsExactly("Health", "HealthRegen");
+		assertThat(entry(built, 1036).categories()).containsExactly("Damage", "Lane");
+	}
+
+	@Test
+	void categoriesOfMissingListIsEmpty() {
+		assertThat(ItemCatalog.categoriesOf(MAPPER.createObjectNode()))
+			.isEmpty();
+	}
 }

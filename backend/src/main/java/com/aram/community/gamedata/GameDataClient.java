@@ -50,7 +50,7 @@ public class GameDataClient {
 
 	/** 증강 칼바람 상점에서 살 수 있는 아이템. 이름은 한국어가 먼저고, 없으면 영어예요. */
 	public record ItemData(int id, String nameKo, ItemTier tier, int priceTotal, List<Integer> fromIds,
-			Map<AugmentLocale, LocalizedText> texts, int unresolvedCount) {
+			List<String> categories, Map<AugmentLocale, LocalizedText> texts, int unresolvedCount) {
 	}
 
 	private static final Pattern REFERENCE = Pattern.compile("\\{\\{\\s*([^}]+?)\\s*\\}\\}");
@@ -289,7 +289,8 @@ public class GameDataClient {
 			if (unresolved > 0) {
 				unresolvedItems.add(e.id() + "(" + unresolved + ")");
 			}
-			result.add(new ItemData(e.id(), nameKo, e.tier(), e.priceTotal(), e.fromIds(), texts, unresolved));
+			result.add(new ItemData(e.id(), nameKo, e.tier(), e.priceTotal(), e.fromIds(), e.categories(), texts,
+					unresolved));
 		}
 		if (!unresolvedItems.isEmpty()) {
 			// 어느 아이템 설명에 ?가 남는지 동기화 로그 한 줄로 남겨요: 아이템 번호(못 채운 수).

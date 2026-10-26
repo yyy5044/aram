@@ -144,7 +144,7 @@ public class GameDataService {
 	private ItemDto toDto(Item item, Map<Integer, List<Integer>> into) {
 		return new ItemDto(String.valueOf(item.getId()), item.getNameKo(), item.getTier(), item.getPriceTotal(),
 				itemIconUrl(item.getIconFile()), asStrings(item.getFromIds()),
-				asStrings(into.getOrDefault(item.getId(), List.of())), item.isActive());
+				asStrings(into.getOrDefault(item.getId(), List.of())), item.isActive(), item.getCategories());
 	}
 
 	public ItemDto toDto(Item item) {

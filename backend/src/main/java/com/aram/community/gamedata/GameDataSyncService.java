@@ -231,10 +231,11 @@ public class GameDataSyncService {
 			String iconFile = i.id() + ".png";
 			Item item = existing.get(i.id());
 			if (item == null) {
-				items.save(new Item(i.id(), i.nameKo(), i.tier(), i.priceTotal(), iconFile, i.fromIds(), now));
+				items.save(new Item(i.id(), i.nameKo(), i.tier(), i.priceTotal(), iconFile, i.fromIds(), i.categories(),
+						now));
 			}
 			else {
-				item.refresh(i.nameKo(), i.tier(), i.priceTotal(), iconFile, i.fromIds(), now);
+				item.refresh(i.nameKo(), i.tier(), i.priceTotal(), iconFile, i.fromIds(), i.categories(), now);
 			}
 			for (Map.Entry<AugmentLocale, LocalizedText> e : i.texts().entrySet()) {
 				ItemTextId id = new ItemTextId(i.id(), e.getKey().code());
