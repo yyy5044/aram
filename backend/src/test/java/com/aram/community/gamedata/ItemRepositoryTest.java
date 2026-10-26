@@ -19,7 +19,7 @@ class ItemRepositoryTest extends IntegrationTest {
 	@Test
 	void savesItemWithRecipeAndTexts() {
 		items.saveAndFlush(new Item(3084, "심장강철", ItemTier.LEGENDARY, 3000, "3084.png",
-				List.of(1011, 3801, 1011), Instant.now()));
+				List.of(1011, 3801, 1011), List.of("Health", "HealthRegen"), Instant.now()));
 		texts.save(new ItemText(new ItemTextId(3084, "ko"), "심장강철", "체력 +%…", Instant.now()));
 		texts.save(new ItemText(new ItemTextId(3084, "en"), "Heartsteel", "Health +%…", Instant.now()));
 
@@ -31,13 +31,15 @@ class ItemRepositoryTest extends IntegrationTest {
 		assertThat(saved.isActive()).isTrue();
 		// 재료는 순서와 중복을 그대로 돌려줘요.
 		assertThat(saved.getFromIds()).containsExactly(1011, 3801, 1011);
+		assertThat(saved.getCategories()).containsExactly("Health", "HealthRegen");
 		assertThat(texts.findByIdItemId(3084)).extracting(t -> t.getId().locale())
 			.containsExactlyInAnyOrder("ko", "en");
 	}
 
 	@Test
 	void deactivateKeepsRow() {
-		items.saveAndFlush(new Item(3865, "세계 지도", ItemTier.STARTER, 400, "3865.png", List.of(), Instant.now()));
+		items.saveAndFlush(new Item(3865, "세계 지도", ItemTier.STARTER, 400, "3865.png", List.of(), List.of(),
+				Instant.now()));
 
 		Item item = items.findById(3865).orElseThrow();
 		item.deactivate(Instant.now());

@@ -153,6 +153,7 @@ class GameDataControllerTest extends IntegrationTest {
 				+ "(3084, '굳건한 심장', 'LEGENDARY', 3000, '3084.png', '{1011,1011}', true, now()), "
 				+ "(3083, '워모그의 갑옷', 'LEGENDARY', 3000, '3083.png', '{1011}', true, now()), "
 				+ "(9999, '옛 아이템', 'EPIC', 2000, '9999.png', '{1011}', false, now())");
+		jdbc.update("update items set categories = '{Health,HealthRegen}' where id = 3084");
 		jdbc.update("insert into item_texts (item_id, locale, name, description) values "
 				+ "(3084, 'en', 'Heartsteel', 'Gain <attention>health</attention>'), "
 				+ "(3084, 'ko', '굳건한 심장', '<attention>체력</attention>을 얻어요')");
@@ -177,6 +178,8 @@ class GameDataControllerTest extends IntegrationTest {
 			.andExpect(jsonPath("$[1].id").value("3084"))
 			.andExpect(jsonPath("$[1].fromIds").value(org.hamcrest.Matchers.contains("1011", "1011")))
 			.andExpect(jsonPath("$[1].intoIds").value(org.hamcrest.Matchers.empty()))
+			.andExpect(jsonPath("$[1].categories").value(org.hamcrest.Matchers.contains("Health", "HealthRegen")))
+			.andExpect(jsonPath("$[0].categories").value(org.hamcrest.Matchers.empty()))
 			.andExpect(jsonPath("$[2].id").value("9999"))
 			.andExpect(jsonPath("$[2].active").value(false))
 			.andExpect(jsonPath("$[3].id").value("3083"));

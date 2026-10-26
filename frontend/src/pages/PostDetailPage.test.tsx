@@ -23,7 +23,6 @@ function detail(overrides: Partial<PostDetail> = {}): PostDetail {
     author: { id: 1, nickname: '양호', avatarUrl: null },
     champions: [amumu],
     augments: [legDay],
-    items: [],
     likeCount: 24,
     commentCount: 0,
     viewCount: 12,
@@ -69,9 +68,10 @@ describe('PostDetailPage', () => {
     expect(screen.getByRole('link', { name: '‹ 목록으로' })).toHaveAttribute('href', '/')
   })
 
-  it('shows item chips after the augments, linking to the item page', async () => {
-    setup(null, detail({ champions: [], augments: [], items: [heartsteel] }))
-    expect(await screen.findByRole('link', { name: /심장 강타/ })).toHaveAttribute('href', '/items/3084')
+  it('shows no item chips, even if old data still carries items', async () => {
+    setup(null, { ...detail({ champions: [], augments: [] }), items: [heartsteel] } as PostDetail)
+    expect(await screen.findByRole('heading', { name: '아무무는 이 증강 두 개면 한타 지배합니다' })).toBeInTheDocument()
+    expect(screen.queryByText('심장 강타')).not.toBeInTheDocument()
   })
 
   it('links the author nickname to the profile', async () => {

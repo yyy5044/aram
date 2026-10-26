@@ -50,6 +50,7 @@ export const heartsteel: Item = {
   fromIds: [],
   intoIds: [],
   active: true,
+  categories: ['Health', 'HealthRegen'],
 }
 export const oldItem: Item = { ...heartsteel, id: '9999', nameKo: '옛 아이템', iconUrl: null, active: false }
 
@@ -65,7 +66,6 @@ export function listItem(overrides: Partial<PostListItem> = {}): PostListItem {
     author: { id: 1, nickname: '양호', avatarUrl: null },
     champions: [amumu],
     augments: [legDay],
-    items: [],
     likeCount: 24,
     commentCount: 8,
     viewCount: 31,

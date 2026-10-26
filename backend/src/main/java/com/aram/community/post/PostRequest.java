@@ -8,7 +8,7 @@ import tools.jackson.databind.JsonNode;
 public record PostRequest(
 		// 길이는 앞뒤 공백을 뺀 뒤 PostService에서 검사해요.
 		@NotBlank(message = "제목을 입력해주세요") String title,
-		@NotNull(message = "본문을 입력해주세요") JsonNode content, List<String> championIds, List<String> augmentIds, List<String> itemIds,
+		@NotNull(message = "본문을 입력해주세요") JsonNode content, List<String> championIds, List<String> augmentIds,
 		@NotBlank(message = "패치를 골라주세요") String gamePatch) {
 
 	public List<String> championIdsOrEmpty() {
@@ -17,10 +17,6 @@ public record PostRequest(
 
 	public List<String> augmentIdsOrEmpty() {
 		return augmentIds == null ? List.of() : augmentIds;
-	}
-
-	public List<String> itemIdsOrEmpty() {
-		return itemIds == null ? List.of() : itemIds;
 	}
 
 }

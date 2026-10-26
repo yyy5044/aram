@@ -70,6 +70,8 @@ export type Item = {
   fromIds: string[]
   intoIds: string[]
   active: boolean
+  /** 게임 자료의 능력치 분류(mCategories). 걸러내기는 lib/itemStats.ts가 해요. */
+  categories: string[]
 }
 
 /** 카드용 아이템 상세. original은 영어, translation은 선택 언어(원문과 같거나 없으면 null). */
@@ -88,7 +90,6 @@ export type ItemDetail = {
 export type TagCounts = {
   champions: Record<string, number>
   augments: Record<string, number>
-  items: Record<string, number>
 }
 
 export type TopAugment = { augment: Augment; postCount: number }
@@ -105,7 +106,6 @@ export type PostListItem = {
   author: Author
   champions: Champion[]
   augments: Augment[]
-  items: Item[]
   likeCount: number
   commentCount: number
   viewCount: number
@@ -120,7 +120,6 @@ export type PostDetail = {
   author: Author
   champions: Champion[]
   augments: Augment[]
-  items: Item[]
   likeCount: number
   commentCount: number
   viewCount: number
@@ -153,7 +152,6 @@ export type PostRequest = {
   content: JSONContent
   championIds: string[]
   augmentIds: string[]
-  itemIds: string[]
   gamePatch: string
 }
 

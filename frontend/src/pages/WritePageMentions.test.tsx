@@ -26,6 +26,7 @@ const items: Item[] = Array.from({ length: 11 }, (_, i) => ({
   iconUrl: `https://x/${3000 + i}.png`,
   fromIds: [],
   intoIds: [],
+  categories: [],
   active: true,
 }))
 
@@ -101,16 +102,11 @@ describe('WritePage with @ mentions', () => {
     expect(await screen.findByText('태그 칸이 가득 차서 본문에만 넣었어요')).toBeInTheDocument()
   })
 
-  it('mentionAddsItemTag: adds a mentioned item to the item tags once, ten at most', async () => {
+  it('item mention does not add a tag', async () => {
     setup()
-    await press('흉내: I0')
-    expect(await screen.findByRole('button', { name: '아이템0 빼기' })).toBeInTheDocument()
-    await press('흉내: I0')
-    expect(screen.getAllByRole('button', { name: '아이템0 빼기' })).toHaveLength(1)
-    for (let i = 1; i < 10; i++) await press(`흉내: I${i}`)
-    expect(await screen.findByRole('button', { name: '아이템9 빼기' })).toBeInTheDocument()
-    await press('흉내: I10')
-    expect(screen.queryByRole('button', { name: '아이템10 빼기' })).not.toBeInTheDocument()
-    expect(await screen.findByText('태그 칸이 가득 차서 본문에만 넣었어요')).toBeInTheDocument()
+    for (let i = 0; i < 11; i++) await press(`흉내: I${i}`)
+    await screen.findByLabelText('챔피언 검색')
+    expect(screen.queryByRole('button', { name: /^아이템\d+ 빼기$/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('태그 칸이 가득 차서 본문에만 넣었어요')).not.toBeInTheDocument()
   })
 })

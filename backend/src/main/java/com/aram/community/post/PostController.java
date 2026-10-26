@@ -46,9 +46,8 @@ public class PostController {
 	@GetMapping
 	public PageResponse<PostListItem> list(@RequestParam(defaultValue = "latest") String sort,
 			@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size,
-			@RequestParam(required = false) String champion, @RequestParam(required = false) String augment,
-			@RequestParam(required = false) String item) {
-		return postListService.list(sort, page, size, champion, augment, item);
+			@RequestParam(required = false) String champion, @RequestParam(required = false) String augment) {
+		return postListService.list(sort, page, size, champion, augment);
 	}
 
 	@PostMapping

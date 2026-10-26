@@ -7,7 +7,7 @@ import ItemTooltip from './ItemTooltip'
 const text: AugmentText = { locale: 'ko', name: '무한의 대검', description: '<attention>80</attention> 공격력<br>치명타 피해량 증가' }
 
 function item(id: string, nameKo: string, extra: Partial<Item> = {}): Item {
-  return { id, nameKo, tier: 'BASIC', priceTotal: 100, iconUrl: `${id}.png`, fromIds: [], intoIds: [], active: true, ...extra }
+  return { id, nameKo, tier: 'BASIC', priceTotal: 100, iconUrl: `${id}.png`, fromIds: [], intoIds: [], active: true, categories: [], ...extra }
 }
 
 const items: Item[] = [
