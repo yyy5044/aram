@@ -2,7 +2,6 @@ package com.aram.community.post;
 
 import com.aram.community.gamedata.Augment;
 import com.aram.community.gamedata.Champion;
-import com.aram.community.gamedata.Item;
 import com.aram.community.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -73,25 +72,20 @@ public class Post {
 			inverseJoinColumns = @JoinColumn(name = "augment_id"))
 	private Set<Augment> augments = new LinkedHashSet<>();
 
-	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(name = "post_items", joinColumns = @JoinColumn(name = "post_id"),
-			inverseJoinColumns = @JoinColumn(name = "item_id"))
-	private Set<Item> items = new LinkedHashSet<>();
-
 	protected Post() {
 	}
 
 	public static Post create(User author, String title, ValidatedContent content, String gamePatch,
-			Set<Champion> champions, Set<Augment> augments, Set<Item> items, Instant now) {
+			Set<Champion> champions, Set<Augment> augments, Instant now) {
 		Post post = new Post();
 		post.author = author;
 		post.createdAt = now;
-		post.edit(title, content, gamePatch, champions, augments, items, now);
+		post.edit(title, content, gamePatch, champions, augments, now);
 		return post;
 	}
 
 	public void edit(String title, ValidatedContent content, String gamePatch, Set<Champion> champions,
-			Set<Augment> augments, Set<Item> items, Instant now) {
+			Set<Augment> augments, Instant now) {
 		this.title = title;
 		this.content = content.normalizedJson();
 		this.contentText = content.plainText();
@@ -100,8 +94,6 @@ public class Post {
 		this.champions.addAll(champions);
 		this.augments.clear();
 		this.augments.addAll(augments);
-		this.items.clear();
-		this.items.addAll(items);
 		this.updatedAt = now;
 	}
 
@@ -159,10 +151,6 @@ public class Post {
 
 	public Set<Augment> getAugments() {
 		return augments;
-	}
-
-	public Set<Item> getItems() {
-		return items;
 	}
 
 }
