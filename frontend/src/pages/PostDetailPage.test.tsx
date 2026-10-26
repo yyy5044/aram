@@ -26,6 +26,7 @@ function detail(overrides: Partial<PostDetail> = {}): PostDetail {
     items: [],
     likeCount: 24,
     commentCount: 0,
+    viewCount: 12,
     likedByMe: false,
     scrappedByMe: false,
     createdAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
@@ -60,6 +61,7 @@ describe('PostDetailPage', () => {
     expect(screen.getByText('26.21')).toBeInTheDocument()
     expect(screen.getByText('양호')).toBeInTheDocument()
     expect(screen.getByText('수정됨')).toBeInTheDocument()
+    expect(screen.getByText('조회 12')).toBeInTheDocument()
     expect(await screen.findByText('무조건')).toContainHTML('')
     expect((await screen.findByText('무조건')).tagName).toBe('STRONG')
     expect(screen.getByRole('link', { name: /아무무$/ })).toHaveAttribute('href', '/champions/Amumu')

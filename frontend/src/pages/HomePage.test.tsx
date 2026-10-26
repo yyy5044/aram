@@ -60,6 +60,26 @@ describe('HomePage', () => {
     expect(screen.getByRole('button', { name: '추천순' })).toHaveAttribute('aria-pressed', 'true')
   })
 
+  it('switches to 조회순 and updates the URL', async () => {
+    const api = mockApi({ 'GET /api/posts': () => json(page([listItem()])) })
+    const { router } = renderWithProviders(<HomePage />)
+    await userEvent.click(await screen.findByRole('button', { name: '조회순' }))
+
+    await vi.waitFor(() =>
+      expect(api.find('GET', '/api/posts').some((c) => c.query.get('sort') === 'views')).toBe(true),
+    )
+    expect(router.state.location.search).toContain('sort=views')
+    expect(screen.getByRole('button', { name: '조회순' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('starts with 조회순 from the address', async () => {
+    const api = mockApi({ 'GET /api/posts': () => json(page([listItem()])) })
+    renderWithProviders(<HomePage />, { route: '/?sort=views' })
+    await screen.findByText('26.21')
+    expect(api.find('GET', '/api/posts')[0].query.get('sort')).toBe('views')
+    expect(screen.getByRole('button', { name: '조회순' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('moves between pages', async () => {
     const api = mockApi({
       'GET /api/posts': (req) =>
